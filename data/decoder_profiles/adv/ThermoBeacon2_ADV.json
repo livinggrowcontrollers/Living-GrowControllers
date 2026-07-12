@@ -1,0 +1,24 @@
+{
+  "name": "inside Profile",
+  "vendor": "ThermoBeacon",
+  "model": "inside",
+
+  "company_id": 25,
+  "mac_len": 6,
+  "skip_after_mac": 2,
+
+  "scale_temperature": 16.0,
+  "scale_humidity": 16.0,
+
+  "external_present_threshold": -1,
+
+  "fields": {
+    "T_i": 0,
+    "H_i": 2,
+    "T_e": 4,
+    "H_e": 6,
+    "packet": 8
+  },
+
+  "base_offset": 10
+}

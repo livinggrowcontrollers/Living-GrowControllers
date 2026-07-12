@@ -1,0 +1,16 @@
+{
+  "profile": "gatt_dummy",
+  "company_id": 30,
+  "endian": "le",
+  "mac_len": 0,
+  "skip_after_mac": 0,
+
+  "fields": {
+    "T_i": 0,
+    "H_i": 1,
+    "packet": 2
+  },
+
+  "scale_temperature": 1,
+  "scale_humidity": 1
+}

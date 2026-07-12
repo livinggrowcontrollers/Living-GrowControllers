@@ -1,0 +1,9 @@
+{
+  "devices": [
+    {
+      "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
+      "name": "ThermoBeacon2",
+      "profile": "tb2_bridge"
+    }
+  ]
+}

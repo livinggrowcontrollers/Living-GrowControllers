@@ -1,0 +1,499 @@
+# Dashboard-Datenpipeline
+
+Diese Dokumentation beschreibt den Datenweg vom Rohsignal bis zur sichtbaren
+Dashboard-Ansicht. Sie betrachtet die Einheit, die beim Start der App sichtbar
+ist: `dashboard.py`, `DashboardMainPanel`, `ChartTile`, `HeaderBar`,
+`DataBuffer`, `GlobalStateManager` und die GSM-Engines.
+
+
+## 1. Grundprinzip
+
+Der Decoder ist die Datenquelle. UI und Engines sollen nicht selbst Rohdaten
+interpretieren, sondern fertige Frames lesen.
+
+Der normale Weg ist:
+
+```text
+BLE / Web / Watchdog
+        |
+        v
+decoder.step_decode()
+        |
+        v
+decoder RAM (_DECODED_RAM) + gelegentlich data/decoded.json
+        |
+        v
+DataBuffer
+        |
+        v
+GlobalStateManager
+        |
+        v
+DataFlowEngine
+        |
+        +--> MetricsEngine --> GraphEngine
+        +--> MixedEngine   --> mixed.json / Broadcast
+        +--> UIManager     --> aktiver Screen
+                           |
+                           v
+DashboardScreen / HeaderBar / DashboardMainPanel / ChartTile
+```
+
+Wichtig: Das Dashboard rendert Graphen nur noch aus `GraphEngine`. Es schreibt
+selbst keine Messwerte mehr in die Graph-Buffer.
+
+
+## 2. Decoder-Schicht
+
+### 2.1 Profile und Rohdecodierung
+
+`decoders/binary_parser.py`
+
+Aufgaben:
+
+- Decoderprofile aus `data/decoder_profiles/adv` und
+  `data/decoder_profiles/gatt` laden.
+- Roh-Hexdaten in Bytes wandeln.
+- Felder anhand des Profils lesen.
+- Endianness, Skalierung und Missing-Werte behandeln.
+- Ein neutrales Dict mit Rohwerten liefern:
+  `T_i`, `H_i`, `T_e`, `H_e`, `T_l`, `V_b`, `F_r`.
+
+Diese Ebene kennt keine UI und keine Dashboard-Logik.
+
+
+### 2.2 Kanaldecodierung
+
+`decoders/channel_decoder.py`
+
+Aufgaben:
+
+- Pro Kanal entscheiden, ob ein Signal frisch ist.
+- ADV ueber `adv_raw` beobachten.
+- GATT ueber `packet_counter` beobachten.
+- Letzten bekannten Raw-Wert und Timestamp je MAC verwalten.
+- Bei Timeout oder fehlendem Profil einen Offline-Channel-Frame erzeugen.
+- Bei gueltiger Decodierung einen aktiven BLE-Frame bauen.
+
+Das Ergebnis ist immer ein strukturierter Kanal:
+
+```text
+alive
+status
+raw
+rssi
+internal
+external
+external2
+vpd_internal
+vpd_external
+battery_voltage
+dew_point_*
+coord
+```
+
+
+### 2.3 Frame-Erzeugung
+
+`decoders/frame_factory.py`
+
+Aufgaben:
+
+- Einheitliche Offline-Kanalframes erzeugen.
+- Aktive BLE-Frames mit Offset, VPD, Taupunkt und Koordinaten bauen.
+- Web-Telemetrie in dieselbe Sensorstruktur bringen.
+- Komplette Offline-Device-Frames erzeugen.
+
+Das ist wichtig, weil die UI dadurch auch bei Offline-Geraeten stabile Keys
+bekommt und nicht auf fehlenden Dict-Strukturen landet.
+
+
+### 2.4 Decoder-Orchestrierung
+
+`decoder.py`
+
+`step_decode()` ist der zentrale Takt.
+
+Ablauf:
+
+1. Config laden.
+2. Wenn keine Devices existieren, Runtime-Caches leeren.
+3. Caches geloeschter MACs entfernen.
+4. BLE-Watchdog-Status lesen.
+5. `ble_dump.json` lesen.
+6. Web-Daten bevorzugt aus RAM lesen, Disk nur als Backup.
+7. Pro Config-Device einen Frame bauen.
+8. ADV, GATT und Webserver getrennt bewerten.
+9. Device-Alive aus den drei Kanaelen ableiten.
+10. Frames in `_DECODED_RAM` schreiben und selten nach `decoded.json`.
+
+Config ist die harte Grenze: Frames werden nur fuer MACs gebaut, die aktuell in
+`config.devices` stehen.
+
+
+## 3. DataBuffer
+
+`dashboard_gui/data_buffer.py`
+
+Der Buffer ist die UI-nahe Leseschicht.
+
+Reihenfolge:
+
+1. Config laden.
+2. Wenn keine Devices existieren: `self.data = []`.
+3. Decoder-RAM lesen.
+4. RAM-Frames gegen aktuelle Config filtern.
+5. Nur wenn RAM leer ist, `data/decoded.json` als Start-Fallback lesen.
+6. Auch Disk-Frames gegen Config filtern.
+
+Damit verhindert der Buffer, dass geloeschte Geraete in die UI gelangen.
+
+
+## 4. GlobalStateManager
+
+`dashboard_gui/global_state_manager.py`
+
+Der GSM ist der Dashboard-Orchestrator.
+
+Er erzeugt unter anderem:
+
+- `GraphEngine`
+- `ConfigEngine`
+- `LedEngine`
+- `MixedEngine`
+- `MetricsEngine`
+- `GattConfigEngine`
+- `ActiveChannelEngine`
+- `UnitEngine`
+- `MultiActiveKeyEngine`
+- `TileEngine`
+- `DataFlowEngine`
+- `BroadcastEngine`
+- `OverlayCommandEngine`
+- `GraphControlEngine`
+
+Der Haupttakt ist:
+
+```text
+Clock.schedule_interval(self._global_update, config.get_refresh_interval())
+```
+
+`_global_update()` delegiert an:
+
+```text
+self.data_flow.process_cycle()
+```
+
+
+## 5. DataFlowEngine
+
+`dashboard_gui/gsm_engines/data_flow_engine.py`
+
+`process_cycle()` macht pro Tick:
+
+1. `BUFFER.soft_reload()`.
+2. Wenn keine Daten da sind: LED offline, RSSI-History leeren, aktiven Screen
+   mit leerem Frame informieren.
+3. Aktiven UI-Kanal lesen: `adv`, `gatt` oder `webserver`.
+4. Fuer alle Frames nur diesen aktiven Kanal an `MetricsEngine` geben.
+5. `MixedEngine.update(data)` ausfuehren.
+6. Aktives Device suchen.
+7. Fokus-RSSI aktualisieren.
+8. Aktiven Screen per `UIManager.update_active_screen()` updaten.
+9. LED-Status aus Kanalfrische ableiten.
+
+Normale Dashboard-Graphen entstehen hier, nicht in den Tiles.
+
+
+## 6. MetricsEngine und GraphEngine
+
+### 6.1 MetricsEngine
+
+`dashboard_gui/gsm_engines/metrics_engine.py`
+
+Die MetricsEngine extrahiert aus einem Kanal:
+
+- interne Temperatur, Feuchte, VPD
+- externe Temperatur, Feuchte, VPD
+- Leaf-Temperatur und Leaf-VPD
+- BLE-Inside/Outside-Werte
+- Fan-RPM
+- Batterie
+- RSSI
+
+Fuer jeden Wert entsteht ein Graph-Key:
+
+```text
+{device_id}_{channel}_{metric}
+```
+
+Beispiel:
+
+```text
+AA:BB:CC:DD:EE:FF_webserver_temp_in
+```
+
+Danach:
+
+- `GraphEngine.process_new_value(key, value)`
+- `UnitEngine.set_unit(key, unit)`
+- `TileEngine.register_tiles(...)`
+
+
+### 6.2 GraphEngine
+
+`dashboard_gui/gsm_engines/graph_engine.py`
+
+Die GraphEngine besitzt die Messwert-Historien:
+
+- `graph_buffers`
+- `_trend_buffers`
+- `_last_smoothed_values`
+- `global_trends`
+- `_update_counters`
+
+Sie erledigt:
+
+- Smoothing
+- Graph-Resolution / Downsampling
+- Trend-Berechnung
+- Buffer-Window
+- Reset
+- Config-Refresh
+
+Die GraphEngine ist die einzige Quelle fuer sichtbare Dashboard-Graphdaten.
+
+
+## 7. MixedEngine
+
+`dashboard_gui/gsm_engines/mixed_engine.py`
+
+MixedMode ist ein bewusstes Designfeature.
+
+Die MixedEngine betrachtet ausgewaehlte Geraete und kann Werte aus mehreren
+Kanaelen einbeziehen. Das ist kein Fehler und keine zu eliminierende doppelte
+Dashboard-Pipeline.
+
+Sie schreibt:
+
+- `mixed_avg_temp`
+- `mixed_avg_hum`
+- `mixed_avg_vpd`
+- `mixed_avg_dew`
+- `data/mixed.json`
+
+Aus `mixed.json` kann die Broadcast-Schicht Daten bereitstellen.
+
+
+## 8. DashboardScreen
+
+`dashboard_gui/dashboard.py`
+
+Beim Start sichtbare Struktur:
+
+```text
+DashboardScreen
+    root_layout
+        HeaderBar
+        ScrollView
+            DashboardMainPanel
+        ControlButtons
+```
+
+`update_from_global(frame)`:
+
+1. Header aktualisieren.
+2. Wenn keine Devices existieren: Content leeren und Standardhintergrund setzen.
+3. Sonst `DashboardMainPanel.update_from_data(frame)` ausfuehren.
+4. Sichtbare Tiles im `TileEngine` registrieren.
+5. Hintergrund je nach aktiver Kachelmenge wechseln.
+
+
+## 9. DashboardMainPanel
+
+`dashboard_gui/ui/dashboard_content/dashboard_main_panel.py`
+
+Das MainPanel erzeugt alle moeglichen `ChartTile`-Instanzen einmalig aus der
+Metric-Liste.
+
+Pro Update:
+
+1. Aktuelle Buffer-Daten holen.
+2. Wenn keine Devices oder keine Daten existieren: Widgets leeren.
+3. Aktiven Index, aktiven Kanal und aktives Device bestimmen.
+4. Sichtbare Tile-Keys aus dem aktiven Kanal ableiten.
+5. Widgets passend zu den aktiven Keys neu anordnen.
+6. Fuer Frames des aktiven Kanals die Tiles mit Graph-Key und Render-Flag
+   aufrufen.
+
+Das MainPanel entscheidet Sichtbarkeit und Layout. Es ist nicht die Datenquelle.
+
+
+## 10. ChartTile
+
+`dashboard_gui/ui/dashboard_content/chart_tile.py`
+
+`ChartTile` ist jetzt ein reiner Renderer.
+
+Es macht:
+
+- aktuellen Graph-Buffer aus `GraphEngine` lesen
+- letzten Wert anzeigen
+- Trend-Icon anzeigen
+- Min/Max/Avg anzeigen
+- LinePlot und GlowPlot setzen
+- Fill-Mesh aktualisieren
+- leere Graphen sauber loeschen
+
+Es macht nicht mehr:
+
+- Messwerte in `GraphEngine` schreiben
+
+Dadurch ist die doppelte Graph-Pipeline entfernt.
+
+
+## 11. Graph-Rendering
+
+### 11.1 ChartTile Rendering
+
+Bei leerem Buffer:
+
+```text
+clear_graph_series(plot, mesh, glow_plot)
+avg/min/max = ---
+ymin = 0
+ymax = 1
+Zeitlabels leer
+```
+
+Bei einem einzelnen Wert:
+
+```text
+[(0, value), (1, value)]
+```
+
+Dadurch bleibt Kivy Graph renderbar.
+
+
+### 11.2 Mesh
+
+`dashboard_gui/ui/common/graph_chart_content/graph_mesh.py`
+
+`update_graph_mesh()` baut eine transparente Flaeche unter der Linie.
+
+Sicherheiten:
+
+- keine Punkte oder weniger als zwei Punkte: Mesh wird geleert
+- zu viele Punkte: Downsampling
+- Pixelpositionen werden gerundet
+- `triangle_strip` fuer stabile Fill-Flaeche
+
+
+## 12. HeaderBar
+
+`dashboard_gui/ui/common/header_online.py`
+
+Der Header zeigt bewusst globale Geraeteinformationen und Web-Funktionen auch
+dann, wenn der aktive Kanal `adv` ist.
+
+Das betrifft:
+
+- RSSI/Signal
+- Batterie
+- Light
+- externe Sensoricons
+- Fan-Icons
+- Broadcast
+- LED
+- Clock
+- Device-Label mit Kanal-Tag
+
+Dieses Verhalten ist ein Designfeature und kein Pipeline-Fehler.
+
+
+## 13. Offline-Geraete und Ghoststates
+
+### 13.1 Offline
+
+Offline bedeutet nicht "keine Struktur".
+
+Offline-Kanaele besitzen weiterhin:
+
+- `alive: False`
+- `status: offline`
+- leere Sensorwerte
+- leere Koordinaten
+- `rssi: -256` oder `None`
+
+Das verhindert UI-Crashes und macht Offline-Zustaende sichtbar.
+
+
+### 13.2 Geloeschte Geraete
+
+Absicherungen:
+
+- Decoder entfernt Caches geloeschter MACs.
+- DataBuffer filtert RAM/Disk gegen Config.
+- ConfigEngine leert Buffer.
+- ActiveChannelEngine validiert Index.
+- Dashboard leert Content bei leerer Device-Liste.
+- TileEngine wird bei Config-Refresh zurueckgesetzt.
+
+Restliches Optimierungspotenzial:
+
+- GraphEngine- und UnitEngine-Keys geloeschter Devices koennen intern noch
+  existieren, bis ein Reset erfolgt.
+- Bei komplett leerer Config sollte der Decoder auch `_DECODED_RAM` explizit
+  leeren oder `_write([])` ausfuehren.
+
+
+## 14. Shutdown
+
+`core.stop()` beendet:
+
+- WebClient
+- Decoder-Thread
+- Watchdog
+- Bridges
+- Android Foreground Service
+
+Empfehlung:
+
+- `DashboardApp.on_stop()` sollte `core.stop()` aufrufen.
+- Resume-Code sollte Methoden wirklich ausfuehren, also mit `()`.
+
+
+## 15. Verantwortlichkeiten
+
+```text
+Decoder
+    Rohdaten rein, fertige Device-Frames raus.
+
+DataBuffer
+    RAM/Disk lesen und gegen Config filtern.
+
+GlobalStateManager
+    Engines erzeugen, Takt halten, UI verbinden.
+
+DataFlowEngine
+    Pro Tick Daten laden, aktiven Kanal verarbeiten, Screen updaten.
+
+MetricsEngine
+    Kanalwerte extrahieren und GraphEngine fuettern.
+
+GraphEngine
+    Historien, Smoothing, Trends, Downsampling.
+
+DashboardMainPanel
+    Sichtbarkeit und Layout der Tiles.
+
+ChartTile
+    Graphen rendern, keine Daten schreiben.
+
+HeaderBar
+    Geraetezustand und globale Controls anzeigen.
+
+MixedEngine
+    Bewusster Multi-Channel/Multi-Device Durchschnitt und Broadcast-Daten.
+```
+

@@ -1,0 +1,78 @@
+{
+  "devices": {
+    "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+      "name": "LGS_Sensor",
+      "adv_decoder": "LGS_SENSOR",
+      "gatt_decoder": "",
+      "bridge_profile": "",
+      "ip_address": "192.168.2.20",
+      "protected": true,
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21": {
+      "name": "TP351S (987A)",
+      "adv_decoder": "",
+      "gatt_decoder": "ThermoPro_GATT",
+      "bridge_profile": "ThermoPro_Bridge"
+    },
+    "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21_copy": {
+      "name": "AP Modus (Copy)",
+      "adv_decoder": "",
+      "gatt_decoder": "ThermoPro_GATT",
+      "bridge_profile": "ThermoPro_Bridge",
+      "protected": true,
+      "ip_address": "192.168.4.1",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "827482CC-A977-43D7-835E-8E8B6978E66A": {
+      "name": "LGS_Sensor",
+      "adv_decoder": "LGS_SENSOR",
+      "gatt_decoder": "",
+      "bridge_profile": "",
+      "ip_address": "192.168.2.39",
+      "protected": true,
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "name": "sps",
+      "adv_decoder": "Inkbird_ADV_Desktop",
+      "gatt_decoder": "Inkbird_GATT",
+      "bridge_profile": "Inkbird_Bridge"
+    },
+    "FF-FF-A1-00-00-01": {
+      "name": "LGS_NODE_17",
+      "adv_decoder": "LGS_ADV",
+      "gatt_decoder": "",
+      "bridge_profile": ""
+    },
+    "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
+      "name": "ThermoBeacon2",
+      "adv_decoder": "ThermoBeacon2_ADV",
+      "gatt_decoder": "ThermoBeacon2_GATT",
+      "bridge_profile": "ThermoBeacon2_Bridge"
+    }
+  },
+  "bridge_profiles": {},
+  "refresh_interval": 0.1,
+  "stale_timeout": 15.0,
+  "graph_resolution": 49.1,
+  "tile_graph_window": 1000,
+  "temperature_unit": "C",
+  "temperature_offset": 0.0,
+  "humidity_offset": 0.0,
+  "leaf_offset": 0.0,
+  "developer_mode": true,
+  "theme": "tiles",
+  "lgs_mesh_channel_send": 17,
+  "lgs_mesh_channel_recv": 17,
+  "language": "de"
+}

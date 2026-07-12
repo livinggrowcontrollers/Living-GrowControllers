@@ -1,0 +1,627 @@
+Ja. Aus deinem Code wird das Gesamtsystem sehr klar. Es ist kein normales Request/Response-System, sondern ein **Target-Revision-System mit atomarer Bestätigung**.
+
+Ich würde daraus eine vollständige Entwicklerdokumentation machen, die später für jede ESP-Komponente gilt (Licht, Exhaust, Circulation, Grow Controller, Plant Planner usw.).
+
+Die Dokumentation würde ungefähr so aufgebaut sein:
+
+---
+
+# Revision System v2.0
+
+## Offizielle Architektur-Dokumentation
+
+---
+
+# 1. Grundprinzip
+
+Das komplette Dashboard arbeitet ausschließlich nach dem **Target-Revision-Prinzip**.
+
+Es existieren niemals direkte Hardware-Kommandos.
+
+Das UI definiert ausschließlich einen neuen **Target-Zustand**.
+
+Der ESP entscheidet selbstständig wann und wie dieser Target-Zustand erreicht wird.
+
+Dadurch entstehen:
+
+* atomare Updates
+* keine Race Conditions
+* keine halben Zustände
+* sichere Flash-Schreibvorgänge
+* mehrere gleichzeitig geöffnete GUIs möglich
+
+---
+
+# 2. Das absolute Gesetz
+
+```
+UI
+ ↓
+Target
+ ↓
+Revision++
+ ↓
+Command Engine
+ ↓
+ESP übernimmt Target
+ ↓
+Hardware fährt nach
+ ↓
+ESP bestätigt Revision
+ ↓
+UI wird grün
+```
+
+Es existiert niemals:
+
+```
+Slider →
+PWM Pin
+```
+
+Das ist verboten.
+
+---
+
+# 3. Die drei Ebenen
+
+## Ebene 1
+
+User Target
+
+Beispiel
+
+```
+Slider
+
+70 %
+```
+
+Noch keinerlei Hardware.
+
+---
+
+## Ebene 2
+
+ESP Target
+
+```
+current_circulation_fan_speed
+```
+
+Das ist das Ziel.
+
+Noch nicht der reale PWM.
+
+---
+
+## Ebene 3
+
+Hardware
+
+```
+effective_circulation_fan_speed
+```
+
+Das ist die wirkliche Hardware.
+
+Nur dieser Wert darf den Pin schreiben.
+
+```
+ledcWrite(...)
+```
+
+---
+
+# 4. current vs effective
+
+Immer strikt getrennt.
+
+```
+current
+```
+
+=
+
+Sollwert
+
+```
+effective
+```
+
+=
+
+Istwert
+
+Beispiel
+
+```
+Target
+
+80%
+```
+
+Natural Mode erzeugt
+
+```
+62
+66
+58
+74
+70
+```
+
+effective verändert sich permanent.
+
+current bleibt immer
+
+```
+80
+```
+
+---
+
+# 5. Revision
+
+Jedes Modul besitzt seine eigene Revision.
+
+Beispiel
+
+```
+rev_light
+
+rev_circfan
+
+rev_exhaust
+
+rev_grow
+
+rev_plant_planner
+```
+
+Revisionen sind unabhängig.
+
+---
+
+# 6. Command Engine
+
+Die Command Engine besitzt genau eine Aufgabe.
+
+Sie erzeugt neue Target-Revisionen.
+
+Beispiel
+
+```
+last_rev = 15
+
+↓
+
+new_rev = 16
+```
+
+Dann wird verschickt
+
+```
+{
+   circulation_fan_pct : 80,
+   circulation_fan_min : 20,
+   circulation_fan_mode : "nat",
+   rev_circfan : 16
+}
+```
+
+Mehr macht die Engine nicht.
+
+Sie schreibt niemals Hardware.
+
+---
+
+# 7. Overlay
+
+Jedes Overlay benutzt
+
+```
+BaseRevisionSystem
+```
+
+Dadurch bekommt jedes Overlay automatisch
+
+* Pending
+* Retry
+* Sync
+* Orange
+* Grün
+* Rot
+
+ohne eigenen Code.
+
+Das Overlay kennt ausschließlich
+
+```
+send_overlay_command(...)
+```
+
+Die Revision wird von der Command Engine erzeugt.
+
+---
+
+# 8. BaseRevisionSystem
+
+Diese Klasse ist die komplette State Machine.
+
+Sie verwaltet
+
+```
+_last_sent_rev
+
+_last_send_time
+
+_retry_count
+```
+
+Außerdem berechnet sie
+
+```
+Pending
+
+Retry
+
+Confirmed
+
+Error
+
+Green
+
+Orange
+
+Red
+```
+
+Dadurch besitzen alle Overlays identisches Verhalten.
+
+---
+
+# 9. Pending
+
+Nach einem Klick
+
+```
+UI
+
+↓
+
+Revision 25
+```
+
+Der ESP besitzt noch
+
+```
+24
+```
+
+Dann gilt
+
+```
+pending = true
+```
+
+Das UI wird Orange.
+
+---
+
+# 10. Retry
+
+Nach
+
+```
+3 Sekunden
+```
+
+ohne Antwort
+
+```
+should_retry()
+```
+
+liefert
+
+```
+true
+```
+
+Dann wird dieselbe Revision erneut gesendet.
+
+Nicht
+
+```
+26
+```
+
+sondern
+
+```
+25
+```
+
+Erst nach Bestätigung wird weitergezählt.
+
+---
+
+# 11. Confirmation
+
+Der ESP bestätigt ausschließlich echte Änderungen.
+
+Er sendet zurück
+
+```
+rev_circfan = 25
+```
+
+Erst dann gilt
+
+```
+pending = false
+```
+
+---
+
+# 12. Green State
+
+Grün bedeutet niemals
+
+"wir haben gesendet".
+
+Grün bedeutet ausschließlich
+
+```
+ESP Revision
+
+=
+
+UI Revision
+```
+
+Nur dann.
+
+---
+
+# 13. Orange State
+
+Orange bedeutet
+
+```
+lokale Änderungen vorhanden
+```
+
+oder
+
+```
+ESP hat noch nicht bestätigt
+```
+
+---
+
+# 14. Error State
+
+Rot bedeutet
+
+* Retry-Limit erreicht
+
+oder
+
+* keine gültige ESP-Revision
+
+oder
+
+* Gerät offline
+
+---
+
+# 15. ESP-Seite
+
+Auf dem ESP besitzt jedes Modul dieselbe Struktur.
+
+## process_json()
+
+liest
+
+```
+rev_xxx
+```
+
+Ist
+
+```
+received_rev > local_rev
+```
+
+werden Targetwerte übernommen.
+
+---
+
+Danach
+
+```
+flash_changed
+```
+
+entscheidet
+
+```
+save_state()
+```
+
+---
+
+Zum Schluss sendet
+
+```
+get_status()
+```
+
+immer
+
+```
+rev_xxx
+```
+
+zurück.
+
+Das ist die Bestätigung.
+
+---
+
+# 16. Flash
+
+Flash wird ausschließlich geschrieben wenn
+
+```
+Revision akzeptiert
+```
+
+und
+
+```
+Werte geändert
+```
+
+wurden.
+
+Nicht bei jedem Paket.
+
+---
+
+# 17. Hardware
+
+Die Hardware reagiert ausschließlich auf
+
+```
+current
+```
+
+niemals auf JSON.
+
+Beispiel
+
+```
+loop()
+
+↓
+
+update()
+
+↓
+
+effective
+
+↓
+
+PWM
+```
+
+---
+
+# 18. Multi-Client
+
+Mehrere Dashboards gleichzeitig sind möglich.
+
+Alle sehen denselben
+
+```
+server_rev
+```
+
+Dadurch entsteht niemals
+
+```
+GUI A überschreibt GUI B
+```
+
+solange beide über Revisionen arbeiten.
+
+---
+
+# 19. Initialisierung
+
+Beim Öffnen eines Overlays
+
+```
+_init_values()
+```
+
+holt lediglich den Snapshot.
+
+Es wird **keine neue Revision erzeugt**.
+
+```
+mark_confirmed_snapshot()
+```
+
+setzt den lokalen Zustand auf bestätigt.
+
+Dadurch entsteht beim Öffnen kein unnötiges Pending oder Retry.
+
+---
+
+# 20. Ablaufdiagramm
+
+```text
+User
+ │
+ ▼
+Overlay
+ │
+ ▼
+BaseRevisionSystem
+ │
+ ▼
+OverlayCommandEngine
+ │
+ ▼
+Revision++
+ │
+ ▼
+WEB_CLIENT
+ │
+ ▼
+ESP process_json()
+ │
+ ▼
+Target übernehmen
+ │
+ ▼
+Flash speichern
+ │
+ ▼
+loop()
+ │
+ ▼
+Hardware fährt nach
+ │
+ ▼
+get_status()
+ │
+ ▼
+rev zurück
+ │
+ ▼
+BaseRevisionSystem
+ │
+ ▼
+Pending beendet
+ │
+ ▼
+Grünes Sync-Symbol
+```
+
+## Kernprinzip
+
+Die Verantwortlichkeiten sind strikt getrennt:
+
+* **Overlay:** Benutzerinteraktion und Anzeige.
+* **BaseRevisionSystem:** Verwaltung von Revisionen, Pending-, Retry- und Sync-Status.
+* **OverlayCommandEngine:** Erzeugt die nächste Revision und sendet den vollständigen Target-Zustand.
+* **ESP:** Übernimmt neue Target-Werte nur bei neuer Revision, speichert sie bei Bedarf persistent und bestätigt die Revision.
+* **Hardware-Loop:** Führt den Target-Zustand asynchron aus (`effective` folgt `current`).
+
+Diese Trennung sorgt dafür, dass UI, Netzwerk, ESP-Logik und Hardware unabhängig voneinander arbeiten können, ohne inkonsistente Zustände zu erzeugen. Das System ist dadurch robust gegenüber Paketverlusten, Neustarts und mehreren gleichzeitig verbundenen Dashboards.

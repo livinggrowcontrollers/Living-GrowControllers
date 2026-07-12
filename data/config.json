@@ -1,0 +1,33 @@
+{
+  "devices": {
+    "FF-FF-A1-00-00-01": {
+      "name": "LGS_NODE_17",
+      "adv_decoder": "LGS_ADV",
+      "gatt_decoder": "",
+      "bridge_profile": "",
+      "image_file": "unknown_device.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    }
+  },
+  "user": "admin",
+  "pass": "1234",
+  "active": true,
+  "bridge_profiles": {},
+  "refresh_interval": 0.2,
+  "stale_timeout": 28.0,
+  "graph_resolution": 97.1,
+  "graph_smoothing_factor": 1.0,
+  "tile_graph_window": 520,
+  "temperature_unit": "C",
+  "temperature_offset": 0.0,
+  "humidity_offset": 0.0,
+  "leaf_offset": 0.0,
+  "developer_mode": false,
+  "theme": "tiles",
+  "lgs_mesh_channel_send": 17,
+  "lgs_mesh_channel_recv": 17,
+  "language": "de"
+}

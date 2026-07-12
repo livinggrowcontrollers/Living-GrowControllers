@@ -1,0 +1,22 @@
+{
+  "name": "Vivosun Thermo GATT",
+  "vendor": "Vivosun",
+  "model": "Thermo",
+
+  "company_id": 25,
+  "mac_len": 0,
+  "skip_after_mac": 0,
+
+  "scale_temperature": 16.0,
+  "scale_humidity": 16.0,
+
+  "external_present_threshold": -1,
+
+  "fields": {
+    "T_i": 1,
+    "H_i": 3,
+    "T_e": 7,
+    "H_e": 9,
+    "packet": 0
+  }
+}

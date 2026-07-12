@@ -1,0 +1,79 @@
+Hier ist eine prägnante, saubere Dokumentation für dein Entwickler-Wiki, die das Prinzip perfekt zusammenfasst:
+
+---
+
+# Entwickler-Dokumentation: Reaktiver UI-Schutz & Datenstruktur-Validierung
+
+## Problemstellung
+
+In einem Multi-Device-System (z. B. verschiedene ESP32-Typen mit unterschiedlichen Aufgaben wie Grow-Controller, PlantPlanner, Sensor-Hub) liefert der `GLOBAL_STATE` zyklisch Status-Payloads.
+Wird zwischen Geräten umgeschaltet, bleiben ohne Absicherung alte RAM-Reste im UI stehen, oder das UI versucht, nicht existierende JSON-Blöcke zu parsen. Die Folge sind **Geister-Einträge (Pseudo-Daten)** oder UI-Abstürze.
+
+## Das Lösungsprinzip: Defensives Kaskaden-Parsing
+
+Der Schutz basiert auf einer dreistufigen Validierungskette (Kaskade) direkt am Eingang der `update_from_global(self, data)`-Methode. Gibt eine Stufe `False` zurück, wird das UI sofort **gezielt genullt** (`_clear_ui_to_empty()`).
+
+```
+[GSM Payload] ---> Stufe 1: Verbindung? ---> Stufe 2: Feature-Key? ---> Stufe 3: Datentyp? ---> [Echtes UI-Render]
+                         |                            |                          |
+                   (Nein) v                      (Nein) v                    (Nein) v
+             [_clear_ui_to_empty]          [_clear_ui_to_empty]        [_clear_ui_to_empty]
+
+```
+
+---
+
+## Code-Template (Blueprints)
+
+### 1. Das Screen-Template (z. B. `plant_planner_screen.py`)
+
+```python
+    def update_from_global(self, data):
+        """Reaktives Update mit Kaskaden-Schutz gegen Geister-Daten."""
+        # STUFE 1: Globale Existenz & Verbindungs-Status prüfen
+        if not data or not data.get("webserver", {}).get("alive", False):
+            self._clear_ui_to_empty()
+            return
+    
+        web_ch = data.get("webserver", {})
+        
+        # STUFE 2: Feature-Deklaration (Hat das aktuelle Gerät dieses Modul?)
+        if "plant_planner" not in web_ch:  # <-- Hier Modul-Key anpassen (z.B. 'climate_hub')
+            self._clear_ui_to_empty()
+            return
+            
+        pp = web_ch.get("plant_planner", {})
+        new_plants = pp.get("plants", [])
+    
+        # STUFE 3: Datentyp- & Integritätsprüfung (Stimmt die Struktur?)
+        if not isinstance(new_plants, list) or len(new_plants) == 0:
+            self._clear_ui_to_empty()
+            return
+
+        # --- AB HIER SIND DIE DATEN 100% VALIDE FÜR DIESES GERÄT ---
+        if new_plants != self.plants:
+            self.plants = copy.deepcopy(new_plants)
+            self.build_ui()
+
+```
+
+### 2. Die UI-Reset-Hilfsmethode
+
+Jeder Screen benötigt diese Methode, um bei einem Fehlschlag der Validierung die Oberfläche sauber freizuräumen, anstatt den letzten Zustand einzufrieren.
+
+```python
+    def _clear_ui_to_empty(self):
+        """Erzwingt einen sauberen UI-Reset, wenn das Gerät das Feature nicht unterstützt."""
+        if self.plants != []:  # Verhindert endlose Render-Schleifen
+            self.plants = []   # Zustand nullen
+            self.build_ui()    # UI leeren (zeigt z.B. 'NO PLANTS FOUND')
+
+```
+
+---
+
+## Die 3 goldenen Regeln für neue Screens
+
+1. **Niemals Direktzugriff:** Niemals `data["webserver"]["modul"]` ungeprüft aufrufen. Immer `.get()` mit Fallbacks nutzen.
+2. **Online-Status ist Pflicht:** Wenn `alive == False`, sind die Daten im Payload ungültige Cache-Leichen. Sofort verwerfen.
+3. **Zustands-Vergleich vor Render:** Nur `self.build_ui()` aufrufen, wenn sich die Daten im Vergleich zum lokalen RAM (`self.plants != new_plants`) *wirklich* geändert haben, um CPU-Last zu sparen.

@@ -1,0 +1,20 @@
+{
+  "name": "outside ANDROID ADV (MATCH FIX)",
+  "vendor": "ble_outside",
+  "model": "outside",
+
+  "company_id": 0,
+  "mac_len": 0,
+  "skip_after_mac": 0,
+
+  "endian": "le",
+
+  "scale_temperature": 100.0,
+  "scale_humidity": 100.0,
+
+  "fields": {
+    "T_i": 0,
+    "H_i": 2,
+    "packet": 6
+  }
+}

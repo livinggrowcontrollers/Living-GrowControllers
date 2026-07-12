@@ -1,0 +1,42 @@
+[
+  {
+    "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
+    "gatt_raw": null,
+    "timestamp": "2026-07-12T05:17:17.661+0000",
+    "name": "growmaster-d064",
+    "rssi": -54,
+    "adv_raw": "D302A21108D216AC08EB168C9C00017F0026AC",
+    "log_raw": "D302A21108D216AC08EB168C9C00017F0026AC",
+    "note": "raw"
+  },
+  {
+    "address": "85D6296B-906C-BB74-14DD-2D2E89DB7727",
+    "gatt_raw": null,
+    "timestamp": "2026-07-12T05:17:16.772+0000",
+    "name": "(unknown)",
+    "rssi": -52,
+    "adv_raw": "060001092002D30A89B9867CBC78ED01A04B9C4EDE8D861360EB8D5331",
+    "log_raw": "060001092002D30A89B9867CBC78ED01A04B9C4EDE8D861360EB8D5331",
+    "note": "raw"
+  },
+  {
+    "address": "FF-FF-A1-00-00-01",
+    "gatt_raw": null,
+    "timestamp": "2026-07-12T05:17:17.947+0000",
+    "name": "LGS_NODE_17",
+    "rssi": -54,
+    "adv_raw": "7445A11108EC168D8F",
+    "log_raw": "7445A11108EC168D8F",
+    "note": "ch_17_active"
+  },
+  {
+    "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
+    "gatt_raw": null,
+    "timestamp": "2026-07-12T05:17:16.773+0000",
+    "name": "sps",
+    "rssi": -41,
+    "adv_raw": "450913160015F60008",
+    "log_raw": "450913160015F60008",
+    "note": "raw"
+  }
+]

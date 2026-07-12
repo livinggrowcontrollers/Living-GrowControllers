@@ -1,0 +1,11 @@
+{
+  "profile": "inkbird_bridge",
+
+  "service_uuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+  "notify_uuid":  "0000fff2-0000-1000-8000-00805f9b34fb",
+
+  "read_mode": "poll",
+  "read_interval_ms": 1500,
+
+  "notify": false
+}

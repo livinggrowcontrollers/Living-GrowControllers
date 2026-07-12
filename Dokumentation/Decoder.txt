@@ -1,0 +1,670 @@
+Das ist tatsächlich ein sehr guter Startpunkt für die Dokumentation, denn der Decoder ist praktisch der Kern eurer gesamten Architektur. Ich würde das nicht einfach als "Codebeschreibung" schreiben, sondern als **Architekturdokumentation**, damit später jeder sofort versteht, warum das System überhaupt so gebaut wurde.
+
+# Decoder-System
+
+**Pfad:** `decoder.py` (Root)
+**Unterordner:** `network/`
+**Rolle:** Zentrale Datenverarbeitung und Systemzustand
+
+---
+
+# 1. Grundprinzip
+
+Der Decoder ist die zentrale Instanz des gesamten Systems.
+
+Er bildet die einzige gültige Datenquelle zwischen:
+
+* BLE-Subsystem
+* Web-Subsystem
+* Watchdog
+* Sensor-Decodern
+* UI
+* Controller-Engines
+* Logging
+
+Die Benutzeroberfläche liest niemals Rohdaten.
+
+Alle Komponenten lesen ausschließlich die erzeugte:
+
+```text
+data/decoded.json
+```
+
+beziehungsweise den internen RAM-Cache.
+
+---
+
+# 2. Single Source of Truth
+
+Der Decoder besitzt die alleinige Hoheit über den Gerätezustand.
+
+```text
+BLE → Decoder
+WEB → Decoder
+Watchdog → Decoder
+
+Decoder → decoded.json
+Decoder → RAM Cache
+
+UI → Decoder Daten
+Engines → Decoder Daten
+```
+
+Kein anderes Modul darf:
+
+* Webdaten interpretieren
+* Offlinezustände berechnen
+* Sensordaten kombinieren
+* VPD berechnen
+* Gerätezustände festlegen
+
+---
+
+# 3. Architekturübersicht
+
+```text
+                +----------------+
+                | BLE Dump       |
+                +--------+-------+
+                         |
+                         v
+
+                +----------------+
+                | Web Client     |
+                +--------+-------+
+                         |
+                         v
+
++-------------+  +--------------+  +--------------+
+| Watchdog    |->|   Decoder    |<-| Calculator   |
++-------------+  +--------------+  +--------------+
+                         |
+                         |
+            +------------+------------+
+            |                         |
+            v                         v
+
+      RAM Cache                 decoded.json
+
+            |
+            v
+
+      UI / Engines
+```
+
+---
+
+# 4. RAM-Dominanz
+
+Eine der wichtigsten Designentscheidungen.
+
+## Problem
+
+Android-Storage und SD-Karten sind langsam.
+
+Wenn jeder Webrequest zuerst geschrieben und wieder gelesen wird:
+
+* UI-Flackern
+* kurze Offlinezustände
+* leere Frames
+* I/O-Lags
+
+---
+
+## Lösung
+
+Direkte RAM-Injektion.
+
+```python
+inject_web_data(mac, payload)
+```
+
+Die Webdaten landen sofort im Speicher:
+
+```python
+_LIVE_WEB_DATA
+```
+
+Der Decoder verarbeitet ausschließlich den Arbeitsspeicher.
+
+Festplatte dient nur als Backup.
+
+---
+
+# 5. Kanäle
+
+Der Decoder behandelt jeden Kanal unabhängig.
+
+---
+
+## ADV-Kanal
+
+Bluetooth Advertising.
+
+Typische Daten:
+
+* Temperatur
+* Luftfeuchtigkeit
+* Batterie
+* RSSI
+
+Verarbeitet durch:
+
+```text
+decode_channel()
+```
+
+Cache:
+
+```python
+_LAST_ADV_RAW
+_LAST_ADV_TS
+```
+
+---
+
+## GATT-Kanal
+
+Aktive BLE-Abfrage.
+
+Typische Daten:
+
+* Sensordaten
+* Spezialregister
+* Herstellerdaten
+
+Cache:
+
+```python
+_LAST_GATT_RAW
+_LAST_GATT_TS
+```
+
+Besitzt Last-Good-Data-Funktion.
+
+---
+
+## WEB-Kanal
+
+ESP-Webserver.
+
+Typische Daten:
+
+* Telemetrie
+* Lüfter
+* Lampen
+* Targets
+* Pflanzen
+* GPIOs
+
+Cache:
+
+```python
+_LAST_WEB
+```
+
+---
+
+# 6. Last-Good-Data-Prinzip
+
+Der Decoder liefert niemals leere Frames.
+
+Wenn ein Kanal ausfällt:
+
+```text
+letzte gültige Daten
++
+Status offline
+```
+
+Dadurch:
+
+* kein Flackern
+* keine Nullen
+* keine Datenlöcher
+
+---
+
+# 7. Offline-Erkennung
+
+Der Webkanal verwendet keinen externen Watchdog.
+
+Berechnung:
+
+```python
+now - timestamp > stale_timeout
+```
+
+Konfigurierbar über:
+
+```python
+config.get_stale_timeout()
+```
+
+Dadurch:
+
+* keine Fehlalarme
+* keine WLAN-Latenzprobleme
+* stabile UI
+
+---
+
+# 8. Watchdog
+
+Modul:
+
+```python
+BleDumpWatchdog
+```
+
+Aufgabe:
+
+* ADV überwachen
+* GATT überwachen
+
+Der Watchdog dient lediglich als Berater.
+
+Er entscheidet nicht über den Webstatus.
+
+---
+
+# 9. Telemetrieberechnung
+
+Der Decoder erzeugt sämtliche Klimadaten.
+
+Modul:
+
+```text
+calculator.py
+```
+
+Berechnet:
+
+* VPD intern
+* VPD extern
+* Taupunkt
+* Blatt-VPD
+* Koordinaten
+* RSSI Qualität
+* Temperatureinheiten
+
+Die UI berechnet niemals selbst.
+
+---
+
+# 10. Strukturierte Daten
+
+Der Decoder erzeugt bereits fertige Datenstrukturen.
+
+Beispiel:
+
+```json
+"internal": {
+    "temperature": {
+        "value": 25.4,
+        "unit": "°C"
+    }
+}
+```
+
+Dadurch:
+
+* keine Berechnungen in Widgets
+* keine Konvertierungen
+* keine Logik im Frontend
+
+---
+
+# 11. Hintergrundthread
+
+Der Decoder läuft permanent.
+
+```python
+start_decoder_thread()
+```
+
+Thread:
+
+```python
+_decoder_loop()
+```
+
+Standardintervall:
+
+```python
+1 Sekunde
+```
+
+Ablauf:
+
+```text
+Daten lesen
+↓
+Kanäle dekodieren
+↓
+Status berechnen
+↓
+Frame erzeugen
+↓
+RAM aktualisieren
+↓
+optional Datei schreiben
+```
+
+---
+
+# 12. RAM-Cache
+
+## _DECODED_RAM
+
+Aktueller Systemzustand.
+
+---
+
+## _LIVE_WEB_DATA
+
+Direkt injizierte Webdaten.
+
+---
+
+## _LAST_WEB
+
+Letzte gültige Webdaten.
+
+---
+
+## _LAST_ADV_RAW
+
+Letzte ADV-Rohdaten.
+
+---
+
+## _LAST_GATT_RAW
+
+Letzte GATT-Rohdaten.
+
+---
+
+# 13. Schreibstrategie
+
+RAM:
+
+```text
+sofort
+```
+
+Festplatte:
+
+```text
+maximal alle 60 Sekunden
+```
+
+Dadurch:
+
+* wenig I/O
+* weniger Android-Lags
+* längere SD-Karten-Lebensdauer
+
+---
+
+# Network-Subsystem
+
+Ordner:
+
+```text
+network/
+```
+
+---
+
+# client_discovery.py
+
+## Aufgabe
+
+Automatische Geräteerkennung im Netzwerk.
+
+Verwendet:
+
+```text
+mDNS / Zeroconf
+```
+
+Sucht:
+
+```text
+_http._tcp.local
+```
+
+Kann Geräte erkennen über:
+
+* Hostname
+* TXT-Record MAC-Adresse
+* IP-Adresse
+
+---
+
+## Prioritäten
+
+1. TXT-MAC
+2. Hostname
+3. IP
+
+Dadurch werden Fehlzuordnungen verhindert.
+
+---
+
+# client_storage.py
+
+Verantwortlich für dauerhafte Speicherung.
+
+---
+
+## web_dump.json
+
+Letzte Webdaten.
+
+---
+
+## plants_store.json
+
+Große Pflanzendaten.
+
+---
+
+## settings_sync.json
+
+Revisionsstände.
+
+---
+
+## Besonderheit
+
+Alle Schreibvorgänge erfolgen atomar.
+
+```text
+Datei.tmp
+↓
+os.replace()
+```
+
+Dadurch entstehen keine beschädigten Dateien.
+
+---
+
+# network_worker.py
+
+Der eigentliche HTTP-Client.
+
+Aufgaben:
+
+* ESP abfragen
+* Steuerbefehle senden
+* Pflanzendaten laden
+* IP-Adressen aktualisieren
+
+---
+
+## Endpunkte
+
+```text
+/data
+```
+
+Live-Daten.
+
+---
+
+```text
+/data/plants
+```
+
+Pflanzendaten.
+
+---
+
+```text
+/control
+```
+
+Steuerbefehle.
+
+---
+
+## Besonderheiten
+
+AP-Modus:
+
+```text
+Timeout 6 Sekunden
+```
+
+LAN:
+
+```text
+Timeout 1,5 Sekunden
+```
+
+---
+
+# DeviceRegistry
+
+Zentrale Netzwerkdatenbank.
+
+Speichert:
+
+```text
+MAC
+IP
+Hostname
+Quelle
+Last Seen
+```
+
+---
+
+## Aufgaben
+
+### Geräte verwalten
+
+```python
+update_device()
+```
+
+---
+
+### Ziele erzeugen
+
+```python
+build_targets()
+```
+
+Erstellt:
+
+```text
+http://192.168.x.x
+http://hostname.local
+```
+
+---
+
+### Circuit Breaker
+
+Schützt das Netzwerk vor dauerhaften Fehlanfragen.
+
+Nach:
+
+```text
+5 Fehlern
+```
+
+wird das Gerät:
+
+```text
+20 Sekunden gesperrt
+```
+
+Dadurch:
+
+* weniger Netzwerklast
+* weniger Timeouts
+* stabilere Threads
+
+---
+
+# Gesamtphilosophie
+
+Der Decoder verfolgt vier grundlegende Ziele:
+
+## 1. Stabilität
+
+Keine flackernden Zustände.
+
+---
+
+## 2. RAM vor Festplatte
+
+Live-Daten haben immer Priorität.
+
+---
+
+## 3. Kanalisolation
+
+BLE und WEB beeinflussen sich nicht.
+
+---
+
+## 4. Fat Backend
+
+Der Decoder erledigt sämtliche Arbeit.
+
+Die UI bleibt dadurch:
+
+* klein
+* schnell
+* wartbar
+* plattformunabhängig
+
+---
+
+# Kurzfassung
+
+```text
+Sensoren
+    ↓
+
+BLE + WEB
+    ↓
+
+Decoder
+    ↓
+
+Calculator
+    ↓
+
+decoded.json + RAM
+    ↓
+
+UI + Controller
+```
+
+Der Decoder ist damit nicht einfach ein Parser, sondern die zentrale Daten- und Wahrheitsinstanz des gesamten Living-Grow-Systems.

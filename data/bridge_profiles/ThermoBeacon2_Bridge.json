@@ -1,0 +1,7 @@
+{
+  "service_uuid": "0000fff0-0000-1000-8000-00805f9b34fb",
+  "notify_uuid": "0000fff3-0000-1000-8000-00805f9b34fb",
+  "command_uuid": "0000fff5-0000-1000-8000-00805f9b34fb",
+  "command": "0D",
+  "convert_to_adv": "inside"
+}

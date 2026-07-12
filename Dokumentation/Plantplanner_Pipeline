@@ -1,0 +1,164 @@
+Hier ist die **komplette Pflanzen-Pipeline** sauber und kompakt für deine Doku:
+
+---
+
+# 🌱 Pflanzen-Pipeline (Client ↔ Gerät)
+
+## 1. 🔄 Standard-Fetch (`/data`)
+
+* `fetch_single_device()` ruft regelmäßig ab:
+
+  ```http
+  GET /data
+  ```
+* Response enthält:
+
+  * Live-Daten
+  * `rev_plant_planner` (Version der Pflanzendaten)
+
+---
+
+## 2. 🧠 Versionsvergleich (entscheidender Punkt)
+
+```python
+esp_plant_rev = payload.get("rev_plant_planner", 0)
+local_rev = local_plant_revs.get(mac, -1)
+```
+
+* **Wenn ESP neuer ist → Heavy Fetch**
+
+```python
+if esp_plant_rev > local_rev:
+    fetch_heavy_plant_data(...)
+```
+
+---
+
+## 3. 📦 Heavy Fetch (`/data/plants`)
+
+* Wird **nur bei neuer Revision** ausgeführt:
+
+  ```http
+  GET /data/plants
+  ```
+
+* Enthält komplette Daten:
+
+  ```json
+  {
+    "plant_planner": {...},
+    "rev_plant_planner": X
+  }
+  ```
+
+---
+
+## 4. 💾 Cache speichern
+
+In `fetch_heavy_plant_data()`:
+
+```python
+network.client_storage.save_heavy_plant_data(...)
+local_plants_cache[mac] = plant_payload
+```
+
+Zusätzlich:
+
+```python
+local_plant_revs[mac] = plant_payload["plant_planner"]["rev_plant_planner"]
+```
+
+👉 Ergebnis:
+
+* `local_plants_cache[mac]` → komplette Pflanzendaten
+* `local_plant_revs[mac]` → aktuelle Version
+
+---
+
+## 5. 🔁 Injection in Live-Payload
+
+Zurück in `fetch_single_device()`:
+
+```python
+cache = local_plants_cache.get(mac)
+
+if cache:
+    payload["plant_planner"] = cache.get("plant_planner", {})
+```
+
+👉 Wichtig:
+
+* UI bekommt Pflanzen **immer aus Cache**
+* unabhängig davon, ob `/data` sie enthält
+
+---
+
+## 6. ✅ Erfolgspfad
+
+```python
+registry.handle_success(mac)
+return mac, payload, is_ap
+```
+
+---
+
+# ⚠️ Design-Prinzip
+
+## 🚀 Warum so gebaut?
+
+* `/data` = schnell (Live-Polling)
+* `/data/plants` = schwer (groß, selten)
+
+👉 Trennung verhindert:
+
+* langsame Requests
+* unnötigen Traffic
+* UI-Lag
+
+---
+
+# ❌ Typische Fehler (die du hattest)
+
+## 1. Cache nicht gesetzt
+
+→ keine Pflanzen sichtbar
+✔ Fix: `local_plants_cache[mac] = plant_payload`
+
+---
+
+## 2. Falsche Cache-Struktur
+
+→ `.get("plant_planner")` liefert leer
+✔ Fix: sicherstellen, dass Struktur passt
+
+---
+
+## 3. Zu strenger Rev-Check
+
+→ nichts wird angezeigt
+✔ Fix: IMMER Cache injecten, nicht blockieren
+
+---
+
+# ✅ Finaler Flow (Kurzform)
+
+```
+/data → rev vergleichen
+        ↓
+    wenn neu → /data/plants
+        ↓
+    Cache speichern
+        ↓
+    Cache → payload injecten
+        ↓
+    UI zeigt Pflanzen
+```
+
+---
+
+Wenn du willst, kann ich dir noch:
+
+* eine **Debug-Checkliste**
+* oder **Log-Ausgaben zum Verifizieren**
+
+geben – aber das hier ist jetzt die saubere Pipeline 👍

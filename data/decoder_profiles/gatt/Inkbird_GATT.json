@@ -1,0 +1,24 @@
+{
+  "name": "ble_outside inside GATT FFF2",
+  "vendor": "ble_outside",
+  "model": "inside / THB-2",
+
+  "company_id": 25,
+  "mac_len": 0,
+  "skip_after_mac": 0,
+
+  "scale_temperature": 100.0,
+  "scale_humidity": 100.0,
+
+  "external_present_threshold": -1,
+
+  "fields": {
+    "T_i": 0,
+    "H_i": 2,
+
+    "T_e": 100,
+    "H_e": 100,
+
+    "packet": 5
+  }
+}

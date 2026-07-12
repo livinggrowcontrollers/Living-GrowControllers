@@ -1,0 +1,28 @@
+{
+  "name": "LGS SENSOR S3",
+  "vendor": "LGS",
+  "model": "LGS-S3-DUAL-EXT-FAN",
+
+  "company_id": 723,
+  "mac_len": 0,
+  "skip_after_mac": 0,
+
+  "endian": "be",
+
+  "scale_temperature": 100.0,
+  "scale_humidity": 100.0,
+  "scale_battery": 100.0,
+
+  "fields": {
+    "type": 0,
+    "channel": 1,
+    "T_e": 2,
+    "H_e": 4,
+    "T_i": 6,
+    "H_i": 8,
+    "T_l": 10,
+    "V_b": 12,
+    "F_r": 14,
+    "packet": 16
+  }
+}

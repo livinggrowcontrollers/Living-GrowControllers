@@ -1,0 +1,109 @@
+Gerne. Hier ist eine kompakte Dokumentation, die genau dieses Thema beschreibt.
+
+# Arbeitspräferenz "Domi" – Keine Konjunktive bei konkreten Lösungen
+
+## Hintergrund
+
+Bei konkreten technischen Aufgaben (Programmierung, Debugging, Architektur, UI-Änderungen usw.) führen Formulierungen im Konjunktiv bei mir nicht zu mehr Vertrauen, sondern zum Gegenteil.
+
+Wörter wie
+
+* würde
+* könnte
+* hätte
+* täte
+* vielleicht
+* eventuell
+
+unterbrechen meinen Arbeitsfluss.
+
+## Warum?
+
+Ich arbeite sehr konkret und lösungsorientiert.
+
+Mein Denkablauf ist:
+
+> Problem → Lösung → Einbauen → Testen → Ergebnis
+
+Der Konjunktiv verändert diesen Ablauf.
+
+Aus
+
+> „Ersetze diesen Block.“
+
+wird
+
+> „Ich würde diesen Block ersetzen.“
+
+Für viele Menschen ist das nur eine höflichere Formulierung.
+
+Für mich verändert sich jedoch die Bedeutung:
+
+* Die Aussage wirkt unverbindlich.
+* Es entsteht der Eindruck, dass der Sprecher keine Verantwortung für die Lösung übernehmen möchte.
+* Der Erfolg der vorgeschlagenen Änderung erscheint plötzlich offen.
+* Sofort entstehen Zweifel:
+
+  * Ist das überhaupt die richtige Lösung?
+  * Glaubt derjenige selbst daran?
+  * Lohnt sich der Einbau überhaupt?
+
+Der technische Inhalt bleibt identisch – die wahrgenommene Verbindlichkeit nicht.
+
+## Auswirkungen
+
+Ein einziger Konjunktiv genügt, damit ich gedanklich nicht mehr beim eigentlichen Problem bin.
+
+Ich beschäftige mich dann mit der Unsicherheit der Aussage statt mit der Umsetzung.
+
+Das kostet Zeit, Energie und Konzentration.
+
+## Gewünschter Kommunikationsstil
+
+Bei klar definierten Aufgaben:
+
+* konkrete Aussagen
+* klare Entscheidungen
+* direkte Handlungsanweisungen
+* fertige Patches
+* eindeutige Einbaustellen
+
+Beispiele:
+
+✔ „Füge den Block direkt unter dem Header ein.“
+
+✔ „Ersetze diesen Abschnitt durch den folgenden Code.“
+
+✔ „Teste anschließend den Screen.“
+
+✔ „Passe die Breite auf 500 dp an.“
+
+Nicht:
+
+✘ „Ich würde den Block dort einfügen.“
+
+✘ „Man könnte das eventuell so lösen.“
+
+✘ „Vielleicht wäre folgende Lösung sinnvoll.“
+
+## Verantwortungsgefühl
+
+Direkte Formulierungen bedeuten für mich nicht Unfehlbarkeit.
+
+Sie bedeuten:
+
+> „Ich habe den Kontext verstanden und liefere eine konkrete Lösung.“
+
+Ob die Lösung funktioniert, zeigt anschließend der Test.
+
+Genau dafür ist Softwareentwicklung da.
+
+## Merksatz
+
+Konjunktive vermitteln für mich fehlende Verbindlichkeit.
+
+Klare Aussagen ermöglichen sofortiges Handeln.
+
+Je konkreter die Aufgabe, desto konkreter sollte auch die Sprache sein.
+
+Das ist aus meiner Sicht keine allgemeine Sprachregel, sondern eine sehr konkrete Arbeitspräferenz. Gerade beim Programmieren erklärt sie gut, warum wir uns an diesem Punkt so festgefahren haben. Sobald die Sprache eindeutig wurde, war die technische Zusammenarbeit deutlich einfacher.

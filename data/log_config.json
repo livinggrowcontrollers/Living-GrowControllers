@@ -1,0 +1,13 @@
+{
+  "devices": {
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "bridge_profile": "Inkbird_Bridge"
+    },
+    "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
+      "bridge_profile": "ThermoBeacon2_Bridge"
+    },
+    "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21": {
+      "bridge_profile": "ThermoPro_Bridge"
+    }
+  }
+}

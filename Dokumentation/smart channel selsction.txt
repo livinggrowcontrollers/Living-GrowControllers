@@ -1,0 +1,82 @@
+😄 **Jetzt** verstehe ich, worauf du hinaus wolltest.
+
+Ich würde das tatsächlich als eigenes Konzept dokumentieren, weil das mehr ist als nur "Gerät auswählen". Es ist eine **automatische Kanalentscheidung**.
+
+## Dokumentation
+
+### **Smart Channel Selection (SCS)**
+
+**Beschreibung**
+
+Beim Auswählen eines Gerätes wird **nicht** blind ein Kommunikationskanal aktiviert. Stattdessen entscheidet das System anhand der aktuell verfügbaren Live-Daten automatisch, welcher Kanal verwendet wird.
+
+Die Priorität lautet:
+
+```
+WEBSERVER
+    ↓
+ADV
+    ↓
+GATT
+```
+
+Das bedeutet:
+
+* Ist der Webserver aktiv (`alive == True`), wird dieser verwendet.
+* Falls nicht, wird ADV verwendet.
+* Falls auch ADV keine Daten liefert, wird GATT verwendet.
+* Existiert kein aktiver Kanal, bleibt der aktuelle Kanal unverändert (oder es kann optional ein Fallback definiert werden).
+
+---
+
+### Ablauf
+
+```
+Benutzer klickt Gerät
+        │
+        ▼
+Gerät wird Active Device
+        │
+        ▼
+BUFFER lesen
+        │
+        ▼
+Kanäle prüfen
+
+WEB alive?
+    │
+ ┌──┴──┐
+ │ Ja  │────────► WEB verwenden
+ │ Nein│
+ └──┬──┘
+    ▼
+ADV alive?
+    │
+ ┌──┴──┐
+ │ Ja  │────────► ADV verwenden
+ │ Nein│
+ └──┬──┘
+    ▼
+GATT alive?
+    │
+ ┌──┴──┐
+ │ Ja  │────────► GATT verwenden
+ │ Nein│
+ └──┬──┘
+    ▼
+Kein Kanal verfügbar
+```
+
+---
+
+### Vorteile
+
+* keine manuelle Kanalwahl erforderlich
+* automatische Nutzung der besten verfügbaren Verbindung
+* Webserver wird bevorzugt (höchste Datenqualität)
+* automatischer Fallback auf ADV oder GATT
+* funktioniert ohne zusätzliche Statusverwaltung, da ausschließlich die vorhandenen `alive`-Informationen des `BUFFER` verwendet werden
+
+---
+
+Ich finde den Namen **Smart Channel Selection (SCS)** ziemlich passend. Er beschreibt genau das Verhalten: Das System **wählt intelligent den Kommunikationskanal** anhand der aktuellen Verfügbarkeit aus. Das ist als Architekturbaustein auch gut verständlich und lässt sich später leicht erweitern, etwa wenn einmal ein vierter Kanal hinzukommt.

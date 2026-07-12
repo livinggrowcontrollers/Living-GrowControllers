@@ -1,0 +1,579 @@
+Tile-Registrierung und Fullscreen-Guards
+Stand: Session nach Tile-/Fullscreen-Fix
+
+Ziel
+====
+
+Diese Doku beschreibt, wie Tiles im Dashboard und im Grow Overview registriert,
+validiert und im Fullscreen geoeffnet werden.
+
+Der wichtigste Grundsatz:
+
+    Ein Fullscreen-Key darf erst aktiv werden, wenn das Tile fuer genau diesen
+    Kontext registriert ist:
+
+        (device_id, channel, tile_id)
+
+Frueher war die aktive Tile-Liste global akkumuliert. Dadurch konnte ein Tile
+von Geraet A als "aktiv" gelten, obwohl Geraet B dieses Tile gar nicht hatte.
+Das fuehrte zu Geisterzustaenden, besonders beim Umschalten von Geraeten oder
+Kanaelen im Fullscreen.
+
+
+Begriffe
+========
+
+Tile-ID
+-------
+
+Die reine Metrik-ID, zum Beispiel:
+
+    temp_in
+    hum_in
+    vpd_in
+    temp_ex
+    hum_ex
+    vpd_ex
+    leaf_temp
+    vpd_leaf
+    ble_temp_outside
+    rssi
+
+
+Full-Key
+--------
+
+Der vollstaendige Graph-/Fullscreen-Key:
+
+    {device_id}_{channel}_{tile_id}
+
+Beispiel:
+
+    AA:BB:CC:DD:EE:FF_webserver_temp_ex
+
+Wichtig: Der Key wird mit split("_", 2) geparst. Damit bleibt die Tile-ID auch
+dann korrekt, wenn sie selbst Unterstriche enthaelt, zum Beispiel
+ble_temp_outside.
+
+
+Kontext
+-------
+
+Ein Kontext ist:
+
+    (device_id, channel)
+
+Die aktive Tile-Liste wird nicht mehr global betrachtet, sondern pro Kontext.
+Geraet A auf webserver hat also eine andere Tile-Liste als Geraet B auf
+webserver oder Geraet A auf gatt.
+
+
+Zentrale Dateien
+================
+
+dashboard_gui/gsm_engines/tile_engine.py
+----------------------------------------
+
+Die TileEngine ist die zentrale Wahrheit fuer registrierte und erlaubte Tiles.
+
+Wichtige Aufgaben:
+
+    - Master-Reihenfolge der bekannten Tiles halten.
+    - Aktive Tiles pro (device_id, channel) speichern.
+    - Full-Keys parsen.
+    - Pruefen, ob ein Tile in einem Kontext aktiv ist.
+    - Naechstes Fullscreen-Tile berechnen.
+    - Fallback-Key liefern, wenn ein angefragtes Tile nicht erlaubt ist.
+
+Wichtige Felder:
+
+    available_tiles
+        Master-Liste aller bekannten Tile-IDs in definierter Reihenfolge.
+
+    active_tiles_by_context
+        Dictionary:
+
+            (device_id, channel) -> [tile_id, tile_id, ...]
+
+    active_tiles
+        Kompatibilitaets-/Cache-Feld fuer den aktuell aktiven Kontext.
+        Neue Logik sollte, wenn moeglich, immer device_id und channel
+        explizit uebergeben.
+
+Wichtige Methoden:
+
+    register_tiles(tile_ids, device_id=None, channel=None)
+        Registriert sichtbare/verfuegbare Tiles fuer einen Kontext.
+        Wenn device_id/channel fehlen, wird der aktuell aktive Kontext aus dem
+        GlobalStateManager verwendet.
+
+    get_active_tiles(device_id=None, channel=None)
+        Gibt die registrierten Tiles fuer den Kontext zurueck.
+
+    parse_full_key(full_key)
+        Gibt (device_id, channel, tile_id) zurueck.
+
+    is_tile_active(device_id, channel, tile_id)
+        True, wenn das Tile fuer diesen Kontext registriert ist.
+
+    get_first_tile_key(device_id, channel)
+        Liefert den Full-Key fuer das erste gueltige Tile im Kontext.
+
+    get_next_full_key(current_full_key, direction)
+        Navigiert nur innerhalb der registrierten Tiles des aktuellen
+        Kontextes. Wenn der aktuelle Key ungueltig ist, wird auf das erste
+        gueltige Tile zurueckgebogen.
+
+
+dashboard_gui/global_state_manager.py
+-------------------------------------
+
+Der GlobalStateManager delegiert Tile-Fragen an die TileEngine.
+
+Wichtige Methoden:
+
+    register_tiles(tiles, device_id=None, channel=None)
+    get_active_tiles(device_id=None, channel=None)
+    build_tile_key(device_id, channel, tile_id)
+    next_tile_key(full_key, direction)
+
+Der GSM soll selbst keine Tile-Wahrheit halten. Er routet nur.
+
+
+dashboard_gui/gsm_engines/metrics_engine.py
+-------------------------------------------
+
+Die MetricsEngine verarbeitet eingehende Sensordaten und registriert daraus
+aktive Metriken.
+
+Wichtig:
+
+    self.gsm.tile_engine.register_tiles(active_metrics_this_run, dev_id, ch_name)
+
+Damit werden Tiles fuer das konkrete Geraet und den konkreten Kanal
+registriert, nicht mehr global.
+
+
+dashboard_gui/dashboard.py
+--------------------------
+
+Dashboard-Klicks sind ein Eintrittstor in den Fullscreen.
+
+Beim Klick auf ein Tile:
+
+    1. Aktives Geraet bestimmen.
+    2. Aktiven Kanal bestimmen.
+    3. Full-Key bauen.
+    4. Pruefen, ob tile_id in get_active_tiles(device_id, channel) ist.
+    5. Nur dann Fullscreen oeffnen.
+
+Wichtig:
+
+    Ein Dashboard-Klick darf den Fullscreen nicht oeffnen, wenn das Tile im
+    Zielkontext nicht registriert ist.
+
+
+dashboard_gui/ui/dashboard_content/dashboard_main_panel.py
+----------------------------------------------------------
+
+Das DashboardMainPanel entscheidet, welche Tiles aktuell sichtbar sind.
+
+Es ruft:
+
+    GLOBAL_STATE.register_tiles(active_tiles, dev_id, channel)
+
+Damit meldet das sichtbare Dashboard seine aktiven Tiles ebenfalls fuer den
+aktuellen Kontext an.
+
+
+dashboard_gui/gesture_engines/dashboard_swipe.py
+------------------------------------------------
+
+Wird unter anderem von ChartTile und Grow-Overview-Tiles genutzt, um den
+Fullscreen zu oeffnen.
+
+Wichtig:
+
+    open_fullscreen(full_key)
+
+holt den Fullscreen-Screen robust entweder aus dem Kivy ScreenManager oder als
+Fallback aus dem ui_handler. Danach ruft es:
+
+    fs.activate_tile(full_key)
+
+Nur wenn activate_tile True zurueckgibt, wird wirklich zum Fullscreen
+navigiert.
+
+
+dashboard_gui/ui/fullscreen_content/fullscreen_view.py
+------------------------------------------------------
+
+Der Fullscreen ist das harte Gate.
+
+Wichtigster Grundsatz:
+
+    current_key wird erst gesetzt, nachdem der Full-Key validiert wurde.
+
+Ablauf in activate_tile(full_key):
+
+    1. Full-Key parsen.
+    2. Aktive Tiles fuer (device_id, channel) holen.
+    3. Pruefen, ob tile_id erlaubt ist.
+    4. Wenn nicht erlaubt:
+        - Fallback auf erstes gueltiges Tile im Kontext.
+        - Wenn kein Fallback existiert: aktiven Fullscreen-Zustand leeren.
+    5. Erst danach:
+        - current_key setzen
+        - tile_id setzen
+        - Graph/Farben/Einheit laden
+        - Daten laden
+
+update_from_global(data):
+
+    - Synchronisiert den Fullscreen beim Geraete- oder Kanalwechsel.
+    - Wenn das bisherige Tile im neuen Kontext nicht erlaubt ist, wird auf das
+      erste gueltige Tile gewechselt.
+    - Wenn kein Tile existiert, wird der Fullscreen sauber geleert.
+
+_switch(direction):
+
+    - Nutzt TileEngine.get_next_full_key().
+    - Navigiert nur innerhalb erlaubter Tiles des aktuellen Kontextes.
+
+
+Grow Overview
+=============
+
+Problem
+-------
+
+Grow Overview hat eigene Tiles, die Full-Keys selbst bauen und nicht immer
+durch die normale Dashboard-Tile-Registrierung laufen.
+
+Beispiele:
+
+    sensor_external_sht31_tile.py
+    sensor_internal_sht31_tile.py
+    mlx90614_tile.py
+    ble_outside_tile.py
+
+Diese Tiles bauen Keys wie:
+
+    {self.device_id}_{self.channel}_{target_tile_id}
+
+Damit diese Keys vom Fullscreen-Gate akzeptiert werden, muessen die
+Grow-Overview-Tiles ihre vorhandenen Sub-Tiles registrieren.
+
+
+Aktuelle Grow-Overview-Regel
+----------------------------
+
+In update_values(data, prefix="...") wird zuerst der echte Kontext synchronisiert:
+
+    self.device_id, self.channel = prefix.split("_", 1)
+
+Danach registriert das Tile genau die Metriken, fuer die Werte vorhanden sind.
+
+
+sensor_external_sht31_tile.py
+-----------------------------
+
+Registriert:
+
+    temp_ex
+    hum_ex
+    vpd_ex
+
+Nur, wenn die jeweiligen Werte vorhanden sind.
+
+
+sensor_internal_sht31_tile.py
+-----------------------------
+
+Registriert:
+
+    temp_in
+    hum_in
+    vpd_in
+
+
+mlx90614_tile.py
+----------------
+
+Registriert:
+
+    leaf_temp
+    vpd_leaf
+
+
+ble_outside_tile.py
+-------------------
+
+Registriert:
+
+    ble_temp_outside
+    ble_hum_outside
+    ble_vpd_outside
+
+
+Touch-Handler in Grow Overview
+------------------------------
+
+Die on_touch_down-Handler bauen weiterhin den Full-Key selbst. Wichtig ist aber:
+
+    Sie geben nur True zurueck, wenn open_fullscreen(full_key) wirklich True
+    liefert.
+
+Wenn der Fullscreen-Gate blockt, wird der Touch nicht blind als erfolgreich
+verschluckt.
+
+
+Warum keine globale Sonderfreigabe?
+===================================
+
+Es waere verlockend gewesen, Grow Overview einfach am Fullscreen-Gate vorbei zu
+lassen. Das waere aber wieder die alte Fehlerklasse:
+
+    "Ein Key darf rein, weil irgendein Screen ihn gebaut hat."
+
+Die saubere Architektur ist:
+
+    Jeder Screen darf Keys bauen.
+    Aber nur die TileEngine entscheidet, ob der Key im aktuellen Kontext
+    erlaubt ist.
+
+Darum registriert Grow Overview seine echten Tiles jetzt in derselben zentralen
+TileEngine.
+
+
+Geraetewechsel und Kanalwechsel
+===============================
+
+dashboard_gui/gsm_engines/active_channel_engine.py
+--------------------------------------------------
+
+Beim Umschalten von Geraeten oder Kanaelen darf der Fullscreen nicht auf einem
+Tile bleiben, das im neuen Kontext nicht existiert.
+
+Aktuelle Logik:
+
+    - Nach Wechsel: aktive Tiles fuer neues (device_id, channel) holen.
+    - Wenn Fullscreen offen ist und ein gueltiges erstes Tile existiert:
+        fs_screen.activate_tile(fallback)
+    - Wenn kein Tile existiert:
+        fs_screen._clear_active_tile()
+
+Damit verschwindet der alte Fullscreen-Key, statt als Geist weiterzuleben.
+
+
+Anti-Geisterzustand-Regeln
+==========================
+
+1. Kein Fullscreen-State vor Validierung
+----------------------------------------
+
+Nie current_key setzen, bevor geprueft wurde, ob der Full-Key erlaubt ist.
+
+
+2. Tile-Aktivitaet ist kontextbezogen
+-------------------------------------
+
+Nie nur fragen:
+
+    Ist tile_id aktiv?
+
+Sondern immer:
+
+    Ist tile_id fuer device_id + channel aktiv?
+
+
+3. Alle Eintrittstueren muessen denselben Gate benutzen
+-------------------------------------------------------
+
+Eintrittstueren:
+
+    - Dashboard ChartTile
+    - DashboardScreen.open_fullscreen()
+    - DashboardSwipeEngine.open_fullscreen()
+    - Grow Overview Touch-Handler
+    - Fullscreen Swipe links/rechts
+    - ActiveChannelEngine bei Geraete-/Kanalwechsel
+
+Alle Wege muessen letztlich bei:
+
+    FullScreenView.activate_tile(full_key)
+
+landen.
+
+
+4. Fallback nur innerhalb desselben Kontextes
+--------------------------------------------
+
+Wenn ein Tile ungueltig ist, darf der Fallback nur aus:
+
+    get_first_tile_key(device_id, channel)
+
+kommen.
+
+Kein Fallback auf globale Tiles.
+
+
+5. Kein RSSI-Sonderweg ausserhalb der Registrierung
+---------------------------------------------------
+
+RSSI ist ein normales Tile in available_tiles und wird registriert, wenn es
+gueltige Daten gibt. Es soll nicht mehr als pauschale Ausnahme am Gate vorbei.
+
+
+Graph-/Mesh-Lifecycle
+=====================
+
+Auch visuelle Graph-Reste koennen wie Geisterzustand wirken.
+
+dashboard_gui/ui/common/graph_chart_content/graph_mesh.py
+---------------------------------------------------------
+
+Zentrale Funktionen:
+
+    update_graph_mesh(graph, plot, mesh)
+        Berechnet die Fill-Flaeche unter der Linie.
+
+    clear_graph_mesh(mesh)
+        Leert vertices, indices und texture.
+
+    clear_graph_series(plot, mesh, glow_plot=None)
+        Leert Linie, Glow-Linie und Mesh zentral.
+
+Wichtig:
+
+    Nicht lokal nur mesh.vertices = [] setzen.
+    Immer clear_graph_series() oder clear_graph_mesh() nutzen.
+
+Dashboard und Fullscreen nutzen dieselbe Mesh-Lifecycle-Logik.
+
+
+Debug-Checkliste fuer naechstes Mal
+===================================
+
+Wenn wieder ein Tile-Geist auftaucht:
+
+1. Welcher Full-Key wurde gebaut?
+---------------------------------
+
+Log suchen:
+
+    [FS] Aktiviere: ...
+    [External-Tile] Klick erkannt! Oeffne Graph fuer: ...
+    [DashboardSwipe] Fullscreen blocked for: ...
+
+
+2. Ist der Key korrekt parsebar?
+--------------------------------
+
+Sollte ergeben:
+
+    device_id
+    channel
+    tile_id
+
+Bei Tile-IDs mit Unterstrichen muss parse_full_key() genutzt werden.
+
+
+3. Ist das Tile fuer den Kontext registriert?
+---------------------------------------------
+
+Pruefen:
+
+    GLOBAL_STATE.get_active_tiles(device_id, channel)
+
+Wenn das Tile dort fehlt, ist nicht der Fullscreen kaputt, sondern die
+Registrierung der Quelle fehlt.
+
+
+4. Welche Quelle haette registrieren muessen?
+---------------------------------------------
+
+Dashboard:
+
+    DashboardMainPanel._apply_tile_visibility()
+
+Metrics:
+
+    MetricsEngine.process_metrics()
+
+Grow Overview:
+
+    update_values(data, prefix=...)
+
+
+5. Ist der Fullscreen-State zu frueh gesetzt?
+---------------------------------------------
+
+In activate_tile() muss current_key erst nach der Validierung gesetzt werden.
+
+
+6. Sind Graph-Reste echte Daten oder altes Mesh?
+------------------------------------------------
+
+Wenn Linie leer ist, aber Flaeche sichtbar bleibt:
+
+    clear_graph_series() verwenden.
+
+Nicht nur:
+
+    plot.points = []
+    mesh.vertices = []
+
+
+Bekannte Soll-Zustaende
+=======================
+
+Geraet A hat leaf_temp, Geraet B nicht:
+
+    - A darf leaf_temp oeffnen.
+    - Beim Wechsel auf B darf leaf_temp nicht aktiv bleiben.
+    - Fullscreen faellt auf erstes gueltiges Tile von B zurueck.
+    - Wenn B gar keine Tiles hat, wird Fullscreen geleert.
+
+
+Grow Overview External SHT31:
+
+    - Klick auf Temperatur oeffnet temp_ex.
+    - Klick auf Humidity oeffnet hum_ex.
+    - Klick auf VPD oeffnet vpd_ex.
+    - Voraussetzung: update_values() hat prefix gesetzt und vorhandene Werte
+      registriert.
+
+
+Vier Tiles im Dashboard:
+
+    - Layout-Sonderfall ist 2 x 2.
+    - Diese Regel betrifft nur Layout, nicht Registrierung.
+
+
+Kurzfassung
+===========
+
+Die TileEngine ist die Wahrheit.
+
+Registrierung:
+
+    register_tiles(tile_ids, device_id, channel)
+
+Validierung:
+
+    tile_id in get_active_tiles(device_id, channel)
+
+Fullscreen:
+
+    current_key erst nach erfolgreicher Validierung setzen.
+
+Grow Overview:
+
+    Eigene Full-Keys sind erlaubt, aber nur wenn die Tiles vorher im gleichen
+    Kontext registriert wurden.
+
+Mesh:
+
+    Graph-Reste immer zentral ueber clear_graph_series() entfernen.
+

@@ -1,0 +1,16 @@
+{
+  "name": "ThermoPro TP351S GATT",
+  "endian": "le",
+  "mac_len": 0,
+  "skip_after_mac": 0,
+  "base_offset": 0,
+
+  "scale_temperature": 10.0,
+  "scale_humidity": 1.0,
+
+  "fields": {
+    "T_i": 3,
+    "H_i": 5,
+    "packet": 0
+  }
+}
