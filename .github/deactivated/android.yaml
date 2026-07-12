@@ -1,0 +1,62 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip \
+            autoconf autotools-dev libtool libtool-bin libltdl-dev pkg-config \
+            zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev \
+            libssl-dev libreadline-dev libffi-dev libsqlite3-dev \
+            tk-dev libgdbm-compat-dev liblzma-dev lzma
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer cython
+
+      - name: Build APK (with auto-licensed SDK)
+        run: |
+          if [ ! -f buildozer.spec ]; then buildozer init; fi
+          
+          # 1. Startet den Build kurz, damit Buildozer die SDK-Struktur korrekt anlegt
+          buildozer android p4a -- get-packages || true
+          
+          # 2. Erstellt den Lizenzordner in der von Buildozer erzeugten Struktur
+          mkdir -p $HOME/.buildozer/android/platform/android-sdk/licenses
+          
+          # 3. Schreibt die korrekten Lizenzen hinein
+          echo -e "\n8933bad161af41784110de240d9b0745790291ae\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n76dc32b947f85b34fe78f6f5417cb6597104a09c" > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd\n504667f4c0de7af1a06de9f4b1727b84351f2910" > $HOME/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          
+          # 4. Führt den eigentlichen Build komplett aus
+          buildozer -v android debug
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESPGrowcontroller-APK
+          path: .buildozer/android/platform/build-apks/*/*.apk
