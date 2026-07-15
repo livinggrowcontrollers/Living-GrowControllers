@@ -162,5 +162,90 @@ class WebClientThread(threading.Thread):
         self._discovery.stop()
         self._executor.shutdown(wait=False)
 
+
+    def start_ota_update(self, mac, file_path, on_progress_callback=None, on_done_callback=None):
+        """
+        Startet den asynchronen OTA-Upload im Hintergrund.
+        """
+        import os
+        import threading
+        import time
+        import urllib.request
+        import urllib.parse
+        import http.client
+
+        def _async_upload():
+            cfg = config._init()
+            dev_cfg = cfg.get("devices", {}).get(mac, {})
+            targets = self.registry.build_targets(mac, dev_cfg)
+            user, pw = config.get_device_auth(mac)
+
+            if not targets:
+                if on_done_callback: on_done_callback(False, "Keine Ziel-IP fuer Device gefunden.")
+                return
+
+            base_url = targets[0]
+            url = f"{base_url.rstrip('/')}/update"
+
+            try:
+                file_size = os.path.getsize(file_path)
+                filename = os.path.basename(file_path)
+                
+                boundary = '----GrowmasterOtaBoundary' + str(int(time.time()))
+                
+                header = (
+                    f"--{boundary}\r\n"
+                    f'Content-Disposition: form-data; name="update"; filename="{filename}"\r\n'
+                    f"Content-Type: application/octet-stream\r\n\r\n"
+                ).encode('utf-8')
+                
+                footer = f"\r\n--{boundary}--\r\n".encode('utf-8')
+                total_length = len(header) + file_size + len(footer)
+
+                parsed_url = urllib.parse.urlparse(url)
+                
+                if parsed_url.scheme == "https":
+                    conn = http.client.HTTPSConnection(parsed_url.netloc, timeout=30)
+                else:
+                    conn = http.client.HTTPConnection(parsed_url.netloc, timeout=30)
+                    
+                conn.putrequest("POST", parsed_url.path)
+                conn.putheader('Content-Type', f'multipart/form-data; boundary={boundary}')
+                conn.putheader('Content-Length', str(total_length))
+                if user and pw:
+                    import base64
+                    auth_str = base64.b64encode(f"{user}:{pw}".encode('utf-8')).decode('utf-8')
+                    conn.putheader('Authorization', f'Basic {auth_str}')
+                conn.endheaders()
+
+                conn.send(header)
+                bytes_sent = len(header)
+
+                chunk_size = 16384
+                with open(file_path, 'rb') as f:
+                    while True:
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        conn.send(chunk)
+                        bytes_sent += len(chunk)
+                        if on_progress_callback:
+                            file_progress = bytes_sent - len(header)
+                            on_progress_callback(min(file_progress, file_size), file_size)
+
+                conn.send(footer)
+                
+                response = conn.getresponse()
+                resp_data = response.read().decode('utf-8')
+                
+                if response.status == 200:
+                    if on_done_callback: on_done_callback(True, "Erfolgreich übertragen!")
+                else:
+                    if on_done_callback: on_done_callback(False, f"ESP-Fehler: {response.status}")
+
+            except Exception as e:
+                if on_done_callback: on_done_callback(False, str(e))
+
+        threading.Thread(target=_async_upload, daemon=True).start()
 # Singleton Instanz für die App bereitstellen
 WEB_CLIENT = WebClientThread()

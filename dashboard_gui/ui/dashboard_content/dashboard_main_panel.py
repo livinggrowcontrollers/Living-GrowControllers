@@ -26,7 +26,7 @@ class DashboardMainPanel(GridLayout):
             "ble_temp_outside", "ble_hum_outside", "ble_vpd_outside",
             "ble_temp_inside", "ble_hum_inside", "ble_vpd_inside",
             "leaf_temp", "vpd_leaf",
-            "circulation_fan_rpm", "exhaust_fan_rpm", "v_bat", "rssi" 
+            "v_bat", "rssi" 
         ]
 
         self.tile_map = {}
@@ -200,7 +200,7 @@ class DashboardMainPanel(GridLayout):
             "ble_temp_inside", "ble_hum_inside", "ble_vpd_inside",
             "leaf_temp", "vpd_leaf",
 
-            "circulation_fan_rpm", "exhaust_fan_rpm", "v_bat", "rssi",
+            "v_bat", "rssi",
         ]
     
         for key in order:

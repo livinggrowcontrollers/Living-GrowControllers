@@ -1,0 +1,76 @@
+Datei:
+testble2.ino
+
+Patch-ID:
+CIRCULATION_INIT
+// PATCHER BEGIN: CIRCULATION_INIT
+if (sysConfig.pin_circ_fan == -1 || sysConfig.pin_circ_tacho == -1) {
+    Serial.println("Circulation Fan disabled (sysConfig).");
+} else {
+    circulation_fan_init((uint8_t)sysConfig.pin_circ_fan, (uint8_t)sysConfig.pin_circ_tacho);
+}
+// PATCHER END: CIRCULATION_INIT
+
+// PATCHER BEGIN: CIRCULATION_UPDATE
+circulation_fan_update();
+// PATCHER END: CIRCULATION_UPDATE
+
+// PATCHER BEGIN: CIRCULATION_INCLUDE
+#include "circulation_fan.h"
+// PATCHER END: CIRCULATION_INCLUDE
+
+// PATCHER BEGIN: CIRCULATION_GET_STATUS
+circulation_fan_get_status(obj);
+// PATCHER END: CIRCULATION_GET_STATUS
+
+// PATCHER BEGIN: CIRCULATION_JSON_UPDATE
+circulation_fan_process_json(obj);
+    
+// PATCHER END: CIRCULATION_JSON_UPDATE
+
+
+// PATCHER BEGIN: CIRCULATION_CONFIG
+int pin_circ_fan;
+int pin_circ_tacho;
+int pin_circ_tacho_pull;
+// PATCHER END: CIRCULATION_CONFIG
+
+// PATCHER BEGIN: CIRCULATION_CONFIG_DEFAULTS
+
+/* pin_circ_fan */ 45,
+/* pin_circ_tacho */ 2,
+/* pin_circ_tacho_pull */ 1,
+// PATCHER END: CIRCULATION_CONFIG_DEFAULTS
+
+
+grow_controller.cpp
+// PATCHER BEGIN: CIRCULATION_PREFS_LOAD
+sysConfig.pin_circ_fan        = growPrefs.getInt("p_c_fan", sysConfig.pin_circ_fan);
+sysConfig.pin_circ_tacho      = growPrefs.getInt("p_c_tac", sysConfig.pin_circ_tacho);
+sysConfig.pin_circ_tacho_pull = growPrefs.getInt("p_c_tac_pull", sysConfig.pin_circ_tacho_pull);
+// PATCHER END: CIRCULATION_PREFS_LOAD
+
+// PATCHER BEGIN: CIRCULATION_PREFS_SAVE
+if (doc.containsKey("p_c_fan")) {
+    int v = doc["p_c_fan"];
+    growPrefs.putInt("p_c_fan", v);
+    sysConfig.pin_circ_fan = v;
+    gpio_changed = true;
+}
+if (doc.containsKey("p_c_tac_pull")) {
+    int v = doc["p_c_tac_pull"];
+    growPrefs.putInt("p_c_tac_pull", v);
+    sysConfig.pin_circ_tacho_pull = v;
+    gpio_changed = true;
+}
+if (doc.containsKey("p_c_tac")) {
+    int v = doc["p_c_tac"];
+    growPrefs.putInt("p_c_tac", v);
+    sysConfig.pin_circ_tacho = v;
+    gpio_changed = true;
+}
+// PATCHER END: CIRCULATION_PREFS_SAVE
+
+// PATCHER BEGIN: CIRCULATION_RECONFIGURE
+circulation_fan_reconfigure();
+// PATCHER END: CIRCULATION_RECONFIGURE

@@ -1,9 +1,8 @@
-# dashboard_gui/ui/grow_overview_content/segmented_progress_bar.py
-
 from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
 from kivy.graphics import Color, RoundedRectangle
-from kivy.properties import NumericProperty
+# 🔥 ListProperty hier aus kivy.properties importieren:
+from kivy.properties import NumericProperty, ListProperty
 from kivy.metrics import dp
 
 
@@ -17,8 +16,9 @@ class SegmentedProgressBar(Widget):
     max = NumericProperty(100)
     num_segments = NumericProperty(30)
 
-    active_color = (1.0, 0.72, 0.15, 1)
-    inactive_color = (0.2, 0.2, 0.2, 1)
+    # 🔥 Hier zu echten Kivy-Properties machen:
+    active_color = ListProperty([1.0, 0.72, 0.15, 1])
+    inactive_color = ListProperty([0.2, 0.2, 0.2, 1])
 
     segment_spacing = NumericProperty(dp(2))
     corner_radius = NumericProperty(dp(2))
@@ -30,7 +30,10 @@ class SegmentedProgressBar(Widget):
             size=self._update_canvas,
             value=self._update_canvas,
             max=self._update_canvas,
-            num_segments=self._update_canvas
+            num_segments=self._update_canvas,
+            # 🔥 Wenn sich die Farbe ändert, auch neu zeichnen!
+            active_color=self._update_canvas,
+            inactive_color=self._update_canvas
         )
 
     def _update_canvas(self, *args):
@@ -62,7 +65,6 @@ class SegmentedProgressBar(Widget):
                     size=(segment_w, segment_h),
                     radius=[self.corner_radius]
                 )
-
 
 class SegmentedProgressBarView(BoxLayout):
     """

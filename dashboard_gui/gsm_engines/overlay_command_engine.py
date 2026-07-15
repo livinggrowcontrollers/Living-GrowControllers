@@ -17,6 +17,8 @@
 ##### JEDE KI-ÄNDERUNG MUSS DIESE TRENNUNG VON RAM-PING (INIT) UND FLASH-DATA
 ##### (REV) WAHREN. WERTE OHNE REVISIONS-SPIEGELUNG SIND REINE LÜGEN!
 ###################################################################################################################################
+
+# overlay_command
 import time
 from web_client import WEB_CLIENT
 try:
@@ -92,8 +94,39 @@ class OverlayCommandEngine:
             return self.send_plant_planner_command(mac, **kwargs)
         elif cmd_type == "climate_hub":
             return self.send_climate_hub_command(mac, **kwargs)
-        
+        elif cmd_type == "ota_update":
+            return self.send_ota_command(mac, **kwargs)
         return None
+
+
+    # =========================================================================
+    # OTA UPDATE COMMANDS
+    # =========================================================================
+
+    def send_ota_command(self, mac, **kwargs):
+        file_path = kwargs.get("file_path")
+        new_ota_rev = int(kwargs.get("new_ota_rev", 1))
+        on_progress = kwargs.get("on_progress")
+        on_done = kwargs.get("on_done")
+
+        if not file_path:
+            if on_done: on_done(False, "Keine Bin-Datei ausgewaehlt!")
+            return None
+
+        payload = {
+            "ota_rev": new_ota_rev
+        }
+        WEB_CLIENT.send_control(mac, payload)
+
+        # 🔥 Hier stand vorher 'start_ota_upload'. Jetzt greift es fehlerfrei:
+        WEB_CLIENT.start_ota_update(
+            mac=mac, 
+            file_path=file_path, 
+            on_progress_callback=on_progress, 
+            on_done_callback=on_done
+        )
+        
+        return new_ota_rev
 
     # =========================================================================
     # PLANT PLANNER COMMANDS (Target-Revision v2.0 - Ohne Init-Handshake)

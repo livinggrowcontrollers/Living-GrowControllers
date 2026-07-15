@@ -17,7 +17,9 @@
 #include "ble_bridge.h"
 #include "sys_config.h"
 #include "hardware_init.h"
+// PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
+// PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
 #include "light_control.h"
 // 1. GLOBALE DEFINITION (Ohne static!)
@@ -54,9 +56,11 @@ void grow_controller_init() {
     
     // GPIOs aus den Preferences laden (Fallbacks sind die sysConfig Defaults)
     sysConfig.pin_reset_button = growPrefs.getInt("p_reset", sysConfig.pin_reset_button);
-    sysConfig.pin_circ_fan     = growPrefs.getInt("p_c_fan", sysConfig.pin_circ_fan);
-    sysConfig.pin_circ_tacho   = growPrefs.getInt("p_c_tac", sysConfig.pin_circ_tacho);
-    sysConfig.pin_circ_tacho_pull = growPrefs.getInt("p_c_tac_pull", 1);
+    // PATCHER BEGIN: CIRCULATION_PREFS_LOAD
+    sysConfig.pin_circ_fan        = growPrefs.getInt("p_c_fan", sysConfig.pin_circ_fan);
+    sysConfig.pin_circ_tacho      = growPrefs.getInt("p_c_tac", sysConfig.pin_circ_tacho);
+    sysConfig.pin_circ_tacho_pull = growPrefs.getInt("p_c_tac_pull", sysConfig.pin_circ_tacho_pull);
+// PATCHER END: CIRCULATION_PREFS_LOAD
     sysConfig.pin_exh_fan      = growPrefs.getInt("p_e_fan", sysConfig.pin_exh_fan);
     sysConfig.pin_exh_tacho    = growPrefs.getInt("p_e_tac", sysConfig.pin_exh_tacho);
     sysConfig.pin_exh_tacho_pull = growPrefs.getInt("p_e_tac_pull", 1);
@@ -252,19 +256,26 @@ void grow_controller_process_json(JsonObject doc) {
         gpio_changed = true;
     }
 
+    // PATCHER BEGIN: CIRCULATION_PREFS_SAVE
     if (doc.containsKey("p_c_fan")) {
         int v = doc["p_c_fan"];
         growPrefs.putInt("p_c_fan", v);
         sysConfig.pin_circ_fan = v;
         gpio_changed = true;
     }
-
+    if (doc.containsKey("p_c_tac_pull")) {
+        int v = doc["p_c_tac_pull"];
+        growPrefs.putInt("p_c_tac_pull", v);
+        sysConfig.pin_circ_tacho_pull = v;
+        gpio_changed = true;
+    }
     if (doc.containsKey("p_c_tac")) {
         int v = doc["p_c_tac"];
         growPrefs.putInt("p_c_tac", v);
         sysConfig.pin_circ_tacho = v;
         gpio_changed = true;
     }
+// PATCHER END: CIRCULATION_PREFS_SAVE
 
     if (doc.containsKey("p_e_fan")) {
         int v = doc["p_e_fan"];
@@ -322,12 +333,7 @@ void grow_controller_process_json(JsonObject doc) {
         gpio_changed = true;
     }
 
-    if (doc.containsKey("p_c_tac_pull")) {
-        int v = doc["p_c_tac_pull"];
-        growPrefs.putInt("p_c_tac_pull", v);
-        sysConfig.pin_circ_tacho_pull = v;
-        gpio_changed = true;
-    }
+
 
     if (doc.containsKey("p_e_tac_pull")) {
         int v = doc["p_e_tac_pull"];
@@ -346,7 +352,9 @@ void grow_controller_process_json(JsonObject doc) {
         Serial.println("GPIO-Konfiguration geändert -> Runtime-Reconfigure");
 
         hardware_reconfigure();
+        // PATCHER BEGIN: CIRCULATION_RECONFIGURE
         circulation_fan_reconfigure();
+// PATCHER END: CIRCULATION_RECONFIGURE
         exhaust_fan_reconfigure();
         light_reconfigure();
     }
@@ -367,7 +375,7 @@ void grow_controller_get_status(JsonObject doc) {
     doc["log_level"] = _log_level;
     
     doc["uptime_esp_s"] = millis() / 1000;
-    doc["fw_ver"] = "v2.8.6-beta";
+    doc["fw_ver"] = "v2.8.6-wow_ota";
     
     // IP + WLAN
     
@@ -394,15 +402,18 @@ void grow_controller_get_status(JsonObject doc) {
     else if (reason == 3)  doc["boot_cause"] = "Software Crash (Watchdog)";
     else                   doc["boot_cause"] = "Other: " + String(reason);
 
-    // === REVISIONEN ZURÜCKSENDEN (genau wie bei circfan) ===
+    // === REVISIONEN ZURÜCKSENDEN () ===
     doc["rev_grow"] = grow_controller_rev;           // <--- Modulspezifisch
     doc["wifi_mode"] = _wifi_mode;
 
     // Aktuelle Live-Pins in den Status-Payload für die Kivy-UI packen
     JsonObject gpios = doc.createNestedObject("gpios");
     gpios["p_reset"] = sysConfig.pin_reset_button;
-    gpios["p_c_fan"] = sysConfig.pin_circ_fan;
-    gpios["p_c_tac"] = sysConfig.pin_circ_tacho;
+    // PATCHER BEGIN: CIRCULATION_GPIO_EXPORT
+    doc["gpios"]["p_c_fan"] = sysConfig.pin_circ_fan;
+    doc["gpios"]["p_c_tac"] = sysConfig.pin_circ_tacho;
+    doc["gpios"]["p_c_tac_pull"] = sysConfig.pin_circ_tacho_pull;
+// PATCHER END: CIRCULATION_GPIO_EXPORT
     gpios["p_e_fan"] = sysConfig.pin_exh_fan;
     gpios["p_e_tac"] = sysConfig.pin_exh_tacho;
     gpios["p_light"] = sysConfig.pin_light;
@@ -416,7 +427,7 @@ void grow_controller_get_status(JsonObject doc) {
     // BLE enablement flags (live RAM state + persisted)
     doc["ble_bridge_enabled"] = _ble_bridge_enabled;   // statt prefs
     doc["ble_scan_enabled"]   = _ble_scan_enabled;     // statt prefs
-    gpios["p_c_tac_pull"] = sysConfig.pin_circ_tacho_pull;
+
     gpios["p_e_tac_pull"] = sysConfig.pin_exh_tacho_pull;
     gpios["p_bat_pull"]   = sysConfig.pin_bat_pull;
 

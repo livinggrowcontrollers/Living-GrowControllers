@@ -2,41 +2,51 @@
   {
     "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
     "gatt_raw": null,
-    "timestamp": "2026-07-12T05:17:17.661+0000",
+    "timestamp": "2026-07-15T03:15:31.439+0000",
     "name": "growmaster-d064",
-    "rssi": -54,
-    "adv_raw": "D302A21108D216AC08EB168C9C00017F0026AC",
-    "log_raw": "D302A21108D216AC08EB168C9C00017F0026AC",
+    "rssi": -58,
+    "adv_raw": "D302A21108FB1420091413FE9C00016C0000F8",
+    "log_raw": "D302A21108FB1420091413FE9C00016C0000F8",
     "note": "raw"
   },
   {
-    "address": "85D6296B-906C-BB74-14DD-2D2E89DB7727",
+    "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "gatt_raw": null,
-    "timestamp": "2026-07-12T05:17:16.772+0000",
-    "name": "(unknown)",
-    "rssi": -52,
-    "adv_raw": "060001092002D30A89B9867CBC78ED01A04B9C4EDE8D861360EB8D5331",
-    "log_raw": "060001092002D30A89B9867CBC78ED01A04B9C4EDE8D861360EB8D5331",
+    "timestamp": "2026-07-15T03:15:27.837+0000",
+    "name": "ThermoBeacon2",
+    "rssi": -63,
+    "adv_raw": "190019060000F1F0840E6B012E03FFFFFFFFAF456200",
+    "log_raw": "190019060000F1F0840E6B012E03FFFFFFFFAF456200",
     "note": "raw"
   },
   {
-    "address": "FF-FF-A1-00-00-01",
+    "address": "827482CC-A977-43D7-835E-8E8B6978E66A",
     "gatt_raw": null,
-    "timestamp": "2026-07-12T05:17:17.947+0000",
-    "name": "LGS_NODE_17",
-    "rssi": -54,
-    "adv_raw": "7445A11108EC168D8F",
-    "log_raw": "7445A11108EC168D8F",
-    "note": "ch_17_active"
+    "timestamp": "2026-07-15T03:15:32.042+0000",
+    "name": "growmaster-1d3c",
+    "rssi": -82,
+    "adv_raw": "D302A2119C009C009C009C009C0001A3000022",
+    "log_raw": "D302A2119C009C009C009C009C0001A3000022",
+    "note": "raw"
   },
   {
     "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
     "gatt_raw": null,
-    "timestamp": "2026-07-12T05:17:16.773+0000",
+    "timestamp": "2026-07-15T03:15:27.534+0000",
     "name": "sps",
-    "rssi": -41,
-    "adv_raw": "450913160015F60008",
-    "log_raw": "450913160015F60008",
+    "rssi": -37,
+    "adv_raw": "84095812005AF10008",
+    "log_raw": "84095812005AF10008",
+    "note": "raw"
+  },
+  {
+    "address": "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21",
+    "gatt_raw": null,
+    "timestamp": "2026-07-15T03:15:02.929+0000",
+    "name": "TP351S (987A)",
+    "rssi": -77,
+    "adv_raw": "C2E8002A213301",
+    "log_raw": "C2E8002A213301",
     "note": "raw"
   }
 ]

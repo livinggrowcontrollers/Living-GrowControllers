@@ -1,7 +1,9 @@
 //  web_server.cpp
 #include "web_server.h"
 #include "sensor.h"
+// PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
+// PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
 #include "light_control.h"
 #include "power_manager.h"
@@ -14,6 +16,9 @@
 #include "ble_scanner.h"
 #include "plant_planner.h"
 #include <ESPmDNS.h>
+#include "ota_manager.h"
+#include <Update.h>
+
 extern ESPWatch watch; 
 
 #include "grow_controller.h" 
@@ -106,7 +111,10 @@ void handleData() {
     obj["mac"] = WiFi.macAddress();
     
     exhaust_fan_get_status(obj);
-    circulation_fan_get_status(obj);
+
+    // PATCHER BEGIN: CIRCULATION_GET_STATUS
+circulation_fan_get_status(obj);
+// PATCHER END: CIRCULATION_GET_STATUS
     
     // Aufruf matcht jetzt exakt mit dem Prototyp aus plant_planner.h
     obj["rev_plant_planner"] = get_plant_planner_rev();
@@ -114,7 +122,7 @@ void handleData() {
     light_control_get_status(obj);
     grow_controller_get_status(obj); 
     BLEScanner::get_status(obj);
-    
+    ota_manager_get_status(obj);
     String response;
     serializeJson(doc, response);
     server.send(200, "application/json", response);
@@ -138,10 +146,14 @@ void handleControlJSON() {
         }
 
         exhaust_fan_process_json(obj); 
+        // PATCHER BEGIN: CIRCULATION_JSON_UPDATE
         circulation_fan_process_json(obj);
+// PATCHER END: CIRCULATION_JSON_UPDATE
         plant_planner_process_json(obj);
         light_control_process_json(obj);            
         grow_controller_process_json(obj);       
+        ota_manager_process_json(obj);
+        
         StaticJsonDocument<128> res;
         res["status"] = "ok";
         res["rev"] = current_rev; 
@@ -190,6 +202,43 @@ void handleControlPlantsJSON() {
 }
 
 namespace WebModule {
+    // 🔥 NEU: Hilfs-Handler für den Datei-Upload über den synchronen Webserver
+    void handleOtaUpload() {
+        if (!server.authenticate(_web_username.c_str(), _web_password.c_str())) return server.requestAuthentication();
+        
+        HTTPUpload& upload = server.upload();
+        
+        if (upload.status == UPLOAD_FILE_START) {
+            Serial.printf("[HTTP-OTA] Start: %s\n", upload.filename.c_str());
+            // Da der synchrone Server die Gesamtgröße im Header mitsendet, holen wir uns diese
+            size_t total_size = 0;
+            if (server.hasHeader("Content-Length")) {
+                total_size = server.header("Content-Length").toInt();
+            } else {
+                // Fallback falls kein Header: Wir schätzen großzügig oder nutzen das Maximum der Partition
+                total_size = UPDATE_SIZE_UNKNOWN; 
+            }
+            
+            if (!ota_manager_start(total_size)) {
+                Serial.println("[HTTP-OTA] Fehler beim Initialisieren!");
+            }
+        } 
+        else if (upload.status == UPLOAD_FILE_WRITE) {
+            if (!ota_manager_write(upload.buf, upload.currentSize)) {
+                Serial.println("[HTTP-OTA] Fehler beim Schreiben des Chunks!");
+            }
+        } 
+        else if (upload.status == UPLOAD_FILE_END) {
+            if (ota_manager_end()) {
+                sendStandardHeaders();
+                server.send(200, "text/plain", "OTA SUCCESS. Rebooting...");
+            } else {
+                sendStandardHeaders();
+                server.send(500, "text/plain", "OTA FAILED!");
+            }
+        }
+    }
+
     void _startServerCommon() {
         server.on("/data", handleData);                         
         server.on("/control", HTTP_POST, handleControlJSON);     
@@ -197,7 +246,17 @@ namespace WebModule {
         server.on("/data/plants", handleGetPlants);              
         server.on("/control/plants", HTTP_POST, handleControlPlantsJSON); 
         
+        // 🔥 NEU: Registrierung der OTA-Route für Datei-Uploads
+        // Wir nutzen denselben Handler sowohl für den Request-Abschluss als auch für den Stream-Erhalt
+        server.on("/update", HTTP_POST, [](){}, handleOtaUpload);
+        
         WebServerBrowser::registerRoutes(server);
+        
+        // Da wir mDNS/Uploads machen, erlauben wir dem Server Header zu lesen
+        const char * headerkeys[] = {"Content-Length"} ;
+        size_t headerkeyssize = sizeof(headerkeys)/sizeof(char*);
+        server.collectHeaders(headerkeys, headerkeyssize);
+
         server.begin();
         Serial.println("Webserver gestartet.");
     }

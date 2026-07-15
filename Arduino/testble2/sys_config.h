@@ -17,9 +17,12 @@ inline uint8_t get_pull_mode(int pull)
 struct SystemConfig {
     int pin_reset_button;
 
+    // PATCHER BEGIN: CIRCULATION_CONFIG
     int pin_circ_fan;
     int pin_circ_tacho;
     int pin_circ_tacho_pull;
+// PATCHER END: CIRCULATION_CONFIG
+
 
     int pin_exh_fan;
     int pin_exh_tacho;

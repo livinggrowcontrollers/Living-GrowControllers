@@ -5,7 +5,12 @@
 #include "ble_bridge.h"
 #include "logic_helper.h"
 #include "hardware_init.h"
-#include "circulation_fan.h" 
+#include "ota_manager.h"
+
+// PATCHER BEGIN: CIRCULATION_INCLUDE
+#include "circulation_fan.h"
+// PATCHER END: CIRCULATION_INCLUDE
+
 #include "exhaust_fan.h" 
 #include "sys_config.h"
 #include "web_server.h" 
@@ -59,7 +64,7 @@ void setup() {
     BLEDevice::init("LGS_Grow_Master");
 
     grow_controller_init();
-
+    ota_manager_init();
     // Hardware danach initialisieren (nutzt jetzt aktualisierte sysConfig)
     init_hardware();
 
@@ -112,11 +117,13 @@ void setup() {
     }
 
     // 5. BACKGROUND
-    if (sysConfig.pin_circ_fan == -1 || sysConfig.pin_circ_tacho == -1) {
-        Serial.println("Circulation Fan disabled (sysConfig).");
-    } else {
-        circulation_fan_init((uint8_t)sysConfig.pin_circ_fan, (uint8_t)sysConfig.pin_circ_tacho);
-    }
+    // PATCHER BEGIN: CIRCULATION_INIT
+if (sysConfig.pin_circ_fan == -1 || sysConfig.pin_circ_tacho == -1) {
+    Serial.println("Circulation Fan disabled (sysConfig).");
+} else {
+    circulation_fan_init((uint8_t)sysConfig.pin_circ_fan, (uint8_t)sysConfig.pin_circ_tacho);
+}
+// PATCHER END: CIRCULATION_INIT
 
     if (sysConfig.pin_exh_fan == -1 || sysConfig.pin_exh_tacho == -1) {
         Serial.println("Exhaust Fan disabled (sysConfig).");
@@ -178,7 +185,13 @@ void setup() {
 void loop() {
     WebModule::update();           // Web-Server am Leben erhalten
     SystemReset::update();         // <--- 3. PERMANENT DEN KNOPF ÜBERWACHEN
-    circulation_fan_update(); 
+    
+        
+    // PATCHER BEGIN: CIRCULATION_UPDATE
+    circulation_fan_update();
+// PATCHER END: CIRCULATION_UPDATE
+        
+    
     exhaust_fan_update(); 
 
     // Beide Klimawerte sauber an das Lichtmodul übergeben (Push-Prinzip)

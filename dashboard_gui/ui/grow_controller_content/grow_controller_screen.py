@@ -20,7 +20,7 @@ from dashboard_gui.ui.grow_controller_content.controller_wifi_settings import Wi
 from dashboard_gui.ui.grow_controller_content.controller_user_password_settings import UserPasswordSettingsOverlay
 from dashboard_gui.ui.grow_controller_content.controller_bluetooth_settings import BluetoothSettingsOverlay
 from dashboard_gui.ui.grow_controller_content.controller_gpio_settings import GpioSettingsPanel
-
+from dashboard_gui.ui.grow_controller_content.controller_ota_settings import OtaSettingsOverlay
 from dashboard_gui.ui.grow_controller_content.alternative_gpio_settings import AlternativeGpioSettings
 from dashboard_gui.ui.grow_controller_content.controller_command_status_popup import GrowCommandStatusPopup
 from dashboard_gui.overlays.base_revision_system import BaseRevisionSystem
@@ -121,6 +121,8 @@ class GrowControllerScreen(Screen):
             ("[font=FA]\uf5fd[/font]\nPIN MATRIX", self.open_alternative_gpio_settings),
             ("AP MODE", self.set_ap_mode),
             ("ROUTER MODE", self.set_sta_mode),
+            ("[font=FA]\uf019[/font]\nOTA UPDATE", self.open_ota_settings), # NEUER BUTTON
+
         ]
 
         for text, callback in buttons:
@@ -379,6 +381,16 @@ class GrowControllerScreen(Screen):
             show_status=True
         )
 
+    def open_ota_settings(self, *_):
+        if hasattr(self, 'ota_overlay') and self.ota_overlay in self.children:
+            return
+        self.ota_overlay = OtaSettingsOverlay(screen=self)
+        self.add_widget(self.ota_overlay)
+
+    def close_ota_settings(self):
+        if hasattr(self, 'ota_overlay') and self.ota_overlay in self.children:
+            self.remove_widget(self.ota_overlay)
+
     def update_from_global(self, data):
         """Reaktives Update vom GSM - JETZT PERFORMANCE-OPTIMIERT & MIT RESET-SCHUTZ!"""
         self.header.update_from_global(data)
@@ -400,9 +412,7 @@ class GrowControllerScreen(Screen):
 
             # Nur echte Änderungen übernehmen
             if new_gpios != self.live_gpios:
-
                 self.live_gpios = dict(new_gpios)
-
                 if self.gpio_panel:
                     self.gpio_panel.update_from_live_gpios(
                         self.live_gpios
@@ -416,10 +426,31 @@ class GrowControllerScreen(Screen):
             else:
                 self.discovered_ble_devices = []
 
-            # Server-Revisionen holen
+            # =========================================================================
+            # SAUBERE TRENNUNG DER REVISIONEN (Target-Revision-Prinzip)
+            # =========================================================================
+            # 1. Standard-System-Revision (für GPIOs, WiFi, etc.)
             self.current_rev = int(ws.get("rev_grow", 0))
+            
+            # 2. Eigene OTA-Revision (isoliert aus dem 'ota'-Unterobjekt)
+            ota_data = ws.get("ota", {})
+            self.current_ota_rev = int(ota_data.get("ota_rev", ws.get("rev_grow", 0)))
+            
+            # --- DEINE UNKAPUTTBARE REVISIONS-ÄNDERUNGS-LOGIK (jetzt auf OTA-Rev gemappt) ---
+            ota_waiting = getattr(self, '_ota_is_waiting', False)
+            rev_before_ota = getattr(self, '_rev_before_ota', -1)
+            
+            # Sobald der ESP nach dem Booten eine andere OTA-Revision meldet als vorher:
+            if ota_waiting and rev_before_ota != -1 and self.current_ota_rev != rev_before_ota:
+                print(f"[OTA-Pipeline] ERFOLG! Revision im 'ota' block geändert von {rev_before_ota} auf {self.current_ota_rev}.")
+                self._ota_is_waiting = False
+                self._rev_before_ota = -1  # Reset
+                
+                # Schließe das Overlay und zeige dem User den Erfolg
+                if hasattr(self, 'ota_overlay') and self.ota_overlay:
+                    self.ota_overlay._update_done_ui(True, "Erfolgreich geflasht und neu gestartet!")
 
-
+            # --- STANDARD ACK-LOGIK (reagiert isoliert auf self.current_rev) ---
             if (
                 self._reset_after_ack
                 and self._last_sent_rev > 0
@@ -456,6 +487,7 @@ class GrowControllerScreen(Screen):
             self.dev_name = ws.get("dev_name", "-")
             self.fw_ver = ws.get("fw_ver", "-")
             self.rssi = ws.get("rssi", 0)
+            
             # BLE enabled flags from device status
             self.ble_bridge_enabled = bool(ws.get("ble_bridge_enabled", True))
             self.ble_scan_enabled = bool(ws.get("ble_scan_enabled", True))
@@ -465,7 +497,6 @@ class GrowControllerScreen(Screen):
 
             # Wenn das ESP die Revision übernommen hat und ein Reboot erforderlich ist,
             # zeigen wir eine nicht-intrusive manuelle Aktion in der Footer-Leiste
-            # anstatt eines Popups. Der Nutzer kann "JETZT NEUSTARTEN" oder "SPÄTER" wählen.
             try:
                 last_sent = getattr(self, '_last_sent_rev', 0)
                 if self.reboot_required and self.current_rev == last_sent and not self._reboot_popup_shown:
@@ -485,7 +516,6 @@ class GrowControllerScreen(Screen):
 
                         def do_restart(*_a):
                             self._send_command("soft_reset")
-                            # After issuing the restart command, hide the action box
                             try:
                                 if hasattr(self, 'reboot_action_box') and self.reboot_action_box in self.footer_layout.children:
                                     self.footer_layout.remove_widget(self.reboot_action_box)
@@ -493,7 +523,6 @@ class GrowControllerScreen(Screen):
                                 pass
 
                         def do_later(*_a):
-                            # Mark as shown so we don't nag the user again until next session
                             self._reboot_popup_shown = True
                             try:
                                 if hasattr(self, 'reboot_action_box') and self.reboot_action_box in self.footer_layout.children:
@@ -512,9 +541,9 @@ class GrowControllerScreen(Screen):
                         self.footer_layout.add_widget(self.reboot_action_box)
                     self._reboot_popup_shown = True
             except Exception:
-                # Safety: Don't let UI-action logic break overall update
                 pass
 
+            # Retry-Engine für Standard-Acks
             if self.engine.is_pending(self.current_rev) and self.engine.should_retry():
                 if self.engine.retry_allowed():
                     self.engine.register_retry()

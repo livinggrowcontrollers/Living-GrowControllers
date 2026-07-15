@@ -1,11 +1,48 @@
 {
   "devices": {
-    "FF-FF-A1-00-00-01": {
-      "name": "LGS_NODE_17",
-      "adv_decoder": "LGS_ADV",
+    "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+      "name": "growmaster-d064",
+      "adv_decoder": "LGS_SENSOR",
       "gatt_decoder": "",
       "bridge_profile": "",
-      "image_file": "unknown_device.png",
+      "image_file": "esp32_s3.png",
+      "hostname": "growmaster-d064",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      },
+      "ip_address": "192.168.2.20"
+    },
+    "827482CC-A977-43D7-835E-8E8B6978E66A": {
+      "name": "growmaster-1d3c",
+      "adv_decoder": "LGS_SENSOR",
+      "gatt_decoder": "",
+      "bridge_profile": "",
+      "image_file": "esp32_s3.png",
+      "hostname": "growmaster-1d3c",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      },
+      "ip_address": "192.168.2.39"
+    },
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "name": "sps",
+      "adv_decoder": "Inkbird_ADV_Desktop",
+      "gatt_decoder": "Inkbird_GATT",
+      "bridge_profile": "Inkbird_Bridge",
+      "image_file": "inkbird.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
+      "name": "ThermoBeacon2",
+      "adv_decoder": "ThermoBeacon2_ADV",
+      "gatt_decoder": "ThermoBeacon2_GATT",
+      "bridge_profile": "ThermoBeacon2_Bridge",
+      "image_file": "thermobeacon.png",
       "auth": {
         "user": "admin",
         "pass": "1234"

@@ -3,7 +3,7 @@
 #include "plant_planner.h"
 #include <LittleFS.h>
 
-// Interne Modul-Variablen (Analog zu circulation_fan)
+// Interne Modul-Variablen
 static uint32_t plant_planner_rev = 0;
 static Plant system_plants[PLANT_PLANNER_MAX_SLOTS];  // Festes Array mit 10 Slots
 
