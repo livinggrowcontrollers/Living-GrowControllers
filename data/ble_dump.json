@@ -1,52 +1,82 @@
 [
   {
-    "address": "827482CC-A977-43D7-835E-8E8B6978E66A",
+    "address": "AD84909A-8E9A-7FB6-00D9-887AF86C6801",
     "gatt_raw": null,
-    "timestamp": "2026-07-15T07:40:44.709+0000",
-    "name": "growmaster-1d3c",
-    "rssi": -77,
-    "adv_raw": "D302A2119C009C009C009C009C0001A300005C",
-    "log_raw": "D302A2119C009C009C009C009C0001A300005C",
+    "timestamp": "2026-07-15T08:56:41.733+0000",
+    "name": "(unknown)",
+    "rssi": -58,
+    "adv_raw": "650001EE05",
+    "log_raw": "650001EE05",
+    "note": "raw"
+  },
+  {
+    "address": "842DD63F-9137-623B-6337-E92B19A3E49F",
+    "gatt_raw": null,
+    "timestamp": "2026-07-15T08:56:41.448+0000",
+    "name": "(unknown)",
+    "rssi": -60,
+    "adv_raw": "4C0002152686F39CBADA4658854AA62E7E5E8B8D000100000B",
+    "log_raw": "4C0002152686F39CBADA4658854AA62E7E5E8B8D000100000B",
+    "note": "raw"
+  },
+  {
+    "address": "5E7E9399-657F-25C4-EF7A-CE180E8F2F84",
+    "gatt_raw": null,
+    "timestamp": "2026-07-15T08:56:40.844+0000",
+    "name": "(unknown)",
+    "rssi": -58,
+    "adv_raw": "4C0003161100000277C0A802C20000000000000000000000000B",
+    "log_raw": "4C0003161100000277C0A802C20000000000000000000000000B",
     "note": "raw"
   },
   {
     "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
     "gatt_raw": null,
-    "timestamp": "2026-07-15T07:40:44.117+0000",
+    "timestamp": "2026-07-15T08:56:41.719+0000",
     "name": "growmaster-d064",
-    "rssi": -48,
-    "adv_raw": "D302A21108E91554090215339C0001CC000078",
-    "log_raw": "D302A21108E91554090215339C0001CC000078",
+    "rssi": -51,
+    "adv_raw": "D302A21108F9154E091115249C0001AC00002C",
+    "log_raw": "D302A21108F9154E091115249C0001AC00002C",
     "note": "raw"
   },
   {
     "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
     "gatt_raw": null,
-    "timestamp": "2026-07-15T07:40:42.013+0000",
+    "timestamp": "2026-07-15T08:56:37.223+0000",
     "name": "sps",
     "rssi": -36,
-    "adv_raw": "780908140009540008",
-    "log_raw": "780908140009540008",
+    "adv_raw": "8F096014007D5D0008",
+    "log_raw": "8F096014007D5D0008",
     "note": "raw"
   },
   {
     "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "gatt_raw": null,
-    "timestamp": "2026-07-15T07:40:42.322+0000",
+    "timestamp": "2026-07-15T08:56:41.126+0000",
     "name": "ThermoBeacon2",
-    "rssi": -68,
-    "adv_raw": "190019060000F1F0840E68015D03FFFFFFFFDB836200",
-    "log_raw": "190019060000F1F0840E68015D03FFFFFFFFDB836200",
+    "rssi": -63,
+    "adv_raw": "190019060000F1F0810E6A016203FFFFFFFFAA956200",
+    "log_raw": "190019060000F1F0810E6A016203FFFFFFFFAA956200",
+    "note": "raw"
+  },
+  {
+    "address": "827482CC-A977-43D7-835E-8E8B6978E66A",
+    "gatt_raw": null,
+    "timestamp": "2026-07-15T08:56:41.759+0000",
+    "name": "growmaster-1d3c",
+    "rssi": -58,
+    "adv_raw": "D302A2119C009C009C009C009C0001A4000026",
+    "log_raw": "D302A2119C009C009C009C009C0001A4000026",
     "note": "raw"
   },
   {
     "address": "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21",
     "gatt_raw": null,
-    "timestamp": "2026-07-15T07:40:44.407+0000",
+    "timestamp": "2026-07-15T08:56:26.142+0000",
     "name": "TP351S (987A)",
-    "rssi": -73,
-    "adv_raw": "C2F8002D213301",
-    "log_raw": "C2F8002D213301",
+    "rssi": -77,
+    "adv_raw": "C206012A213301",
+    "log_raw": "C206012A213301",
     "note": "raw"
   }
 ]

@@ -231,7 +231,9 @@ class OtaSettingsOverlay(RelativeLayout):
 
     def trigger_download(self, instance):
         """Startet den echten HTTP-Download in einem Hintergrund-Thread."""
-        url = "https://github.com/Hackintosh1980/AI-Dashboard/raw/refs/heads/main/Arduino/testble2/build/esp32.esp32.waveshare_esp32_s3_lcd_147/testble2.ino.bin"
+        url = "https://github.com/livinggrowcontrollers/Living-GrowControllers/raw/refs/heads/main/Arduino/testble2/build/esp32.esp32.waveshare_esp32_s3_lcd_147/testble2.ino.bin"
+        
+        
         filename = "testble2.ino.bin"
         save_path = os.path.join(self.firmware_dir, filename)
 

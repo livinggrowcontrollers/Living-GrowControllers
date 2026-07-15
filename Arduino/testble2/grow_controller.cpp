@@ -375,7 +375,7 @@ void grow_controller_get_status(JsonObject doc) {
     doc["log_level"] = _log_level;
     
     doc["uptime_esp_s"] = millis() / 1000;
-    doc["fw_ver"] = "v2.8.6-usb-flash";
+    doc["fw_ver"] = "v2.8.6-github_test";
     
     // IP + WLAN
     
