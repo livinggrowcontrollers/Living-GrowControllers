@@ -1,18 +1,5 @@
 {
   "devices": {
-    "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
-      "name": "growmaster-d064",
-      "adv_decoder": "LGS_SENSOR",
-      "gatt_decoder": "",
-      "bridge_profile": "",
-      "image_file": "esp32_s3.png",
-      "hostname": "growmaster-d064",
-      "auth": {
-        "user": "admin",
-        "pass": "1234"
-      },
-      "ip_address": "192.168.2.20"
-    },
     "827482CC-A977-43D7-835E-8E8B6978E66A": {
       "name": "growmaster-1d3c",
       "adv_decoder": "LGS_SENSOR",
@@ -25,6 +12,19 @@
         "pass": "1234"
       },
       "ip_address": "192.168.2.39"
+    },
+    "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+      "name": "growmaster-d064",
+      "adv_decoder": "LGS_SENSOR",
+      "gatt_decoder": "",
+      "bridge_profile": "",
+      "image_file": "esp32_s3.png",
+      "hostname": "growmaster-d064",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      },
+      "ip_address": "192.168.2.20"
     },
     "C898B4F2-B452-7502-1A67-0536E77D49EA": {
       "name": "sps",
@@ -43,6 +43,17 @@
       "gatt_decoder": "ThermoBeacon2_GATT",
       "bridge_profile": "ThermoBeacon2_Bridge",
       "image_file": "thermobeacon.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21": {
+      "name": "TP351S (987A)",
+      "adv_decoder": "",
+      "gatt_decoder": "ThermoPro_GATT",
+      "bridge_profile": "ThermoPro_Bridge",
+      "image_file": "thermopro.png",
       "auth": {
         "user": "admin",
         "pass": "1234"

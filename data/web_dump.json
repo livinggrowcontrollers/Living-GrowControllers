@@ -2,18 +2,18 @@
   "827482CC-A977-43D7-835E-8E8B6978E66A": {
     "health": {
       "signal": {
-        "rssi": -82
+        "rssi": -72
       }
     },
     "rtc_found": false,
     "rtc_time": "offline",
-    "system_time": "05:14:57",
+    "system_time": "09:32:47",
     "temp_in": -256,
     "temp_ext": -256,
     "humid_ext": -256,
     "humid_in": -256,
     "leaf_temp": -256,
-    "vbat": 4.203,
+    "vbat": 4.197,
     "rev": 0,
     "hostname": "growmaster-1d3c",
     "ip_address": "192.168.2.39",
@@ -56,22 +56,21 @@
     "light_state_reason": "disabled",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 142,
-    "fw_ver": "v2.8.6-wow_ota",
+    "uptime_esp_s": 2609,
+    "fw_ver": "v2.8.6-beta",
     "ip": "192.168.2.39",
     "ssid": "Cudy-Indoor",
-    "rssi": -82,
-    "free_heap": 155352,
-    "max_alloc": 110580,
-    "heap_usage": 169772,
+    "rssi": -73,
+    "free_heap": 156532,
+    "max_alloc": 114676,
+    "heap_usage": 168840,
     "boot_cause": "Software Reboot",
-    "rev_grow": 12,
+    "rev_grow": 1,
     "wifi_mode": 1,
     "gpios": {
       "p_reset": -1,
       "p_c_fan": -1,
       "p_c_tac": 2,
-      "p_c_tac_pull": 1,
       "p_e_fan": -1,
       "p_e_tac": 1,
       "p_light": -1,
@@ -80,6 +79,7 @@
       "p_rtc_sda": 13,
       "p_rtc_scl": 14,
       "p_bat": 12,
+      "p_c_tac_pull": 1,
       "p_e_tac_pull": 1,
       "p_bat_pull": 0
     },
@@ -87,35 +87,29 @@
     "ble_scan_enabled": true,
     "ble_sensors": {
       "outside": {
-        "ble_temp_outside": 24.5,
-        "ble_humid_outside": 47.04,
+        "ble_temp_outside": 24.31,
+        "ble_humid_outside": 51.54,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
       "inside": {
-        "ble_temp_inside": 22.625,
-        "ble_humid_inside": 50.875,
+        "ble_temp_inside": 22.5,
+        "ble_humid_inside": 53.6875,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
       "discovered_devices": [
         {
-          "name": "ThermoBeacon2",
-          "mac": "f0:f1:00:00:06:19"
-        },
-        {
           "name": "sps",
           "mac": "49:25:08:23:07:21"
+        },
+        {
+          "name": "ThermoBeacon2",
+          "mac": "f0:f1:00:00:06:19"
         }
       ]
-    },
-    "ota": {
-      "ota_rev": 82888,
-      "status": "IDLE",
-      "progress": 0,
-      "error_msg": ""
     },
     "plant_planner": {
       "rev_plant_planner": 0,
@@ -412,23 +406,23 @@
         }
       ]
     },
-    "timestamp": 1784085297.292775
+    "timestamp": 1784100767.683149
   },
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "health": {
       "signal": {
-        "rssi": -63
+        "rssi": -58
       }
     },
     "rtc_found": true,
-    "rtc_time": "05:14:57",
-    "system_time": "05:14:57",
-    "temp_in": 23.25,
-    "temp_ext": 22.99,
-    "humid_ext": 51.51,
-    "humid_in": 51.14,
+    "rtc_time": "09:32:55",
+    "system_time": "09:32:55",
+    "temp_in": 23.03,
+    "temp_ext": 22.74,
+    "humid_ext": 54.71,
+    "humid_in": 54.33,
     "leaf_temp": -256,
-    "vbat": 3.978,
+    "vbat": 3.162,
     "rev": 0,
     "hostname": "growmaster-d064",
     "ip_address": "192.168.2.20",
@@ -444,18 +438,18 @@
     "target_humidity_max": 70,
     "target_vpd_min": 0.8,
     "target_vpd_max": 2.6,
-    "rev_exhaust": 338,
-    "plant_phase": 2,
+    "rev_exhaust": 339,
+    "plant_phase": 0,
     "exhaust_fan_chaos_active": false,
     "exhaust_fan_state_reason_1": "idle_balanced",
-    "exhaust_fan_state_reason_2": "night_reduction",
+    "exhaust_fan_state_reason_2": "",
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 54,
+    "circulation_fan_speed_now": 43,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
-    "rev_circfan": 332,
+    "rev_circfan": 333,
     "rev_plant_planner": 2,
     "light_pct": 0,
     "light_target": 0,
@@ -471,21 +465,22 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 16670,
-    "fw_ver": "v2.8.6-beta",
+    "uptime_esp_s": 142,
+    "fw_ver": "v2.8.6-wow_ota",
     "ip": "192.168.2.20",
     "ssid": "Cudy-Indoor",
-    "rssi": -63,
-    "free_heap": 150868,
-    "max_alloc": 102388,
-    "heap_usage": 174504,
+    "rssi": -58,
+    "free_heap": 154904,
+    "max_alloc": 110580,
+    "heap_usage": 170220,
     "boot_cause": "Software Reboot",
-    "rev_grow": 3,
+    "rev_grow": 1,
     "wifi_mode": 1,
     "gpios": {
       "p_reset": 7,
       "p_c_fan": 45,
       "p_c_tac": 2,
+      "p_c_tac_pull": 1,
       "p_e_fan": 47,
       "p_e_tac": 1,
       "p_light": 21,
@@ -494,7 +489,6 @@
       "p_rtc_sda": 13,
       "p_rtc_scl": 14,
       "p_bat": 6,
-      "p_c_tac_pull": 1,
       "p_e_tac_pull": 1,
       "p_bat_pull": 0
     },
@@ -502,20 +496,35 @@
     "ble_scan_enabled": true,
     "ble_sensors": {
       "outside": {
-        "ble_temp_outside": 22.625,
-        "ble_humid_outside": 50.875,
+        "ble_temp_outside": 22.5,
+        "ble_humid_outside": 53.75,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
       "inside": {
-        "ble_temp_inside": 24.5,
-        "ble_humid_inside": 47.04,
+        "ble_temp_inside": 24.49,
+        "ble_humid_inside": 51.81,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
-      "discovered_devices": []
+      "discovered_devices": [
+        {
+          "name": "ThermoBeacon2",
+          "mac": "f0:f1:00:00:06:19"
+        },
+        {
+          "name": "sps",
+          "mac": "49:25:08:23:07:21"
+        }
+      ]
+    },
+    "ota": {
+      "ota_rev": 600,
+      "status": "IDLE",
+      "progress": 0,
+      "error_msg": ""
     },
     "plant_planner": {
       "rev_plant_planner": 2,
@@ -812,6 +821,6 @@
         }
       ]
     },
-    "timestamp": 1784085297.292775
+    "timestamp": 1784100767.683149
   }
 }

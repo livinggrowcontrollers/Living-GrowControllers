@@ -4,7 +4,7 @@ package.name = espgrowcontroller
 package.domain = org.hackintosh1980
 #####undbedingt ble service.py abndern bei namensnderung!und ja keine binde und unterstriche verwenden!
 
-source.include_exts = py,kv,png,jpg,json,ttf
+source.include_exts = py,kv,png,jpg,json,ttf,bin
 include_patterns = garden/**/*
 source.include_dirs = garden
 source.dir = .
