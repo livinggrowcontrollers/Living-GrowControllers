@@ -11,7 +11,9 @@
         "user": "admin",
         "pass": "1234"
       },
-      "ip_address": "192.168.2.20"
+      "ip_address": "192.168.2.20",
+      "mixed_enabled": true,
+      "mixed_external": false
     },
     "827482CC-A977-43D7-835E-8E8B6978E66A": {
       "name": "growmaster-1d3c",
@@ -24,7 +26,9 @@
         "user": "admin",
         "pass": "1234"
       },
-      "ip_address": "192.168.2.39"
+      "ip_address": "192.168.2.39",
+      "mixed_enabled": true,
+      "mixed_external": false
     },
     "C898B4F2-B452-7502-1A67-0536E77D49EA": {
       "name": "sps",

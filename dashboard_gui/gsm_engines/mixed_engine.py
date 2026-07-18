@@ -197,7 +197,6 @@ class MixedEngine:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump([], f)
     
-            self.gsm.broadcast_data_available = False
             print(f"[MixedEngine] mixed.json initialisiert: {path}")
     
         except Exception as e:

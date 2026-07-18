@@ -1,7 +1,6 @@
 # dashboard_gui/gsm_engines/data_flow_engine.py
 import time
 from dashboard_gui.data_buffer import BUFFER
-from datetime import datetime
 
 class DataFlowEngine:
     def __init__(self, gsm):
@@ -28,15 +27,10 @@ class DataFlowEngine:
                 self.rssi_history.clear()
                 self.last_seen_timestamps.clear()
                 
-                if hasattr(self.gsm, 'ui_handler'):
-                    self.gsm.ui_handler.update_active_screen(
-                        self.gsm.screen_manager, 
-                        {
-                            "device_id": None, 
-                            "channel": "",      
-                            "alive": False
-                        }
-                    )
+                self.gsm.ui_handler.update_active_screen(
+                    self.gsm.screen_manager,
+                    {"device_id": None, "channel": "", "alive": False},
+                )
             return
 
         # --- PHASE 1: BACKGROUND UPDATES (Global) ---
@@ -95,11 +89,12 @@ class DataFlowEngine:
         # ❗ NEU: RSSI-Historie basierend auf Kanal-spezifischem RSSI
         self._update_focused_rssi(dev_id, d, ch_name, ch)
 
-        d["channel"] = ch_name 
-        d["latency"] = self.current_latency 
+        # UI-only metadata must not leak back into the decoded RAM frame.
+        ui_packet = dict(d)
+        ui_packet["channel"] = ch_name
+        ui_packet["latency"] = self.current_latency
 
-        if hasattr(self.gsm, 'ui_handler'):
-            self.gsm.ui_handler.update_active_screen(self.gsm.screen_manager, d)
+        self.gsm.ui_handler.update_active_screen(self.gsm.screen_manager, ui_packet)
         
         self._handle_health_and_leds(d, ch, ch_name, dev_id)
 
@@ -127,29 +122,29 @@ class DataFlowEngine:
 
     def _handle_health_and_leds(self, d, ch, ch_name, dev_id):
         if not ch.get("alive", False):
-            self.gsm.led_engine.offline()
+            self.gsm.led_engine.offline(ch_name)
             return
 
         if ch_name == "webserver":
             current_web_ts = ch.get("timestamp")
             if current_web_ts and current_web_ts != self._last_web_ts:
-                self.gsm.led_engine.flow()
+                self.gsm.led_engine.flow(ch_name)
                 self._last_web_ts = current_web_ts
             else:
-                self.gsm.led_engine.stale()
+                self.gsm.led_engine.stale(ch_name)
 
         elif ch_name == "adv":
             raw = ch.get("raw")
             if raw and raw != self._last_raw:
-                self.gsm.led_engine.flow()
+                self.gsm.led_engine.flow(ch_name)
                 self._last_raw = raw
             else:
-                self.gsm.led_engine.stale()
+                self.gsm.led_engine.stale(ch_name)
             
         else: # GATT
             counter = ch.get("packet_counter")
             if counter is not None and counter != self._last_counter:
-                self.gsm.led_engine.flow()
+                self.gsm.led_engine.flow(ch_name)
                 self._last_counter = counter
             else:
-                self.gsm.led_engine.stale()
+                self.gsm.led_engine.stale(ch_name)

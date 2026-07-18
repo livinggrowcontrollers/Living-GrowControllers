@@ -3,9 +3,11 @@
 from kivy.clock import Clock
 from dashboard_gui.data_buffer import BUFFER
 from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.ui.common.header_capabilities import build_header_capabilities, build_header_state
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.formatters import UIFormatter
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
+from dashboard_gui.circulation_fan_registry import MAX_CIRCULATION_FANS, fan_snapshot
 class DeviceStatusPipeline:
     def __init__(self, screen_instance):
         self.screen = screen_instance
@@ -191,28 +193,11 @@ class DeviceStatusPipeline:
                                 payload[f"trend_{metric}"] = _get_trend_icon(key)
                                 break
 
-                light = web.get("light_pct")
-                if light is not None:
-                    payload["caps"].append({"type": "light", "icon": "", "color": (*BoxColorUpdater.get_light_color(light), 1)})
-
-                fan_rpm = web.get("circulation_fan", {}).get("circulation_fan_rpm")
-                if fan_rpm is not None:
-                    payload["caps"].append({"type": "circulation_fan", "icon": "", "color": (*BoxColorUpdater.get_rpm_color(fan_rpm), 1)})
-
-                exhaust_rpm = web.get("exhaust_fan", {}).get("exhaust_fan_rpm")
-                if exhaust_rpm is not None:
-                    payload["caps"].append({"type": "exhaust_fan", "icon": "", "color": (*BoxColorUpdater.get_rpm_color(exhaust_rpm), 1)})
-
-                battery = health.get("battery", {}).get("voltage") or web.get("battery_voltage")
-                if battery is not None:
-                    icon, _ = BoxColorUpdater.get_battery_state(battery)
-                    payload["caps"].append({"type": "battery", "icon": icon, "color": (*BoxColorUpdater.get_battery_color(battery), 1)})
-
-                if any(matched_frame.get(ch, {}).get("external", {}).get("present") for ch in ("adv", "gatt", "webserver")):
-                    payload["caps"].append({"type": "external", "icon": "", "color": (*BoxColorUpdater.get_external_color(), 1)})
-
-                if matched_frame.get("climate_hub") or web.get("climate_hub"):
-                    payload["caps"].append({"type": "climate", "icon": "", "color": (*BoxColorUpdater.get_external_color(), 1)})
+                payload["caps"] = [
+                    {"type": cap["id"], "icon": cap["icon"], "color": cap["color"]}
+                    for cap in build_header_capabilities(build_header_state(matched_frame))
+                    if cap["show_in_picker"] and cap["enabled"]
+                ]
 
             updates.append(payload)
 

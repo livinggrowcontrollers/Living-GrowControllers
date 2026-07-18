@@ -204,12 +204,3 @@ class ActiveChannelEngine:
             return device_id
         d = cfg.get("devices", {}).get(device_id, {}) if cfg else {}
         return d.get("name", device_id)
-
-
-# Singleton
-ACTIVE_CHANNEL = None
-
-def init_active_channel_engine(gatt_config_engine):
-    global ACTIVE_CHANNEL
-    ACTIVE_CHANNEL = ActiveChannelEngine(gatt_config_engine)
-    return ACTIVE_CHANNEL

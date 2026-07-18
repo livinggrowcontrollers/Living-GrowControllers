@@ -1,8 +1,6 @@
 # dashboard_gui/global_state_manager.py
 # HEARTBEAT + MULTI-DEVICE – CLEAN VERSION
-import core
 from kivy.clock import Clock
-from dashboard_gui.data_buffer import BUFFER
 import time
 import config
 from dashboard_gui.gsm_engines.graph_engine import GraphEngine
@@ -12,7 +10,7 @@ from dashboard_gui.gsm_engines.led_engine import LedEngine
 from dashboard_gui.gsm_engines.mixed_engine import MixedEngine
 from dashboard_gui.gsm_engines.metrics_engine import MetricsEngine
 from dashboard_gui.gsm_engines.gatt_config_engine import GattConfigEngine
-from dashboard_gui.gsm_engines.active_channel_engine import init_active_channel_engine
+from dashboard_gui.gsm_engines.active_channel_engine import ActiveChannelEngine
 from dashboard_gui.gsm_engines.unit_engine import UnitEngine
 from dashboard_gui.gsm_engines.multi_active_key_engine import MultiActiveKeyEngine
 from dashboard_gui.gsm_engines.tile_engine import TileEngine
@@ -21,44 +19,21 @@ from dashboard_gui.global_gesture_manager import GlobalGestureManager
 from dashboard_gui.gsm_engines.data_flow_engine import DataFlowEngine
 from dashboard_gui.gsm_engines.broadcast_engine import BroadcastEngine
 from dashboard_gui.gsm_engines.overlay_command_engine import OverlayCommandEngine
-from dashboard_gui.gsm_engines.graph_control_engine import GraphControlEngine# Initialisieren
-from dashboard_gui.gsm_engines.active_channel_engine import ACTIVE_CHANNEL
-def _extract_mac(dev):
-    """Normiert device_id auf reine MAC."""
-    if isinstance(dev, dict):
-        return dev.get("device_id")
-    return dev
+from dashboard_gui.gsm_engines.graph_control_engine import GraphControlEngine
+
+
 class GlobalStateManager:
     def __init__(self):
-        # Run-State
-        self.dashboard_ref = None
-    
         self.running = True
-        # in __init__
-        self._flow_hold = False
-
+        self.screen_manager = None
 
         # Mixed Mode
-        self.mixed_mode_active = False
         self.mixed_selected_buffers = set()
         self.mixed_device_modes = {}
-        # Aktives Gerät (Index)
-
-        # LED Status
 
         self.max_history = config.get_tile_graph_window()
 
-        # Heartbeat
-        self.trend_window = config.get_tile_graph_window() 
-        # Global Tick
-        # Statt 0.5 nehmen wir den Wert aus der Config
-        self._main_tick = Clock.schedule_interval(self._global_update, config.get_refresh_interval())
-
-        self.fan_rpm = 0
-        self.fan_pct = 0
-        self.active_mode = "manual"
-        
-        ###### REFACTORING!!!!! ENGINES
+        # Engines
         self.graph_engine = GraphEngine(self)
         self.ui_handler = UIManager(self)
         self.engine = ConfigEngine(self)
@@ -75,19 +50,16 @@ class GlobalStateManager:
         self.graph_control = GraphControlEngine(self)
         self.overlay_engine = OverlayCommandEngine(self)
         
-        from dashboard_gui.gsm_engines.active_channel_engine import init_active_channel_engine
-        
-        # ✅ ZUERST erstellen
-        self.active_channel_engine = init_active_channel_engine(self.gatt_engine)
-        
-        global ACTIVE_CHANNEL_ENGINE
-        ACTIVE_CHANNEL_ENGINE = self.active_channel_engine
+        self.active_channel_engine = ActiveChannelEngine(self.gatt_engine)
         
         # ✅ ERST DANACH DataFlow!
         self.data_flow = DataFlowEngine(self)
-        
-        ##################################
-        ######### REFACTOR
+
+        # Der Tick darf erst starten, wenn alle von ihm verwendeten Engines
+        # vollständig aufgebaut sind.
+        self._main_tick = Clock.schedule_interval(
+            self._global_update, config.get_refresh_interval()
+        )
     def sync_ui_buttons(self):
         """Triggert den Sync-Vorgang im UI Manager an."""
         self.ui_handler._refresh_all_buttons()
@@ -127,26 +99,26 @@ class GlobalStateManager:
     
     def set_active_channel(self, channel):
         self.active_channel_engine.set_active_channel(channel)
-        self.data_flow.process_cycle()  # gut so
+        self.data_flow.process_cycle()
 
     def get_active_index(self):
-        return ACTIVE_CHANNEL_ENGINE.get_active_index()
+        return self.active_channel_engine.get_active_index()
 
     def set_active_index(self, idx):
-        ACTIVE_CHANNEL_ENGINE.set_active_index(idx)
+        self.active_channel_engine.set_active_index(idx)
 
     def next_device(self):
-        ACTIVE_CHANNEL_ENGINE.next_device()
+        self.active_channel_engine.next_device()
 
     def previous_device(self):
-        ACTIVE_CHANNEL_ENGINE.previous_device()
+        self.active_channel_engine.previous_device()
 
     def get_device_list(self):
-        return ACTIVE_CHANNEL_ENGINE.get_device_list()
+        return self.active_channel_engine.get_device_list()
 
     def get_last_seen_text(self, dev_id):
         """Gibt einen menschlich lesbaren String zurück."""
-        last_ts = self.last_seen_timestamps.get(dev_id)
+        last_ts = self.data_flow.last_seen_timestamps.get(dev_id)
         if not last_ts:
             return "Nie gesehen"
         
@@ -171,11 +143,6 @@ class GlobalStateManager:
     def set_broadcast_user_disabled(self, state: bool):
         self.broadcast_engine.set_user_disabled(state)
 
-    def refresh_all_headers(self):
-        # Delegiert an den UI-Manager
-        self.ui_handler.refresh_broadcast_buttons()
-
-    # In dashboard_gui/global_state_manager.py
     def send_overlay_command(self, cmd_type, **kwargs):
         """Der GSM routet nur noch – keine Logik mehr hier drin!"""
         mac = self.get_active_device_id()
@@ -262,18 +229,10 @@ class GlobalStateManager:
 
         return ""
 
-########reserrr
-
     def global_start(self): self.graph_control.start()
     def global_stop(self): self.graph_control.stop()
     def global_reset(self): self.graph_control.reset()
-    # ---------------------------------------------------------
-    # LED Helpers
-    # ---------------------------------------------------------
-    def _push_led(self):
-        # Der GSM sagt nur noch: "Hier ist der Status, verteil das mal!"
-        self.ui_handler.update_leds(self.led_state)
-    
+
     def bind_screen_manager(self, sm):
         self.screen_manager = sm
 
@@ -283,7 +242,6 @@ class GlobalStateManager:
     # ---------------------------------------------------------
     # Der neue, saubere Tick:
     def _global_update(self, dt):
-        # Alles delegiert an die Spezial-Engine
         self.data_flow.process_cycle()
 
     # ---------------------------------------------------------
@@ -293,7 +251,6 @@ class GlobalStateManager:
         return self.multi_key_engine.extract_active_keys(d)
 
     def refresh_all_headers(self):
-        # Nutzt jetzt den ui_handler
         self.ui_handler.refresh_broadcast_buttons()
 
 

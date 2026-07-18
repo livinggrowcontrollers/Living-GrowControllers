@@ -78,14 +78,10 @@ class OverlayCommandEngine:
     def process_command(self, mac, cmd_type, **kwargs):
         if cmd_type == "circulation_fan":
             return self.send_fan_command(mac, **kwargs)
-        elif cmd_type == "circulation_fan_range":
-            return self.send_fan_range(mac, **kwargs)
             
         # --- EXHAUST FAN LOGIK ---
         elif cmd_type == "exhaust_fan":
             return self.send_exhaust_command(mac, **kwargs)
-        elif cmd_type == "exhaust_fan_range":
-            return self.send_exhaust_range(mac, **kwargs)
             
         elif cmd_type == "light":
             return self.send_light_command(mac, **kwargs)

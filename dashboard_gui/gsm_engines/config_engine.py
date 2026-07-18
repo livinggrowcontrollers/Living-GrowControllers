@@ -28,7 +28,6 @@ class ConfigEngine:
         # (Wenn config.get_graph_smoothing_factor existiert)
         new_smoothing = getattr(config, 'get_graph_smoothing_factor', lambda: "N/A")()
 
-        self.gsm.trend_window = new_window
         self.gsm.max_history = new_window
         
         # 🔥 MODIFIZIERT: Statt nur rebuild_buffers rufen wir jetzt refresh_config auf
@@ -70,14 +69,14 @@ class ConfigEngine:
         current_id = self.gsm.get_active_device_id()
         device_list = ace.get_device_list()
         
-        # NEU: Wenn sich die Liste drastisch ändert, den RAM-Buffer leeren/forcieren
-        # Das verhindert, dass gelöschte Geräte im Datenstrom verbleiben
+        # Der Buffer filtert anhand der aktuellen Config.  Ein erneutes Laden
+        # entfernt gelöschte Geräte, ohne den Decoder-Fallback auf Platte zu
+        # zerstören.
         try:
             from dashboard_gui.data_buffer import BUFFER
-            BUFFER.clear() # Falls dein BUFFER eine .clear() oder .reset() Methode hat
-            # Alternativ falls keine Methode da ist: BUFFER._data = [] oder ähnlich
+            BUFFER.soft_reload()
         except Exception as buf_err:
-            print("[ConfigEngine] Could not hard-clear BUFFER:", buf_err)
+            print("[ConfigEngine] Could not reload BUFFER:", buf_err)
         
         if not device_list:
             ace.active_index = 0

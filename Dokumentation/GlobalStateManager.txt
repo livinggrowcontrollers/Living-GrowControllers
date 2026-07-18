@@ -1,0 +1,268 @@
+GLOBAL STATE MANAGER (GSM)
+==========================
+
+Zweck
+-----
+Der GlobalStateManager ist die zentrale Laufzeit-Fassade der Dashboard-App.
+Er besitzt langlebige Engines, startet den periodischen Datenzyklus und bietet
+der UI eine gemeinsame, schlanke API. Er ist kein Sammelplatz für Fachlogik.
+Neue Sensor-, Lüfter- oder Overlay-Logik gehört in die zuständige Engine oder
+in einen Protokoll-Adapter; der GSM koordiniert nur.
+
+Datei: dashboard_gui/global_state_manager.py
+Instanz: GLOBAL_STATE
+
+
+1. START UND LIFECYCLE
+----------------------
+Beim Import wird genau eine Instanz GLOBAL_STATE erzeugt. Der Konstruktor baut
+zuerst alle Engines auf, danach DataFlowEngine und erst dann den Kivy-Tick:
+
+    GlobalStateManager
+      -> Engines erzeugen
+      -> DataFlowEngine erzeugen
+      -> Clock.schedule_interval(_global_update, refresh_interval)
+
+Diese Reihenfolge ist ein Gesetz: Der Tick ruft data_flow.process_cycle() auf
+und darf nicht laufen, bevor die von ihm benutzten Engines existieren.
+
+main.py bindet den Kivy-ScreenManager später mit:
+
+    GLOBAL_STATE.bind_screen_manager(self.sm)
+
+Vorher ist screen_manager bewusst None. UIManager behandelt diesen Zustand
+sicher; ein früher Datenzyklus darf keinen Absturz verursachen.
+
+
+2. BESITZVERHÄLTNISSE / EINE WAHRHEIT
+-------------------------------------
+GLOBAL_STATE besitzt genau eine Instanz jeder Engine. Insbesondere existiert
+keine zweite globale ActiveChannelEngine mehr.
+
+    GLOBAL_STATE
+    ├── active_channel_engine  Gerät- und Kanalauswahl
+    ├── data_flow              laufender Datenzyklus
+    ├── graph_engine           Messhistorie, Glättung, Trends
+    ├── metrics_engine         Metriken -> GraphEngine / TileEngine
+    ├── tile_engine            aktive Fullscreen-Kacheln je Gerät/Kanal
+    ├── unit_engine            Einheiten je Metrik
+    ├── led_engine             Header-LED je Transportkanal
+    ├── overlay_engine         UI-Befehle -> WebClient / ESP
+    ├── gatt_engine            GATT-Bridge-Konfiguration
+    ├── broadcast_engine       Mixed-JSON-Broadcast
+    ├── mixed_engine           Sensor-Mittelwerte
+    ├── graph_control          Graph Start, Stop und Reset
+    ├── ui_handler             Screens, Navigation, Header-Updates
+    └── ggm                    globale Gesten
+
+Der GSM delegiert nur an den jeweiligen Besitzer:
+
+    get_active_channel()       -> active_channel_engine
+    get_graph_data()           -> graph_engine
+    get_unit() / set_unit()    -> unit_engine
+    send_overlay_command()     -> overlay_engine
+    global_start/stop/reset()  -> graph_control
+
+Regel: Keine bestehende Fachlogik in den GSM kopieren. Besser eine klare
+Methode an der zuständigen Engine ergänzen und bei Bedarf schlank delegieren.
+
+
+3. DATENPIPELINE
+----------------
+Pro Tick läuft folgende Pipeline:
+
+    Decoder-RAM / decoded.json
+        -> DataBuffer.soft_reload()
+        -> DataFlowEngine.process_cycle()
+        -> Hintergrundverarbeitung aller lebendigen Kanäle
+        -> MixedEngine
+        -> ausgewähltes Gerät + ausgewählter Kanal
+        -> sichtbarer Screen, Header und LED
+
+DataBuffer arbeitet RAM-first. decoded.json ist nur der Fallback beim Start,
+wenn der Decoder-RAM noch leer ist. Der Datenfluss darf decoded.json nicht
+löschen, um die UI zu aktualisieren.
+
+Die Hintergrundphase verarbeitet für jedes Gerät jeden lebendigen Kanal:
+
+    adv, webserver, gatt
+        -> MetricsEngine.process_metrics()
+        -> MetricsEngine.process_vpd_coords()
+
+Dadurch bleiben Graphen und Fullscreen-Kacheln auch für nicht ausgewählte
+Geräte oder Kanäle aktuell.
+
+Die Fokusphase sucht danach ausschließlich das gewählte Gerät und seinen
+gewählten Kanal. Für die UI entsteht eine Kopie des Decoder-Frames mit:
+
+    channel  = aktuell gewählter Kanal
+    latency  = Dauer seit dem letzten GSM-Tick
+
+Diese Werte dürfen nicht in den Decoder-RAM geschrieben werden. Decoder-RAM
+bleibt die Roh-Wahrheit der Pipeline; UI-Metadaten bleiben im UI-Paket.
+
+
+4. KANAL-WAHRHEIT
+-----------------
+Jeder Frame enthält drei getrennte Transportzustände:
+
+    frame["adv"]
+    frame["gatt"]
+    frame["webserver"]
+
+Der Root-Frame kann alive=True sein, obwohl GATT offline ist, weil ADV oder
+der Webserver lebt. Der Root-Status bedeutet nur:
+
+    "Mindestens ein Transport des Geräts lebt."
+
+Er darf nie für eine kanalbezogene Anzeige verwendet werden.
+
+Für den Header gilt deshalb exakt:
+
+    LED auf GATT -> frame["gatt"]["alive" / "status"]
+    LED auf ADV  -> frame["adv"]["alive" / "status"]
+    LED auf WEB  -> frame["webserver"]["alive" / "status"]
+
+So kann ein offline GATT niemals grün erscheinen, nur weil der Webserver oder
+ADV aktiv ist. Dieselbe Regel gilt für RSSI, Signalqualität und Kanal-Tiles.
+
+
+5. LED-PIPELINE
+---------------
+DataFlowEngine bewertet den ausgewählten Kanal:
+
+    Kanal offline                 -> LED offline
+    Webserver mit neuer timestamp  -> LED flow
+    ADV mit neuem raw-Paket        -> LED flow
+    GATT mit neuem packet_counter  -> LED flow
+    lebendiger Kanal ohne Neuheit  -> LED stale
+
+LedEngine speichert Zustände getrennt pro Kanal. ADV-flow und WEB-flow sind
+zwei unterschiedliche Ereignisse. Wiederholungen desselben Zustands desselben
+Kanals werden für die Performance unterdrückt. Ein Wechsel ADV -> WEB löst
+aber immer einen Header-Update aus, selbst bei gleicher Farbe.
+
+
+6. GERÄT- UND KANALAUSWAHL
+--------------------------
+ActiveChannelEngine ist alleiniger Besitzer von:
+
+    active_index     Index im konfigurierten Gerätebestand
+    active_channel   adv | gatt | webserver
+
+Der GSM bietet nur die öffentliche Bedienoberfläche:
+
+    set_active_channel(channel)
+    get_active_channel()
+    set_active_index(index)
+    next_device() / previous_device()
+    get_active_device_id()
+
+set_active_channel() startet danach sofort einen DataFlow-Zyklus. Die UI muss
+also nicht auf den nächsten Clock-Tick warten, um Header, Kacheln und LED des
+neu gewählten Kanals zu sehen.
+
+
+7. GRAPHEN, METRIKEN UND KACHELN
+--------------------------------
+MetricsEngine übersetzt Decoder-Werte in eindeutige Schlüssel:
+
+    <device_id>_<channel>_<metric>
+
+Beispiele:
+
+    E697..._webserver_temp_in
+    E697..._gatt_vpd_in
+
+GraphEngine besitzt Datenpuffer, Glättung, Downsampling und Trendrichtung.
+UnitEngine besitzt die Einheiten. TileEngine merkt sich, welche Metriken je
+(device_id, channel) tatsächlich vorhanden und damit fullscreen-fähig sind.
+
+Der vollständige Schlüssel mit Gerät und Kanal ist die Wahrheit. Unqualifizierte
+globale Metriknamen dürfen diese drei Engines nicht verbinden.
+
+
+8. OVERLAYS UND ESP-BEFEHLE
+---------------------------
+Overlays sprechen nicht direkt mit dem WebClient:
+
+    Overlay
+      -> GLOBAL_STATE.send_overlay_command(...)
+      -> OverlayCommandEngine.process_command(...)
+      -> WEB_CLIENT.send_control(...)
+      -> ESP
+
+OverlayCommandEngine ist die zentrale Routing-Stelle. Das Target-Revision-
+Prinzip aus Dokumentation/TargetRevisionSystem.txt gilt immer:
+
+    - UI sendet Zielwerte plus neue Revision.
+    - ESP übernimmt atomar und spiegelt die Revision zurück.
+    - "Synced" erst nach bestätigter Revision.
+
+Die generischen Umluftventilatoren verwenden zusätzlich
+dashboard_gui/circulation_fan_registry.py. Dieser Adapter normalisiert Fan 1
+bis Fan 3 für eine gemeinsame UI und verhindert dreifache Pflege.
+
+
+9. CONFIG-REFRESH
+-----------------
+GLOBAL_STATE.refresh_config() führt aus:
+
+    config.reload()
+      -> ConfigEngine.refresh()
+      -> Graph- und Timing-Einstellungen aktualisieren
+      -> Geräteliste und aktiven Index validieren
+      -> Screens kontrolliert zurücksetzen
+
+Ein Config-Refresh darf decoded.json nicht mit [] überschreiben. Ein
+DataBuffer.soft_reload() filtert die Daten anhand der aktuellen Konfiguration
+und entfernt damit gelöschte Geräte aus der UI, ohne den Decoder-Fallback zu
+zerstören.
+
+
+10. PERFORMANCE-REGELN
+----------------------
+Der GSM-Tick läuft mit config.get_refresh_interval() (typisch 0,1 Sekunden).
+Deshalb gilt:
+
+1. Keine Dateioperationen ohne Grund im Tick.
+2. Keine doppelten UI-Updates für denselben Zustand desselben Kanals.
+3. Decoder-RAM niemals für UI-Hilfswerte verändern.
+4. Hintergrundverarbeitung aller Kanäle beibehalten; nur die UI fokussiert
+   das aktive Gerät und den aktiven Kanal.
+5. Bei Optimierungen niemals Kanaltrennung oder Offline-Wahrheit opfern.
+
+Vor jeder Optimierung fragen: Ist der Zustand global, pro Gerät, pro Kanal
+oder nur Darstellung? Nur wirklich gleiche globale Zustände dürfen zusammen-
+gelegt werden.
+
+
+11. CHECKLISTE FÜR ÄNDERUNGEN
+-----------------------------
+- Gehört die neue Variable wirklich in den GSM oder in eine Engine?
+- Gibt es bereits eine bestehende Wahrheit für diesen Zustand?
+- Ist der Wert pro Gerät, pro Kanal oder global?
+- Bleibt Decoder-RAM frei von UI-spezifischen Werten?
+- Ist der Offline-Fall eindeutig offline und nicht aus einem anderen Kanal
+  abgeleitet?
+- Hält ein ESP-Befehl das Target-Revision-Prinzip ein?
+- Läuft der Code sicher, bevor ein ScreenManager gebunden wurde?
+- Liegt der Code im 100-ms-Tick? Dann keine unnötigen Allocations,
+  Dateizugriffe oder UI-Updates ergänzen.
+
+
+WICHTIGE DATEIEN
+----------------
+dashboard_gui/global_state_manager.py
+dashboard_gui/gsm_engines/data_flow_engine.py
+dashboard_gui/gsm_engines/active_channel_engine.py
+dashboard_gui/gsm_engines/led_engine.py
+dashboard_gui/gsm_engines/metrics_engine.py
+dashboard_gui/gsm_engines/graph_engine.py
+dashboard_gui/gsm_engines/tile_engine.py
+dashboard_gui/gsm_engines/overlay_command_engine.py
+dashboard_gui/gsm_engines/config_engine.py
+dashboard_gui/ui/common/header_online.py
+dashboard_gui/data_buffer.py
+Dokumentation/Decoder.txt
+Dokumentation/TargetRevisionSystem.txt

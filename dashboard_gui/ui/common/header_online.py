@@ -209,6 +209,12 @@ class HeaderBar(BoxLayout):
             color=(0.7, 0.7, 0.7, 1),
             font_size=sp_scaled(18)
         )
+        self.capability_widgets = {
+            "light": self.light, "exhaust_fan": self.exhaust_fan, "broadcast": self.btn_broadcast,
+            "battery": self.battery, "external": self.external, "external2": self.external2,
+            "climate_hub": self.climate_hub, "push_message": self.push_message,
+            **{f"circulation_fan_{fan_id}": widget for fan_id, widget in self.circulation_fans.items()},
+        }
         
         # Clock
         self.lbl_clock = Label(
@@ -484,11 +490,12 @@ class HeaderBar(BoxLayout):
 
         
         health = frame.get("health", {})
+        ch_name = frame.get("channel", "adv")
+        selected_channel = frame.get(ch_name, {})
     
         # DEVICE LABEL bleibt wie es ist
         mac = frame.get("device_id")
         label = GLOBAL_STATE.get_device_label(mac) if mac else "---"
-        ch_name = frame.get("channel", "adv")
         tag = "WEB" if ch_name == "webserver" else ch_name.upper()
         self.lbl_dev.text = f"[font=FA]\uf2c7[/font]  {label} [color=777777]· {tag}[/color]"
     
@@ -518,8 +525,12 @@ class HeaderBar(BoxLayout):
             health.get("external2", {}).get("present")
             or web_ch.get("external2", {}).get("present", False)
         )
-        self._state["led_alive"] = frame.get("alive", False)
-        self._state["led_status"] = frame.get("status", "offline")
+        # The root frame describes whether *any* transport is alive.  The
+        # header LED, however, represents the currently selected channel.
+        # Using the root state made a disconnected GATT channel appear green
+        # whenever ADV or Webserver was online.
+        self._state["led_alive"] = bool(selected_channel.get("alive", False))
+        self._state["led_status"] = selected_channel.get("status", "offline")
     
         # EIN EINZIGER APPLY
         self._apply_state()

@@ -482,11 +482,17 @@ class DeviceRow(BoxLayout):
 
         if cap_type == "light" and hasattr(header, "light"):
             header.light.on_touch_down(self._make_header_touch(header.light))
-        elif cap_type == "circulation_fan" and hasattr(header, "circulation_fan"):
-            header.circulation_fan.on_touch_down(self._make_header_touch(header.circulation_fan))
+        elif cap_type.startswith("circulation_fan_") and hasattr(header, "circulation_fans"):
+            try:
+                fan_id = int(cap_type.rsplit("_", 1)[1])
+                fan = header.circulation_fans.get(fan_id)
+            except (ValueError, AttributeError):
+                fan = None
+            if fan:
+                fan.on_touch_down(self._make_header_touch(fan))
         elif cap_type == "exhaust_fan" and hasattr(header, "exhaust_fan"):
             header.exhaust_fan.on_touch_down(self._make_header_touch(header.exhaust_fan))
-        elif cap_type == "climate" and hasattr(header, "climate_hub"):
+        elif cap_type == "climate_hub" and hasattr(header, "climate_hub"):
             header.climate_hub.on_touch_down(self._make_header_touch(header.climate_hub))
         elif cap_type == "battery" and hasattr(header, "battery"):
             # Battery icon has no overlay in HeaderBar; only refresh the widget state.

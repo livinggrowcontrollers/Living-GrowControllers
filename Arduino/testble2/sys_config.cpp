@@ -10,12 +10,6 @@ SystemConfig sysConfig = {
     /* pin_circ_fan */ 45,
     /* pin_circ_tacho */ 2,
     /* pin_circ_tacho_pull */ 1,
-    /* pin_circ_fan2 */ -1,
-    /* pin_circ_tacho2 */ -1,
-    /* pin_circ_tacho2_pull */ 1,
-    /* pin_circ_fan3 */ -1,
-    /* pin_circ_tacho3 */ -1,
-    /* pin_circ_tacho3_pull */ 1,
 // PATCHER END: CIRCULATION_CONFIG_DEFAULTS
 
 

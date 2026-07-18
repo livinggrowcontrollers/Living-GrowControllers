@@ -3,8 +3,6 @@
 #include "sensor.h"
 // PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
-#include "circulation_fan2.h"
-#include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
 #include "light_control.h"
@@ -116,8 +114,6 @@ void handleData() {
 
     // PATCHER BEGIN: CIRCULATION_GET_STATUS
     circulation_fan_get_status(obj);
-    circulation_fan2_get_status(obj);
-    circulation_fan3_get_status(obj);
 // PATCHER END: CIRCULATION_GET_STATUS
     
     // Aufruf matcht jetzt exakt mit dem Prototyp aus plant_planner.h
@@ -152,8 +148,6 @@ void handleControlJSON() {
         exhaust_fan_process_json(obj); 
         // PATCHER BEGIN: CIRCULATION_JSON_UPDATE
         circulation_fan_process_json(obj);
-        circulation_fan2_process_json(obj);
-        circulation_fan3_process_json(obj);
 // PATCHER END: CIRCULATION_JSON_UPDATE
         plant_planner_process_json(obj);
         light_control_process_json(obj);            

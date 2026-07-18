@@ -21,12 +21,6 @@ struct SystemConfig {
     int pin_circ_fan;
     int pin_circ_tacho;
     int pin_circ_tacho_pull;
-    int pin_circ_fan2;
-    int pin_circ_tacho2;
-    int pin_circ_tacho2_pull;
-    int pin_circ_fan3;
-    int pin_circ_tacho3;
-    int pin_circ_tacho3_pull;
 // PATCHER END: CIRCULATION_CONFIG
 
 

@@ -5,6 +5,9 @@ class UIManager:
         self.gsm = gsm  # Rückreferenz auf den Boss (GSM)
         self.broadcast_buttons = [] # Alle Screen-Referenzen zentral hier
         self.active_inspector = None
+        self.active_light_overlay = None
+        self.active_circulation_fan_overlay = None
+        self.active_exhaust_fan_overlay = None
         # -------------------------------------------------
         # Navigation History
         # -------------------------------------------------
@@ -141,18 +144,15 @@ class UIManager:
         for btn in self.broadcast_buttons:
             btn.refresh()
 
-    def refresh_all_headers(self):
-        for name, ref in self.screens.items(): # Gefixt: ui_handler -> self.screens
-            if ref and hasattr(ref, 'header'):
-                if hasattr(ref.header, "btn_broadcast"):
-                    ref.header.btn_broadcast._refresh_state()
-
     def update_active_screen(self, screen_manager, data_packet):
         """Sendet Daten nur an den aktuell sichtbaren Screen."""
+        if screen_manager is None:
+            return
+
         current_name = screen_manager.current
         current_scr = screen_manager.get_screen(current_name)
-        
-        if hasattr(current_scr, 'update_from_global'):
+
+        if current_scr and hasattr(current_scr, 'update_from_global'):
             current_scr.update_from_global(data_packet)
 
     def register_broadcast_button(self, btn):
@@ -165,8 +165,7 @@ class UIManager:
             self.broadcast_buttons.remove(btn)
 
     def get_device_label(self, dev_id):
-        from dashboard_gui.global_state_manager import ACTIVE_CHANNEL_ENGINE
-        return ACTIVE_CHANNEL_ENGINE.get_device_label(dev_id)
+        return self.gsm.active_channel_engine.get_device_label(dev_id)
 
     def reset_all_screens(self):
         """Ruft auf JEDEM registrierten Screen die Reset-Logik auf."""

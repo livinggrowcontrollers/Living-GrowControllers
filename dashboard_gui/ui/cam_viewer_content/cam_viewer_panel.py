@@ -137,9 +137,10 @@ class CamViewerPanel(BoxLayout):
     
         self._log(f"🌐 Browser: {self.stream_url} wird geöffnet.")
 
-        # 🔥 Direkt ins Dashboard springen, immer!
-        if GLOBAL_STATE.dashboard_ref and GLOBAL_STATE.dashboard_ref.manager:
-            GLOBAL_STATE.dashboard_ref.manager.current = "dashboard"
+        # Der ScreenManager ist die zentrale Navigation-Referenz.
+        screen_manager = getattr(GLOBAL_STATE, "screen_manager", None)
+        if screen_manager:
+            screen_manager.current = "dashboard"
 
     def stop(self):
         self.player.show_stopped()

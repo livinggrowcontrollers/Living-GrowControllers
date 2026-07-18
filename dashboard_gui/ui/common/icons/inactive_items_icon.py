@@ -5,6 +5,7 @@ from kivy.app import App
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.overlays.inactive_items_overlay import InactiveItemsOverlay
+from dashboard_gui.ui.common.header_capabilities import build_header_capabilities
 
 class InactiveItemsIcon(BoxLayout):
     def __init__(self, **kw):
@@ -50,58 +51,19 @@ class InactiveItemsIcon(BoxLayout):
     
 
     def update_from_header(self, header):
-        state = header._state
         items = []
-
-        def get_icon_props(widget, default_char=""):
-            target = getattr(widget, 'icon', widget)
-            return (
-                getattr(target, 'text', default_char),
-                getattr(target, 'font_name', 'FA'),
-                getattr(target, 'color', (0.6, 0.6, 0.6, 1))
-            )
-
-        def handle(widget, is_active, name, default_icon, width):
-            if not is_active:
-                t, f, c = get_icon_props(widget, default_icon)
-                items.append((name, t, f, c))
+        widgets = header.capability_widgets
+        for capability in build_header_capabilities(header._state, header.push_message.is_active()):
+            widget = widgets[capability["id"]]
+            if not capability["enabled"]:
+                items.append((capability["label"], capability["icon"], "FA", capability["color"]))
                 widget.opacity = 0
                 widget.disabled = True
                 widget.width = 0
             else:
                 widget.opacity = 1
                 widget.disabled = False
-                widget.width = width
-
-        # --- LOGIK ---
-        handle(header.light, state.get("light") is not None, "Light Control", "\uf0eb", dp_scaled(40))
-
-        for fan_id, widget in header.circulation_fans.items():
-            fan = state.get("circulation_fans", {}).get(fan_id, {})
-            handle(widget, bool(fan.get("enabled")), f"Circulation Fan {fan_id}", "\uf863", dp_scaled(40))
-
-        handle(header.exhaust_fan, state.get("exhaust_fan_rpm") is not None,
-            "Exhaust Fan", "\uf863", dp_scaled(40))
-
-        handle(header.btn_broadcast, state.get("broadcast_available"),
-            "Broadcast", "\uf09e", dp_scaled(40))
-
-        handle(header.battery, state.get("battery") is not None,
-            "Battery", "\uf244", dp_scaled(70))
-
-        handle(header.external, state.get("external"),
-            "External Sensor", "\uf2c9", dp_scaled(75))
-
-        handle(header.external2, state.get("external2"),
-            "External Sensor 2", "\uf2c9", dp_scaled(75))
-
-        handle(header.climate_hub, state.get("climate_hub"),
-            "Climate Hub", "\uf0c2", dp_scaled(40))
-
-        # Push separat (weil Methode)
-        push_active = getattr(header.push_message, 'is_active', lambda: False)()
-        handle(header.push_message, push_active,
-            "Push Messages", "\uf0f3", dp_scaled(40))
+                widget.width = dp_scaled(70) if capability["id"] == "battery" else dp_scaled(75) if capability["id"] in {"external", "external2"} else dp_scaled(40)
 
         # --- ICON SELBST ---
         self.update_items(items)
