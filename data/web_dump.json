@@ -2,18 +2,18 @@
   "827482CC-A977-43D7-835E-8E8B6978E66A": {
     "health": {
       "signal": {
-        "rssi": -73
+        "rssi": -72
       }
     },
     "rtc_found": false,
     "rtc_time": "offline",
-    "system_time": "22:39:12",
+    "system_time": "22:55:30",
     "temp_in": -256,
     "temp_ext": -256,
     "humid_ext": -256,
     "humid_in": -256,
     "leaf_temp": -256,
-    "vbat": 1.296,
+    "vbat": 0,
     "rev": 0,
     "hostname": "growmaster-1d3c",
     "ip_address": "192.168.2.39",
@@ -29,7 +29,7 @@
     "target_humidity_max": 70,
     "target_vpd_min": 0.8,
     "target_vpd_max": 1.5,
-    "rev_exhaust": 330,
+    "rev_exhaust": 355,
     "plant_phase": 2,
     "exhaust_fan_chaos_active": false,
     "exhaust_fan_state_reason_1": "sensor_fail",
@@ -37,22 +37,10 @@
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 47,
+    "circulation_fan_speed_now": 49,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
-    "rev_circfan": 324,
-    "circulation_fan2_rpm": -256,
-    "circulation_fan2_pct": -256,
-    "circulation_fan2_speed_now": -256,
-    "circulation_fan2_min": -256,
-    "circulation_fan2_mode": "off",
-    "rev_circfan2": 0,
-    "circulation_fan3_rpm": -256,
-    "circulation_fan3_pct": -256,
-    "circulation_fan3_speed_now": -256,
-    "circulation_fan3_min": -256,
-    "circulation_fan3_mode": "off",
-    "rev_circfan3": 0,
+    "rev_circfan": 349,
     "rev_plant_planner": 0,
     "light_pct": 0,
     "light_target": 0,
@@ -68,14 +56,14 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 43449,
-    "fw_ver": "v2.8.6-github_test",
+    "uptime_esp_s": 661,
+    "fw_ver": "v2.8.6-singlefan",
     "ip": "192.168.2.39",
     "ssid": "Cudy-Indoor",
-    "rssi": -73,
-    "free_heap": 148592,
-    "max_alloc": 106484,
-    "heap_usage": 176116,
+    "rssi": -72,
+    "free_heap": 155900,
+    "max_alloc": 110580,
+    "heap_usage": 169224,
     "boot_cause": "Software Reboot",
     "rev_grow": 16,
     "wifi_mode": 1,
@@ -84,12 +72,6 @@
       "p_c_fan": 45,
       "p_c_tac": 2,
       "p_c_tac_pull": 1,
-      "p_c_fan2": -1,
-      "p_c_tac2": -1,
-      "p_c_tac2_pull": 1,
-      "p_c_fan3": -1,
-      "p_c_tac3": -1,
-      "p_c_tac3_pull": 1,
       "p_e_fan": 47,
       "p_e_tac": 1,
       "p_light": 21,
@@ -105,20 +87,25 @@
     "ble_scan_enabled": true,
     "ble_sensors": {
       "outside": {
-        "ble_temp_outside": 26.13,
-        "ble_humid_outside": 40.28,
+        "ble_temp_outside": 26.04,
+        "ble_humid_outside": 40.44,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
       "inside": {
-        "ble_temp_inside": 23.75,
-        "ble_humid_inside": 42.625,
+        "ble_temp_inside": 24,
+        "ble_humid_inside": 42.3125,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
-      "discovered_devices": []
+      "discovered_devices": [
+        {
+          "name": "ThermoBeacon2",
+          "mac": "f0:f1:00:00:06:19"
+        }
+      ]
     },
     "ota": {
       "ota_rev": 82629,
@@ -421,23 +408,23 @@
         }
       ]
     },
-    "timestamp": 1784407152.2397
+    "timestamp": 1784408130.480447
   },
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "health": {
       "signal": {
-        "rssi": -60
+        "rssi": -54
       }
     },
     "rtc_found": true,
-    "rtc_time": "22:39:11",
-    "system_time": "22:39:11",
-    "temp_in": 24.68,
-    "temp_ext": 24.33,
-    "humid_ext": 43.15,
-    "humid_in": 42.8,
+    "rtc_time": "22:55:30",
+    "system_time": "22:55:30",
+    "temp_in": 24.71,
+    "temp_ext": 24.46,
+    "humid_ext": 43,
+    "humid_in": 42.79,
     "leaf_temp": -256,
-    "vbat": 3.858,
+    "vbat": 4.548,
     "rev": 0,
     "hostname": "growmaster-d064",
     "ip_address": "192.168.2.20",
@@ -453,7 +440,7 @@
     "target_humidity_max": 70,
     "target_vpd_min": 0.8,
     "target_vpd_max": 2.6,
-    "rev_exhaust": 340,
+    "rev_exhaust": 367,
     "plant_phase": 2,
     "exhaust_fan_chaos_active": false,
     "exhaust_fan_state_reason_1": "idle_balanced",
@@ -461,23 +448,11 @@
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 50,
+    "circulation_fan_speed_now": 41,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
-    "rev_circfan": 334,
-    "circulation_fan2_rpm": -256,
-    "circulation_fan2_pct": -256,
-    "circulation_fan2_speed_now": -256,
-    "circulation_fan2_min": -256,
-    "circulation_fan2_mode": "off",
-    "rev_circfan2": 0,
-    "circulation_fan3_rpm": -256,
-    "circulation_fan3_pct": -256,
-    "circulation_fan3_speed_now": -256,
-    "circulation_fan3_min": -256,
-    "circulation_fan3_mode": "off",
-    "rev_circfan3": 0,
-    "rev_plant_planner": 4,
+    "rev_circfan": 361,
+    "rev_plant_planner": 5,
     "light_pct": 0,
     "light_target": 0,
     "light_mode": "manual",
@@ -492,14 +467,14 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 33051,
-    "fw_ver": "v2.8.6-multifan",
+    "uptime_esp_s": 424,
+    "fw_ver": "v2.8.6-singlefan",
     "ip": "192.168.2.20",
     "ssid": "Cudy-Indoor",
-    "rssi": -60,
-    "free_heap": 154108,
-    "max_alloc": 110580,
-    "heap_usage": 170600,
+    "rssi": -54,
+    "free_heap": 150648,
+    "max_alloc": 106484,
+    "heap_usage": 174476,
     "boot_cause": "Software Reboot",
     "rev_grow": 9,
     "wifi_mode": 1,
@@ -508,12 +483,6 @@
       "p_c_fan": 45,
       "p_c_tac": 2,
       "p_c_tac_pull": 1,
-      "p_c_fan2": -1,
-      "p_c_tac2": -1,
-      "p_c_tac2_pull": 1,
-      "p_c_fan3": -1,
-      "p_c_tac3": -1,
-      "p_c_tac3_pull": 1,
       "p_e_fan": 47,
       "p_e_tac": 1,
       "p_light": 21,
@@ -529,15 +498,15 @@
     "ble_scan_enabled": true,
     "ble_sensors": {
       "outside": {
-        "ble_temp_outside": 26.13,
-        "ble_humid_outside": 40.28,
+        "ble_temp_outside": 26.04,
+        "ble_humid_outside": 40.44,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
       "inside": {
-        "ble_temp_inside": 23.75,
-        "ble_humid_inside": 42.625,
+        "ble_temp_inside": 24,
+        "ble_humid_inside": 42.375,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
@@ -545,13 +514,13 @@
       "discovered_devices": []
     },
     "ota": {
-      "ota_rev": 63473,
+      "ota_rev": 7558,
       "status": "IDLE",
       "progress": 0,
       "error_msg": ""
     },
     "plant_planner": {
-      "rev_plant_planner": 4,
+      "rev_plant_planner": 5,
       "plants": [
         {
           "slot": 0,
@@ -569,7 +538,7 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 2,
+          "picture": 4,
           "last_watered": 1784348170,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
@@ -845,6 +814,6 @@
         }
       ]
     },
-    "timestamp": 1784407144.0973482
+    "timestamp": 1784408130.480447
   }
 }

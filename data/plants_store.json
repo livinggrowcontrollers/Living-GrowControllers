@@ -1,7 +1,7 @@
 {
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 4,
+      "rev_plant_planner": 5,
       "plants": [
         {
           "slot": 0,
@@ -19,7 +19,7 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 2,
+          "picture": 4,
           "last_watered": 1784348170,
           "last_fertilized": 0,
           "estimated_veg_days": 30,

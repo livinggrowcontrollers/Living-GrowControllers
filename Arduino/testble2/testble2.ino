@@ -9,6 +9,8 @@
 
 // PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
+#include "circulation_fan2.h"
+#include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 
 #include "exhaust_fan.h" 
@@ -123,6 +125,16 @@ void setup() {
     } else {
         circulation_fan_init(sysConfig.pin_circ_fan, sysConfig.pin_circ_tacho);
     }
+    if (sysConfig.pin_circ_fan2 == -1 || sysConfig.pin_circ_tacho2 == -1) {
+        Serial.println("Circulation Fan2 disabled (sysConfig). ");
+    } else {
+        circulation_fan2_init(sysConfig.pin_circ_fan2, sysConfig.pin_circ_tacho2);
+    }
+    if (sysConfig.pin_circ_fan3 == -1 || sysConfig.pin_circ_tacho3 == -1) {
+        Serial.println("Circulation Fan3 disabled (sysConfig). ");
+    } else {
+        circulation_fan3_init(sysConfig.pin_circ_fan3, sysConfig.pin_circ_tacho3);
+    }
 // PATCHER END: CIRCULATION_INIT
 
     if (sysConfig.pin_exh_fan == -1 || sysConfig.pin_exh_tacho == -1) {
@@ -189,6 +201,8 @@ void loop() {
         
     // PATCHER BEGIN: CIRCULATION_UPDATE
     circulation_fan_update();
+    circulation_fan2_update();
+    circulation_fan3_update();
 // PATCHER END: CIRCULATION_UPDATE
         
     

@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 # The one normal setting for interactive use.  Valid values: 1, 2 or 3.
-DEFAULT_INSTANCE_COUNT = 1
+DEFAULT_INSTANCE_COUNT = 3
 MAX_INSTANCE_COUNT = 3
 
 ROOT = Path(__file__).resolve().parent

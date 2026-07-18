@@ -19,6 +19,8 @@
 #include "hardware_init.h"
 // PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
+#include "circulation_fan2.h"
+#include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
 #include "light_control.h"
@@ -60,6 +62,12 @@ void grow_controller_init() {
     sysConfig.pin_circ_fan = growPrefs.getInt("p_c_fan", sysConfig.pin_circ_fan);
     sysConfig.pin_circ_tacho = growPrefs.getInt("p_c_tac", sysConfig.pin_circ_tacho);
     sysConfig.pin_circ_tacho_pull = growPrefs.getInt("p_c_tac_pull", sysConfig.pin_circ_tacho_pull);
+    sysConfig.pin_circ_fan2 = growPrefs.getInt("p_c_fan2", sysConfig.pin_circ_fan2);
+    sysConfig.pin_circ_tacho2 = growPrefs.getInt("p_c_tac2", sysConfig.pin_circ_tacho2);
+    sysConfig.pin_circ_tacho2_pull = growPrefs.getInt("p_c_tac2_pull", sysConfig.pin_circ_tacho2_pull);
+    sysConfig.pin_circ_fan3 = growPrefs.getInt("p_c_fan3", sysConfig.pin_circ_fan3);
+    sysConfig.pin_circ_tacho3 = growPrefs.getInt("p_c_tac3", sysConfig.pin_circ_tacho3);
+    sysConfig.pin_circ_tacho3_pull = growPrefs.getInt("p_c_tac3_pull", sysConfig.pin_circ_tacho3_pull);
 // PATCHER END: CIRCULATION_PREFS_LOAD
     sysConfig.pin_exh_fan      = growPrefs.getInt("p_e_fan", sysConfig.pin_exh_fan);
     sysConfig.pin_exh_tacho    = growPrefs.getInt("p_e_tac", sysConfig.pin_exh_tacho);
@@ -275,6 +283,42 @@ void grow_controller_process_json(JsonObject doc) {
         sysConfig.pin_circ_tacho = v;
         gpio_changed = true;
     }
+    if (doc.containsKey("p_c_fan2")) {
+        int v = doc["p_c_fan2"];
+        growPrefs.putInt("p_c_fan2", v);
+        sysConfig.pin_circ_fan2 = v;
+        gpio_changed = true;
+    }
+    if (doc.containsKey("p_c_tac2_pull")) {
+        int v = doc["p_c_tac2_pull"];
+        growPrefs.putInt("p_c_tac2_pull", v);
+        sysConfig.pin_circ_tacho2_pull = v;
+        gpio_changed = true;
+    }
+    if (doc.containsKey("p_c_tac2")) {
+        int v = doc["p_c_tac2"];
+        growPrefs.putInt("p_c_tac2", v);
+        sysConfig.pin_circ_tacho2 = v;
+        gpio_changed = true;
+    }
+    if (doc.containsKey("p_c_fan3")) {
+        int v = doc["p_c_fan3"];
+        growPrefs.putInt("p_c_fan3", v);
+        sysConfig.pin_circ_fan3 = v;
+        gpio_changed = true;
+    }
+    if (doc.containsKey("p_c_tac3_pull")) {
+        int v = doc["p_c_tac3_pull"];
+        growPrefs.putInt("p_c_tac3_pull", v);
+        sysConfig.pin_circ_tacho3_pull = v;
+        gpio_changed = true;
+    }
+    if (doc.containsKey("p_c_tac3")) {
+        int v = doc["p_c_tac3"];
+        growPrefs.putInt("p_c_tac3", v);
+        sysConfig.pin_circ_tacho3 = v;
+        gpio_changed = true;
+    }
 // PATCHER END: CIRCULATION_PREFS_SAVE
 
     if (doc.containsKey("p_e_fan")) {
@@ -354,6 +398,8 @@ void grow_controller_process_json(JsonObject doc) {
         hardware_reconfigure();
         // PATCHER BEGIN: CIRCULATION_RECONFIGURE
         circulation_fan_reconfigure();
+        circulation_fan2_reconfigure();
+        circulation_fan3_reconfigure();
 // PATCHER END: CIRCULATION_RECONFIGURE
         exhaust_fan_reconfigure();
         light_reconfigure();
@@ -413,6 +459,12 @@ void grow_controller_get_status(JsonObject doc) {
     doc["gpios"]["p_c_fan"] = sysConfig.pin_circ_fan;
     doc["gpios"]["p_c_tac"] = sysConfig.pin_circ_tacho;
     doc["gpios"]["p_c_tac_pull"] = sysConfig.pin_circ_tacho_pull;
+    doc["gpios"]["p_c_fan2"] = sysConfig.pin_circ_fan2;
+    doc["gpios"]["p_c_tac2"] = sysConfig.pin_circ_tacho2;
+    doc["gpios"]["p_c_tac2_pull"] = sysConfig.pin_circ_tacho2_pull;
+    doc["gpios"]["p_c_fan3"] = sysConfig.pin_circ_fan3;
+    doc["gpios"]["p_c_tac3"] = sysConfig.pin_circ_tacho3;
+    doc["gpios"]["p_c_tac3_pull"] = sysConfig.pin_circ_tacho3_pull;
 // PATCHER END: CIRCULATION_GPIO_EXPORT
     gpios["p_e_fan"] = sysConfig.pin_exh_fan;
     gpios["p_e_tac"] = sysConfig.pin_exh_tacho;
