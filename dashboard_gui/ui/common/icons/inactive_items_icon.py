@@ -76,8 +76,9 @@ class InactiveItemsIcon(BoxLayout):
         # --- LOGIK ---
         handle(header.light, state.get("light") is not None, "Light Control", "\uf0eb", dp_scaled(40))
 
-        handle(header.circulation_fan, state.get("circulation_fan_rpm") is not None,
-            "Circulation Fan", "\uf863", dp_scaled(40))
+        for fan_id, widget in header.circulation_fans.items():
+            fan = state.get("circulation_fans", {}).get(fan_id, {})
+            handle(widget, bool(fan.get("enabled")), f"Circulation Fan {fan_id}", "\uf863", dp_scaled(40))
 
         handle(header.exhaust_fan, state.get("exhaust_fan_rpm") is not None,
             "Exhaust Fan", "\uf863", dp_scaled(40))

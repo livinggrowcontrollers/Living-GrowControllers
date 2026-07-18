@@ -17,6 +17,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.behaviors import ButtonBehavior
 from dashboard_gui.ui.common.image_viewer import ZoomableImagePopup
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
+from dashboard_gui.circulation_fan_registry import MAX_CIRCULATION_FANS, fan_gpio_keys
 
 PINOUT_PIC = os.path.join(
     ASSET_ROOT,
@@ -107,12 +108,18 @@ class GpioSettingsPanel(BoxLayout):
         self.add_widget(cols_container)
 
         self.current_gpios = getattr(self.screen, 'live_gpios', {})
+        circulation_definitions = []
+        for fan_id in range(1, MAX_CIRCULATION_FANS + 1):
+            pwm, tacho, pull = fan_gpio_keys(fan_id)
+            circulation_definitions.extend((
+                (f"Circulation Fan {fan_id} (PWM)", pwm),
+                (f"Circulation Fan {fan_id} Tacho", tacho),
+                (f"Circulation Fan {fan_id} Pull", pull),
+            ))
+
         self.gpio_definitions = [
             ("Reset Button", "p_reset"),
-
-            ("Circulation Fan (Umluft)", "p_c_fan"),
-            ("Circulation Tacho", "p_c_tac"),
-            ("Circulation Pull", "p_c_tac_pull"),
+            *circulation_definitions,
 
             ("Exhaust Fan (Abluft)", "p_e_fan"),
             ("Exhaust Tacho", "p_e_tac"),
@@ -171,10 +178,10 @@ class GpioSettingsPanel(BoxLayout):
     def build_rows(self):
 
         PULL_KEYS = {
-            "p_c_tac_pull",
             "p_e_tac_pull",
             "p_bat_pull",
         }
+        PULL_KEYS.update(fan_gpio_keys(fan_id)[2] for fan_id in range(1, MAX_CIRCULATION_FANS + 1))
         available_gpios = [-1] + list(range(0, 34)) + list(range(34, 49))
         self.left_grid.clear_widgets()
         self.right_grid.clear_widgets()
@@ -295,10 +302,6 @@ class GpioSettingsPanel(BoxLayout):
         defaults = {
             "p_reset": 7,
 
-            "p_c_fan": 45,
-            "p_c_tac": 2,
-            "p_c_tac_pull": 1,
-
             "p_e_fan": 47,
             "p_e_tac": 1,
             "p_e_tac_pull": 1,
@@ -315,6 +318,9 @@ class GpioSettingsPanel(BoxLayout):
             "p_bat_pull": 0,
         
         }
+        for fan_id in range(1, MAX_CIRCULATION_FANS + 1):
+            pwm, tacho, pull = fan_gpio_keys(fan_id)
+            defaults.update({pwm: 45 if fan_id == 1 else -1, tacho: 2 if fan_id == 1 else -1, pull: 1})
         self.is_dirty = True
         for key, val in defaults.items():
             self.selected_gpios[key] = int(val)
@@ -475,10 +481,10 @@ class GpioSettingsPanel(BoxLayout):
 
         # PULL-FELDER EXPLIZIT ÜBERNEHMEN
         PULL_KEYS = {
-            "p_c_tac_pull",
             "p_e_tac_pull",
             "p_bat_pull",
         }
+        PULL_KEYS.update(fan_gpio_keys(fan_id)[2] for fan_id in range(1, MAX_CIRCULATION_FANS + 1))
 
         for key in PULL_KEYS:
 

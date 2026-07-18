@@ -5,6 +5,7 @@ Pin matrix and validator for grow controller GPIO assignments.
 EXCLUSIVELY DESIGNED FOR: Diymore / Espressif ESP32-S3 DevKitC-1 N16R8 (Octal Flash/PSRAM)
 """
 from typing import Tuple, Dict, Any
+from dashboard_gui.circulation_fan_registry import MAX_CIRCULATION_FANS, fan_gpio_keys
 
 # Roles
 ROLE_DIGITAL_IN = "INPUT"
@@ -69,6 +70,11 @@ REQUIRED_ROLES = {
     "p_rtc_scl": ROLE_I2C,
     "p_bat":     ROLE_ANALOG
 }
+
+for _fan_id in range(1, MAX_CIRCULATION_FANS + 1):
+    _pwm, _tacho, _pull = fan_gpio_keys(_fan_id)
+    REQUIRED_ROLES[_pwm] = ROLE_PWM
+    REQUIRED_ROLES[_tacho] = ROLE_DIGITAL_IN
 
 def validate_and_build_pins(current_device_data: Dict[str, Any], new_kwargs: Dict[str, Any]) -> Tuple[bool, Any]:
     current_gpios = current_device_data.get("gpios", {}) if current_device_data else {}

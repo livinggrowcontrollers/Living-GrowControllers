@@ -2,6 +2,7 @@
 import time
 import config
 import calculator
+from dashboard_gui.circulation_fan_registry import add_normalized_fans
 from decoders.binary_parser import load_profile, decode_with_profile
 
 def offline_channel_frame(raw_hex=None):
@@ -149,6 +150,7 @@ def build_web_telemetry(web_dec, current_web, unit):
     for key, value in current_web.items():
         if key not in BLACKLIST and key not in web_dec:
             web_dec[key] = value
+    add_normalized_fans(current_web, web_dec)
 
 def offline_frame(mac, now, bridge_alive, bridge_status, bridge_last_seen):
     unit = f"°{config.get_temperature_unit().upper()}"

@@ -33,6 +33,7 @@ from dashboard_gui.ui.common.icons.external2_icon import External2Icon
 from dashboard_gui.ui.common.icons.push_message_icon import PushMessageIcon
 from dashboard_gui.ui.common.icons.climate_hub_control import ClimateHubControl
 from dashboard_gui.ui.common.icons.inactive_items_icon import InactiveItemsIcon
+from dashboard_gui.circulation_fan_registry import fan_snapshot
 
 
 #--------------------------------------------------------
@@ -68,6 +69,7 @@ class HeaderBar(BoxLayout):
             "led_alive": False,
             "led_status": "offline",
             "circulation_fan_rpm": None,
+            "circulation_fans": {},
             "exhaust_fan_rpm": None,
             "climate_hub": False,
             "broadcast": False
@@ -152,11 +154,11 @@ class HeaderBar(BoxLayout):
         self.external2.width = dp_scaled(75)  # Gleichmäßige Breite
 
         # Circulation Fan
-        self.circulation_fan = CirculationFanControl(
-            parent_header=self,
-            size_hint=(None, 1),
-            width=dp_scaled(40)  # Gleichmäßige Breite
-        )
+        self.circulation_fans = {
+            fan_id: CirculationFanControl(parent_header=self, fan_id=fan_id, size_hint=(None, 1), width=dp_scaled(40))
+            for fan_id in (1, 2, 3)
+        }
+        self.circulation_fan = self.circulation_fans[1]  # Rückwärtskompatibilität
         
         # Exhaust Fan
         self.exhaust_fan = ExhaustFanControl(
@@ -253,7 +255,8 @@ class HeaderBar(BoxLayout):
         
         self.add_widget(self.climate_hub)
         self.add_widget(self.light)
-        self.add_widget(self.circulation_fan)
+        for fan in self.circulation_fans.values():
+            self.add_widget(fan)
         self.add_widget(self.exhaust_fan)
         self.add_widget(self.btn_broadcast)
         self.add_widget(self.led)
@@ -314,7 +317,8 @@ class HeaderBar(BoxLayout):
         self.external2.set_external2(s["external2"])
         self.led.set_state(s["led_alive"], s["led_status"])
             # 🔥 FANS FIX
-        self.circulation_fan.set_rpm(s["circulation_fan_rpm"])
+        for fan_id, widget in self.circulation_fans.items():
+            widget.set_rpm(s["circulation_fans"].get(fan_id, {}).get("rpm"))
         self.exhaust_fan.set_rpm(s["exhaust_fan_rpm"])
     
     
@@ -470,10 +474,12 @@ class HeaderBar(BoxLayout):
         web_ch = frame.get("webserver", {})
         
         
+        fan_states = {fan_id: fan_snapshot(web_ch, fan_id) for fan_id in (1, 2, 3)}
         circ_data = web_ch.get("circulation_fan", {})
         exh_data = web_ch.get("exhaust_fan", {})
 
         self._state["circulation_fan_rpm"] = circ_data.get("circulation_fan_rpm")
+        self._state["circulation_fans"] = fan_states
         self._state["exhaust_fan_rpm"] = exh_data.get("exhaust_fan_rpm")
 
         
@@ -571,4 +577,3 @@ class HeaderBar(BoxLayout):
 
     def set_clock(self, hhmmss):
         self.lbl_clock.text = hhmmss
-

@@ -1,0 +1,71 @@
+Circulation Fan Patcher – Kurzdokumentation
+=============================================
+
+Zweck
+-----
+Der Patcher erzeugt eine Firmware mit ein, zwei oder drei voneinander
+unabhängigen Umluftventilatoren. Es wird trotzdem nur eine Implementierung
+gewartet.
+
+Einzige Wartungsquelle
+----------------------
+Alle Änderungen an der Fan-Logik erfolgen ausschließlich hier:
+
+    source_path/circulation_fan.cpp
+    source_path/circulation_fan.h
+
+Die Dateien im Projekt-Hauptordner werden bei jedem Patcher-Lauf aus dieser
+Quelle erzeugt. circulation_fan2.* und circulation_fan3.* sind generierte
+Dateien und dürfen nie manuell geändert werden.
+
+Benutzung
+---------
+Im Ordner Arduino/testble2 ausführen:
+
+    python3 Circulation_Patcher.py --instances 1
+    python3 Circulation_Patcher.py --instances 2
+    python3 Circulation_Patcher.py --instances 3
+
+Alternativ kann DEFAULT_INSTANCE_COUNT oben in Circulation_Patcher.py auf 1,
+2 oder 3 gesetzt werden. Ohne Parameter verwendet der Patcher diesen Wert.
+
+Was ein Lauf macht
+------------------
+1. Entfernt zuerst alle zuvor erzeugten Instanzdateien 2 und 3.
+2. Erzeugt circulation_fan.cpp/.h sowie, falls gewählt, fan2 und fan3 frisch
+   aus source_path.
+3. Baut jeden PATCHER-BEGIN/END-Block vollständig neu auf.
+4. Erstellt nur die für die gewählte Instanzanzahl benötigten Includes,
+   Initialisierungen, Loop-Aufrufe, GPIOs, Preferences, Web-Status- und
+   JSON-Handler.
+
+Dadurch ist der Wechsel von drei auf einen Fan sicher: Es bleiben weder
+generierte Dateien noch Marker-Zeilen oder alte GPIO-Konfigurationen zurück.
+
+Instanz-Isolation
+-----------------
+Für Fan 2 und Fan 3 benennt der Patcher alle instanzgebundenen Elemente um,
+unter anderem Funktionen, Tacho-ISR, Preferences, PWM-/Tacho-Zustände,
+Makros, JSON-Felder und Revisionen. Beispiele:
+
+    circulation_fan2_update()
+    count_circ_fan2_pulse()
+    rev_circfan2
+    circulation_fan2_pct
+    p_c_fan2
+
+Jede Instanz hat damit eigene Hardware-Pins, NVS-Werte und eine eigene
+Revision. Die zusätzlichen Instanzen starten standardmäßig deaktiviert
+(PWM- und Tacho-Pin = -1), damit sie nie versehentlich die GPIOs von Fan 1
+beanspruchen.
+
+Wichtige Regeln
+---------------
+- Vor dem Flashen immer den Patcher mit der gewünschten Instanzanzahl laufen
+  lassen.
+- Generierte Fan-Dateien nicht manuell ändern; Änderungen gehen beim nächsten
+  Lauf verloren.
+- Neue instanzgebundene Namen in der Fan-Quelle müssen bei Bedarf auch in der
+  Umbenennungsliste instance_source() im Patcher ergänzt werden.
+- Die Python-Oberfläche verarbeitet derzeit noch Fan 1. Für Fan 2/3 braucht
+  sie anschließend passende Datenpfade und generische Overlay-Instanzen.

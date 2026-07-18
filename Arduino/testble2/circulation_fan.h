@@ -30,7 +30,7 @@ enum circulation_fanMode {
 };
 void circulation_fan_get_status(JsonObject doc);
 // Modul-Funktionen
-void circulation_fan_init(uint8_t pin, uint8_t tacho_pin);
+void circulation_fan_init(int pin, int tacho_pin);
 void circulation_fan_update();
 void circulation_fan_set_speed(int percent);
 void circulation_fan_set_mode(circulation_fanMode mode);

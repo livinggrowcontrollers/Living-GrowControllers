@@ -15,14 +15,9 @@ from dashboard_gui.ui.grow_overview_content.circulation_tile import CirculationT
 from dashboard_gui.ui.grow_overview_content.light_tile import LightTile
 from dashboard_gui.ui.grow_overview_content.esp32_tile import ESP32Tile
 from dashboard_gui.global_state_manager import GLOBAL_STATE
-from dashboard_gui.ui.grow_overview_content.sensor_internal_sht31_tile import SensorInternalSHT31Tile
-from dashboard_gui.ui.grow_overview_content.sensor_external_sht31_tile import SensorExternalSHT31Tile
-from dashboard_gui.ui.grow_overview_content.ble_inside_tile import SensorBLE_InsideTile
-from dashboard_gui.ui.grow_overview_content.ble_outside_tile import SensorBLEOutsideTile
-from dashboard_gui.ui.grow_overview_content.mlx90614_tile import SensorExternalMLX90614Tile  # ← NEU
+from dashboard_gui.ui.grow_overview_content.sensor_summary_tile import SensorSummaryTile, SHT31_PIC
 from dashboard_gui.ui.grow_overview_content.rtc_tile import RTCTile
 from dashboard_gui.ui.grow_overview_content.humidifier_tile import HumidifierTile
-from dashboard_gui.ui.grow_overview_content.scd41_tile import SensorSCD41Tile
 from dashboard_gui.ui.grow_overview_content.tapo_tile import TapoTile
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 
@@ -102,45 +97,55 @@ class GrowOverviewScreen(Screen):
         # ---------------- TILES ----------------
         # ---------------- TILES ----------------
         self.exhaust_tile = ExhaustTile()
-        self.circ_tile = CirculationTile()
+        self.circ_tiles = [CirculationTile(fan_id=fan_id) for fan_id in (1, 2, 3)]
+        self.circ_tile = self.circ_tiles[0]  # Rückwärtskompatibilität
         self.light_tile = LightTile()
         self.esp32_tile = ESP32Tile()
         self.rtc_tile = RTCTile()
         self.tapo_tile = TapoTile()
         self.humidifier_tile = HumidifierTile()
 
-        # Ändere das hier in Zeile 112:
-        self.sht31_internal_tile = SensorInternalSHT31Tile(
-            device_id="internal",     # ID des Geräts
-            channel="ch1",            # Kanal/Channel
-            tile_id="temp_in"         # Start-Tile ID aus deiner 'available_tiles' Liste
-            
+        # Ein Tile-Typ, vier Datenquellen: Darstellung und Interaktion bleiben zentral.
+        self.sht31_internal_tile = SensorSummaryTile(
+            title="Internal: SHT-31", metrics=("temp_in", "hum_in", "vpd_in"),
+            source={"temp": ("internal", "temperature"), "hum": ("internal", "humidity"), "vpd": ("vpd_internal",)},
+            device_id="internal", image_source=SHT31_PIC,
         )
-        self.sht31_external_tile = SensorExternalSHT31Tile(
-            device_id="external",
-            channel="ch1",
-            tile_id="temp_ex"
+        self.sht31_external_tile = SensorSummaryTile(
+            title="External: SHT-31", metrics=("temp_ex", "hum_ex", "vpd_ex"),
+            source={"temp": ("external", "temperature"), "hum": ("external", "humidity"), "vpd": ("vpd_external",)},
+            device_id="external", image_source=SHT31_PIC,
         )
-        
-        self.ble_inside_tile = SensorBLE_InsideTile(
-            device_id="ble_inside",
-            channel="ch1",
-            tile_id="ble_temp_inside"
+        self.ble_inside_tile = SensorSummaryTile(
+            title="BLE: Inside Sensor", metrics=("ble_temp_inside", "ble_hum_inside", "ble_vpd_inside"),
+            source={"sensor": ("ble_sensors", "inside"), "temp": ("ble_sensors", "inside", "temperature"), "hum": ("ble_sensors", "inside", "humidity"), "vpd": ("ble_sensors", "inside", "vpd")},
+            device_id="ble_inside", dynamic_ble_image=True,
         )
-        
-        self.ble_outside_tile = SensorBLEOutsideTile(
-            device_id="ble_outside",
-            channel="ch1",
-            tile_id="ble_temp_outside"
+        self.ble_outside_tile = SensorSummaryTile(
+            title="BLE: Outside Sensor", metrics=("ble_temp_outside", "ble_hum_outside", "ble_vpd_outside"),
+            source={"sensor": ("ble_sensors", "outside"), "temp": ("ble_sensors", "outside", "temperature"), "hum": ("ble_sensors", "outside", "humidity"), "vpd": ("ble_sensors", "outside", "vpd")},
+            device_id="ble_outside", dynamic_ble_image=True,
         )
         
-        self.mlx90614_tile = SensorExternalMLX90614Tile(
-            device_id="mlx90614",
-            channel="ch1",
-            tile_id="leaf_temp"
+        self.mlx90614_tile = SensorSummaryTile(
+            title="MLX90614", metrics=("leaf_temp", "vpd_leaf"),
+            source={}, device_id="mlx90614",
+            image_source=os.path.join(ASSET_ROOT, "hardware_pics", "mlx90614.png"),
+            measurements=(
+                ("Leaf", "leaf_temp", ("external2", "leaf_temp"), "°C"),
+                ("VPD Leaf", "vpd_leaf", ("external2", "vpd_leaf"), "kPa"),
+            ),
         )
-        
-        self.scd41_tile = SensorSCD41Tile()
+        self.scd41_tile = SensorSummaryTile(
+            title="CO2: SCD41", metrics=(), source={}, device_id="scd41",
+            image_source=os.path.join(ASSET_ROOT, "hardware_pics", "scd41.png"),
+            # Erwartete, noch nicht implementierte Pipeline. Keine Fake-Werte in der UI.
+            measurements=(
+                ("CO2", None, ("scd41", "co2"), "ppm"),
+                ("Temp", None, ("scd41", "temperature"), "°C"),
+                ("Hum", None, ("scd41", "humidity"), "%"),
+            ),
+        )
         # ---------------- SENSOR SIZE SETTINGS ----------------
         self.sht31_internal_tile.size_hint_y = None
         self.sht31_internal_tile.height = dp_scaled(140)
@@ -175,9 +180,10 @@ class GrowOverviewScreen(Screen):
         self.humidifier_tile.height = dp_scaled(130)
         self.humidifier_tile.size_hint_x = 1
 
-        self.circ_tile.size_hint_y = None
-        self.circ_tile.height = dp_scaled(130)
-        self.circ_tile.size_hint_x = 1
+        for tile in self.circ_tiles:
+            tile.size_hint_y = None
+            tile.height = dp_scaled(130)
+            tile.size_hint_x = 1
 
         self.light_tile.size_hint_y = None
         self.light_tile.height = dp_scaled(170)
@@ -210,7 +216,8 @@ class GrowOverviewScreen(Screen):
         col2_inner.add_widget(self.scd41_tile)            # ← NEU HIER
         # Column 3: actuators
         col3_inner.add_widget(self.light_tile)
-        col3_inner.add_widget(self.circ_tile)
+        for tile in self.circ_tiles:
+            col3_inner.add_widget(tile)
         col3_inner.add_widget(self.exhaust_tile)
         col3_inner.add_widget(self.humidifier_tile)
         # Add columns to content
@@ -249,7 +256,8 @@ class GrowOverviewScreen(Screen):
 
         # 3. JETZT ERST DIE TILES BESCHICKEN (Läuft somit IMMER durch!)
         self.exhaust_tile.update_values(server_data)
-        self.circ_tile.update_values(server_data)
+        for tile in self.circ_tiles:
+            tile.update_values(server_data)
         self.light_tile.update_values(server_data)
         self.esp32_tile.update_values(server_data)
         self.humidifier_tile.update_values(server_data)

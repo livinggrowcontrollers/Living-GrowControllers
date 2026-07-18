@@ -1,11 +1,11 @@
 {
-  "827482CC-A977-43D7-835E-8E8B6978E66A": {
+  "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 0,
+      "rev_plant_planner": 4,
       "plants": [
         {
           "slot": 0,
-          "used": false,
+          "used": true,
           "name": "",
           "strain": "",
           "breeder": "",
@@ -19,8 +19,8 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 1,
-          "last_watered": 0,
+          "picture": 2,
+          "last_watered": 1784348170,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
           "estimated_flower_days": 60,
@@ -34,8 +34,8 @@
         },
         {
           "slot": 1,
-          "used": false,
-          "name": "",
+          "used": true,
+          "name": " COPY",
           "strain": "",
           "breeder": "",
           "phenotype": "",
@@ -48,8 +48,8 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 1,
-          "last_watered": 0,
+          "picture": 2,
+          "last_watered": 1784348173,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
           "estimated_flower_days": 60,
@@ -296,13 +296,13 @@
       ]
     }
   },
-  "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+  "827482CC-A977-43D7-835E-8E8B6978E66A": {
     "plant_planner": {
-      "rev_plant_planner": 2,
+      "rev_plant_planner": 0,
       "plants": [
         {
           "slot": 0,
-          "used": true,
+          "used": false,
           "name": "",
           "strain": "",
           "breeder": "",
@@ -316,7 +316,7 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 2,
+          "picture": 1,
           "last_watered": 0,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
@@ -331,8 +331,8 @@
         },
         {
           "slot": 1,
-          "used": true,
-          "name": " COPY",
+          "used": false,
+          "name": "",
           "strain": "",
           "breeder": "",
           "phenotype": "",
@@ -345,7 +345,7 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 2,
+          "picture": 1,
           "last_watered": 0,
           "last_fertilized": 0,
           "estimated_veg_days": 30,

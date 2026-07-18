@@ -21,6 +21,7 @@
 # overlay_command
 import time
 from web_client import WEB_CLIENT
+from dashboard_gui.circulation_fan_registry import fan_prefix, fan_revision_key, fan_gpio_keys, MAX_CIRCULATION_FANS
 try:
     from dashboard_gui.ui.grow_controller_content.pin_matrix import validate_and_build_pins
 except Exception:
@@ -245,14 +246,17 @@ class OverlayCommandEngine:
         
     def send_fan_command(self, mac, **kwargs):
         current = self.get_latest_device_data(mac)
-        last = int(current.get("rev_circfan", 0))
+        fan_id = int(kwargs.get("fan_id", 1))
+        prefix = fan_prefix(fan_id)
+        revision_key = fan_revision_key(fan_id)
+        last = int(current.get(revision_key, 0))
         new_rev = last + 1
         
         payload = {
-            "circulation_fan_min": int(kwargs.get("min", 20)),
-            "circulation_fan_pct": int(kwargs.get("max", 65)),
-            "circulation_fan_mode": kwargs.get("mode", "nat"),
-            "rev_circfan": new_rev
+            f"{prefix}_min": int(kwargs.get("min", 20)),
+            f"{prefix}_pct": int(kwargs.get("max", 65)),
+            f"{prefix}_mode": kwargs.get("mode", "nat"),
+            revision_key: new_rev
         }
         
         WEB_CLIENT.send_control(mac, payload)
@@ -311,10 +315,6 @@ class OverlayCommandEngine:
 
         gpio_keys = [
             "p_reset",
-
-            "p_c_fan",
-            "p_c_tac",
-
             "p_e_fan",
             "p_e_tac",
 
@@ -328,6 +328,9 @@ class OverlayCommandEngine:
 
             "p_bat",
         ]
+        for fan_id in range(1, MAX_CIRCULATION_FANS + 1):
+            pwm, tacho, _ = fan_gpio_keys(fan_id)
+            gpio_keys.extend((pwm, tacho))
 
 
         for key in gpio_keys:
@@ -335,10 +338,10 @@ class OverlayCommandEngine:
                 payload[key] = int(merged_gpios.get(key, -1))
 
         pull_keys = [
-            "p_c_tac_pull",
             "p_e_tac_pull",
             "p_bat_pull",
         ]
+        pull_keys.extend(fan_gpio_keys(fan_id)[2] for fan_id in range(1, MAX_CIRCULATION_FANS + 1))
 
         for key in pull_keys:
             if key in kwargs:

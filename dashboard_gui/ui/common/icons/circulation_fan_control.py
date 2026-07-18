@@ -11,9 +11,10 @@ from kivy.app import App
 
 
 class CirculationFanControl(BoxLayout):
-    def __init__(self, parent_header=None, **kw):
+    def __init__(self, parent_header=None, fan_id=1, **kw):
         super().__init__(**kw)
         self.parent_header = parent_header
+        self.fan_id = int(fan_id)
         self.orientation = "horizontal"
         self.size_hint = (None, 1)
         self.width = dp_scaled(45)
@@ -66,7 +67,7 @@ class CirculationFanControl(BoxLayout):
         if getattr(ui, "active_circulation_fan_overlay", None):
             ui.active_circulation_fan_overlay.close()
         else:
-            overlay = CirculationFanOverlay(parent_header=self)
+            overlay = CirculationFanOverlay(parent_header=self, fan_id=self.fan_id)
             ui.active_circulation_fan_overlay = overlay
             App.get_running_app().root.current_screen.add_widget(overlay)
             

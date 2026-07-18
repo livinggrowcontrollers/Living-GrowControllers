@@ -29,8 +29,8 @@ static bool circulation_fan_enabled = true;
 #define CIRC_FAN_PULSES_PER_REV 2
 #define CIRC_FAN_DEBOUNCE_US 500
 // Variablen mit sicheren Startwerten
-static uint8_t _circulation_fan_pin; // Keine Zahl hier!
-static uint8_t _tacho_pin;          // Keine Zahl hier!
+static int _circulation_fan_pin = -1;
+static int _tacho_pin = -1;
 
 // 🔥 TRACKER FÜR HARDWARE-PINS (Runtime GPIO Fix)
 static int current_circ_fan_pin = -1;
@@ -64,9 +64,9 @@ void IRAM_ATTR count_circ_fan_pulse() {
     }
 }
 
-void circulation_fan_init(uint8_t pin, uint8_t tacho_pin) {
+void circulation_fan_init(int pin, int tacho_pin) {
     // Runtime-Check: Pin -1 deaktiviert Modul
-    if ((int)pin == -1 || (int)tacho_pin == -1) {
+    if (pin == -1 || tacho_pin == -1) {
         Serial.println("circulation_fan_init: Pin = -1 -> Modul deaktiviert.");
         circulation_fan_enabled = false;
         return;
@@ -131,7 +131,7 @@ void circulation_fan_reconfigure() {
     _tacho_pin = sysConfig.pin_circ_tacho;
 
     // 3. SCHRITT: Modul-Deaktivierung (HÄRTUNG)
-    if ((int)_circulation_fan_pin == -1 || (int)_tacho_pin == -1) {
+    if (_circulation_fan_pin == -1 || _tacho_pin == -1) {
         circulation_fan_enabled = false;
         current_circ_fan_pin = -1;   // ⚡ FIX: Tracker explizit auf -1 setzen!
         current_circ_tacho_pin = -1; // ⚡ FIX: Tracker explizit auf -1 setzen!

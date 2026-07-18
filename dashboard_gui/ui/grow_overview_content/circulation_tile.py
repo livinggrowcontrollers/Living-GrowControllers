@@ -10,18 +10,20 @@ from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.overlays.circulation_fan_overlay import CirculationFanOverlay
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
 from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.circulation_fan_registry import overlay_snapshot
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 CIRC_PIC = os.path.join(ASSET_ROOT, "hardware_pics", "mars_gaming.png")
 
 class CirculationTile(BoxLayout, BoxColorUpdater):
 
-    def __init__(self, **kw):
+    def __init__(self, fan_id=1, **kw):
         super().__init__(
             orientation="vertical",
             size_hint=(1, 1),
             **kw
         )
+        self.fan_id = int(fan_id)
 
         self.val_box_w = dp_scaled(200)
         self.val_box_h = dp_scaled(140)
@@ -31,7 +33,7 @@ class CirculationTile(BoxLayout, BoxColorUpdater):
 
         # ================= TITLE =================
         self.title_label = Label(
-            text="Circulation: MARS PWMX",
+            text=f"Circulation {self.fan_id}: MARS PWMX",
             font_size=sp_scaled(18),
             bold=True,
             halign="left",
@@ -157,6 +159,7 @@ class CirculationTile(BoxLayout, BoxColorUpdater):
      # ---------------- DATA UPDATE ----------------
 # ---------------- DATA UPDATE ----------------
     def update_values(self, data):
+        data = overlay_snapshot(data, self.fan_id)
         # 1. Daten sicher aus dem Dictionary extrahieren
         rpm = data.get("circulation_fan", {}).get("circulation_fan_rpm")
 
@@ -202,7 +205,7 @@ class CirculationTile(BoxLayout, BoxColorUpdater):
         if getattr(ui, "active_circulation_fan_overlay", None):
             ui.active_circulation_fan_overlay.close()
     
-        overlay = CirculationFanOverlay(parent_header=self)
+        overlay = CirculationFanOverlay(parent_header=self, fan_id=self.fan_id)
         ui.active_circulation_fan_overlay = overlay
         App.get_running_app().root.current_screen.add_widget(overlay)
         return True

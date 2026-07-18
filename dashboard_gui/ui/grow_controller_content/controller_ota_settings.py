@@ -21,7 +21,8 @@ from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
 
 from platform_utils import is_android
-
+import ssl
+import certifi
 
 def get_firmware_root():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -247,32 +248,51 @@ class OtaSettingsOverlay(RelativeLayout):
 
     def _download_worker(self, url, save_path):
         try:
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as response:
-                total_size = int(response.headers.get('content-length', 0))
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": "Mozilla/5.0"
+                }
+            )
+
+            # SSL-Zertifikate von certifi verwenden
+            ssl_context = ssl.create_default_context(
+                cafile=certifi.where()
+            )
+
+            with urllib.request.urlopen(req, context=ssl_context) as response:
+                total_size = int(response.headers.get("content-length", 0))
                 block_size = 8192
                 downloaded = 0
 
-                with open(save_path, 'wb') as f:
+                with open(save_path, "wb") as f:
                     while True:
                         buffer = response.read(block_size)
                         if not buffer:
                             break
+
                         downloaded += len(buffer)
                         f.write(buffer)
 
                         if total_size > 0:
-                            percent = (downloaded / total_size) * 100
+                            percent = downloaded * 100.0 / total_size
                         else:
                             percent = 50
-                        
-                        # UI-Update über die Kivy-Clock ausführen
-                        Clock.schedule_once(lambda dt, p=percent, d=downloaded, t=total_size: self._update_download_progress(p, d, t))
 
-            Clock.schedule_once(lambda dt: self._download_finished(True, save_path))
+                        Clock.schedule_once(
+                            lambda dt, p=percent, d=downloaded, t=total_size:
+                            self._update_download_progress(p, d, t)
+                        )
+
+            Clock.schedule_once(
+                lambda dt: self._download_finished(True, save_path)
+            )
 
         except Exception as e:
-            Clock.schedule_once(lambda dt: self._download_finished(False, str(e)))
+            error = str(e)
+            Clock.schedule_once(
+                lambda dt, msg=error: self._download_finished(False, msg)
+            )
 
     def _update_download_progress(self, percent, downloaded, total_size):
         self.download_progress_bar.value = percent
@@ -284,6 +304,7 @@ class OtaSettingsOverlay(RelativeLayout):
 
     def _download_finished(self, success, result):
         self.download_btn.disabled = False
+        self.flash_btn.disabled = False
         if success:
             self.download_progress_bar.value = 100
             self.status_label.color = (0.2, 1, 0.4, 1)

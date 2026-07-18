@@ -11,6 +11,7 @@ from kivy.graphics import Color, RoundedRectangle, Rectangle
 
 from dashboard_gui.ui.common.buttons.glass_button import GlassButton
 from dashboard_gui.ui.grow_controller_content.pin_matrix import REQUIRED_ROLES, get_pin_info
+from dashboard_gui.circulation_fan_registry import MAX_CIRCULATION_FANS, fan_gpio_keys
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 PINOUT_PIC = os.path.join(ASSET_ROOT, "hardware_pics", "esp32_pinout.png")
@@ -38,6 +39,10 @@ ROLE_NAMES = {
     # entfernen
     # "p_bat_pull"
 }
+for _fan_id in range(1, MAX_CIRCULATION_FANS + 1):
+    _pwm, _tacho, _pull = fan_gpio_keys(_fan_id)
+    ROLE_NAMES[_pwm] = f"Umluft-Lüfter {_fan_id}"
+    ROLE_NAMES[_tacho] = f"Umluft-Tacho {_fan_id}"
 # Deine originalen Pixel-Koordinaten bezogen auf das Bild
 GPIO_POSITIONS = {
 

@@ -23,15 +23,17 @@ from dashboard_gui.overlays.lock_overlay import LockOverlay
 from dashboard_gui.overlays.base_revision_system import BaseRevisionSystem
 from dashboard_gui.ui.common.buttons.button_style_helper import ButtonStyleHelper
 from dashboard_gui.ui.common.background_click_handler import BackgroundClickHandler
+from dashboard_gui.circulation_fan_registry import overlay_snapshot
 from kivy.uix.widget import Widget
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets") 
 CIRC_PIC_PATH = os.path.join(ASSET_ROOT, "hardware_pics", "mars_gaming.png")
 class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, BackgroundClickHandler):
-    def __init__(self, parent_header, **kwargs):
+    def __init__(self, parent_header, fan_id=1, **kwargs):
         super().__init__(**kwargs)
         self.opacity = 0
         self.parent_header = parent_header
+        self.fan_id = int(fan_id)
         self._pending_updates = {} 
         self._user_active = False 
         self._last_user_action = 0 
@@ -92,7 +94,7 @@ class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Bac
 
         # 1. Titel + Sync Icon (Header)
         title_row = BoxLayout(size_hint_y=None, height=dp_scaled(40), spacing=dp_scaled(5))
-        self.lbl_title = Label(text="CIRCULATION FAN CONTROL", bold=True, color=(0, 1, 0, 1),
+        self.lbl_title = Label(text=f"CIRCULATION FAN {self.fan_id} CONTROL", bold=True, color=(0, 1, 0, 1),
                                font_size=sp_scaled(20), halign="left", valign="middle")
         self.lbl_title.bind(size=self.lbl_title.setter('text_size'))
         
@@ -175,6 +177,7 @@ class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Bac
 
         new_rev = GLOBAL_STATE.send_overlay_command(
             "circulation_fan",
+            fan_id=self.fan_id,
             min=int(self.range_slider.min_value),
             max=int(self.range_slider.max_value),
             mode=mode
@@ -196,12 +199,13 @@ class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Bac
     # =========================================================================
     def update_ui(self, *_):
         mac = GLOBAL_STATE.get_active_device_id()
-        server_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
-        if not server_data:
+        raw_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
+        if not raw_data:
             if self._init_done:
                 self.sync_icon.text = "[font=FA]\uf071[/font]"
                 self.sync_icon.color = (1, 0.3, 0, 1)
             return
+        server_data = overlay_snapshot(raw_data, self.fan_id)
         
         # === 1. REVISION & PASSIVE SESSION SNAPSHOT ===
         server_rev = int(server_data.get('rev_circfan', 0))
@@ -297,7 +301,10 @@ class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Bac
         # =========================================================
         # 1. FRISCHEN SERVER SNAPSHOT HOLEN
         # =========================================================
-        data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
+        raw_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
+        if not raw_data:
+            return
+        data = overlay_snapshot(raw_data, self.fan_id)
 
         if not data:
             self.sync_icon.text = "[font=FA]\uf071[/font]"
@@ -367,11 +374,11 @@ class CirculationFanOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Bac
 
     def _init_values(self, *_):
         mac = GLOBAL_STATE.get_active_device_id()
-        data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
-
-        if not data:
+        raw_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
+        if not raw_data:
             Clock.schedule_once(self._init_values, 0.1)
             return
+        data = overlay_snapshot(raw_data, self.fan_id)
 
         # =========================
         # 🔥 1. SERVER STATE ÜBERNEHMEN (OHNE HANDSHAKE)
