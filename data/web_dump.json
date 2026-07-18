@@ -2,18 +2,18 @@
   "827482CC-A977-43D7-835E-8E8B6978E66A": {
     "health": {
       "signal": {
-        "rssi": -76
+        "rssi": -75
       }
     },
     "rtc_found": false,
     "rtc_time": "offline",
-    "system_time": "10:24:56",
+    "system_time": "10:29:57",
     "temp_in": -256,
     "temp_ext": -256,
     "humid_ext": -256,
     "humid_in": -256,
     "leaf_temp": -256,
-    "vbat": 3.468,
+    "vbat": 1.008,
     "rev": 0,
     "hostname": "growmaster-1d3c",
     "ip_address": "192.168.2.39",
@@ -37,16 +37,16 @@
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 58,
+    "circulation_fan_speed_now": 59,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
     "rev_circfan": 324,
     "circulation_fan2_rpm": 0,
     "circulation_fan2_pct": 60,
-    "circulation_fan2_speed_now": 58,
+    "circulation_fan2_speed_now": 59,
     "circulation_fan2_min": 20,
     "circulation_fan2_mode": "nat",
-    "rev_circfan2": 325,
+    "rev_circfan2": 328,
     "circulation_fan3_rpm": -256,
     "circulation_fan3_pct": -256,
     "circulation_fan3_speed_now": -256,
@@ -68,14 +68,14 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 346,
+    "uptime_esp_s": 647,
     "fw_ver": "v2.8.6-github_test",
     "ip": "192.168.2.39",
     "ssid": "Cudy-Indoor",
-    "rssi": -76,
-    "free_heap": 153668,
+    "rssi": -75,
+    "free_heap": 153064,
     "max_alloc": 110580,
-    "heap_usage": 171040,
+    "heap_usage": 171644,
     "boot_cause": "Software Reboot",
     "rev_grow": 14,
     "wifi_mode": 1,
@@ -105,8 +105,8 @@
     "ble_scan_enabled": true,
     "ble_sensors": {
       "outside": {
-        "ble_temp_outside": 24.75,
-        "ble_humid_outside": 48.08,
+        "ble_temp_outside": 24.62,
+        "ble_humid_outside": 47.19,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
@@ -119,6 +119,10 @@
         "name": "ThermoBeacon2"
       },
       "discovered_devices": [
+        {
+          "name": "sps",
+          "mac": "49:25:08:23:07:21"
+        },
         {
           "name": "ThermoBeacon2",
           "mac": "f0:f1:00:00:06:19"
@@ -426,23 +430,23 @@
         }
       ]
     },
-    "timestamp": 1784363096.312005
+    "timestamp": 1784363396.960305
   },
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "health": {
       "signal": {
-        "rssi": -53
+        "rssi": -52
       }
     },
     "rtc_found": true,
-    "rtc_time": "10:24:56",
-    "system_time": "10:24:56",
+    "rtc_time": "10:29:57",
+    "system_time": "10:29:57",
     "temp_in": 23.31,
-    "temp_ext": 23.05,
-    "humid_ext": 49.98,
-    "humid_in": 49.67,
+    "temp_ext": 23.02,
+    "humid_ext": 49.84,
+    "humid_in": 49.5,
     "leaf_temp": -256,
-    "vbat": 5.607,
+    "vbat": 4.767,
     "rev": 0,
     "hostname": "growmaster-d064",
     "ip_address": "192.168.2.20",
@@ -466,7 +470,7 @@
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 52,
+    "circulation_fan_speed_now": 47,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
     "rev_circfan": 359,
@@ -485,16 +489,16 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 33763,
+    "uptime_esp_s": 34063,
     "fw_ver": "v2.8.6-github_test",
     "ip": "192.168.2.20",
     "ssid": "Cudy-Indoor",
-    "rssi": -53,
-    "free_heap": 149580,
+    "rssi": -52,
+    "free_heap": 150120,
     "max_alloc": 106484,
-    "heap_usage": 175544,
+    "heap_usage": 175004,
     "boot_cause": "Software Reboot",
-    "rev_grow": 2,
+    "rev_grow": 3,
     "wifi_mode": 1,
     "gpios": {
       "p_reset": 7,
@@ -529,12 +533,7 @@
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
-      "discovered_devices": [
-        {
-          "name": "sps",
-          "mac": "49:25:08:23:07:21"
-        }
-      ]
+      "discovered_devices": []
     },
     "ota": {
       "ota_rev": 29286,
@@ -837,6 +836,6 @@
         }
       ]
     },
-    "timestamp": 1784363096.312005
+    "timestamp": 1784363396.960305
   }
 }
