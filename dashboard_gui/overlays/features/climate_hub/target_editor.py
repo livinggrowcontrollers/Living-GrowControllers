@@ -1,16 +1,22 @@
 from kivy.uix.boxlayout import BoxLayout
 
 import config
+from dashboard_gui.overlays.components.labeled_slider import LabeledSlider
 from dashboard_gui.ui.scaling_utils import dp_scaled
-from dashboard_gui.overlays.features.shared.climate_targets import ClimateTargets
-from .labeled_slider import LabeledSlider
+from .targets import ClimateTargets
 
 
 class ClimateTargetsEditor(BoxLayout):
-    """Shared temperature, humidity and VPD range controls."""
+    """Climate-Hub controls for temperature, humidity and VPD targets."""
 
     def __init__(self, defaults=None, on_change=None, on_touch_down=None, on_touch_up=None, **kwargs):
-        super().__init__(orientation="vertical", size_hint_y=None, height=dp_scaled(150), **kwargs)
+        super().__init__(
+            orientation="vertical",
+            size_hint_y=None,
+            height=dp_scaled(194),
+            spacing=dp_scaled(7),
+            **kwargs,
+        )
         defaults = defaults or ClimateTargets()
         self._applying = False
         self._on_change = on_change
@@ -44,10 +50,6 @@ class ClimateTargetsEditor(BoxLayout):
     @property
     def sliders(self):
         return [field.slider for field in self.fields]
-
-    @property
-    def is_applying(self):
-        return self._applying
 
     def values(self):
         return ClimateTargets(

@@ -34,6 +34,11 @@ void SystemReset::perform_factory_reset() {
     prefs.clear();
     prefs.end();
 
+    // Gespeicherte BLE-Sensor-Zuordnungen gehören ebenfalls zum Werkszustand.
+    prefs.begin("blescan", false);
+    prefs.clear();
+    prefs.end();
+
     // Licht
     prefs.begin("light", false);
     prefs.clear();
@@ -61,6 +66,7 @@ void SystemReset::perform_factory_reset() {
     prefs.end();
 
     Serial.println("[RESET] grow gelöscht");
+    Serial.println("[RESET] BLE-Sensor-Zuordnungen gelöscht");
     Serial.println("[RESET] light gelöscht");
     Serial.println("[RESET] climate_hub gelöscht");
     Serial.println("[RESET] exhaust_fan gelöscht");

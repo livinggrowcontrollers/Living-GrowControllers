@@ -10,19 +10,21 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
-from dashboard_gui.overlays.components.climate_targets_editor import ClimateTargetsEditor
-from dashboard_gui.overlays.features.shared.climate_targets import ClimateTargets
 from dashboard_gui.overlays.infrastructure.control_overlay import ControlOverlay
 from dashboard_gui.overlays.infrastructure.contracts import OverlayKey
 from .profiles import PROFILES, PROFILE_LABELS, match_profile
 from .state_adapter import ClimateHubStateAdapter
+from .target_editor import ClimateTargetsEditor
+from .targets import ClimateTargets
 
 
 CLIMATE_HUB_PICTURE = os.path.join("dashboard_gui", "assets", "hardware_pics", "climate_hub.png")
 
 
 class ClimateHubOverlay(ControlOverlay):
-    """Experimental UI mirror over the existing Exhaust target channel."""
+    """Primary UI for climate targets and the global Night Reduction policy."""
+
+    _PHASE_NAMES = {0: "DAY", 1: "SUNSET", 2: "NIGHT", 3: "SUNRISE"}
 
     def __init__(self, parent_header, **kwargs):
         self._stage = "custom"
@@ -33,7 +35,7 @@ class ClimateHubOverlay(ControlOverlay):
             command_type="climate_hub",
             adapter=ClimateHubStateAdapter(),
             title="CLIMATE HUB",
-            panel_spacing=8,
+            panel_spacing=7,
             **kwargs,
         )
 
@@ -78,9 +80,9 @@ class ClimateHubOverlay(ControlOverlay):
         self.panel.add_widget(Widget())
 
         night_row = BoxLayout(size_hint_y=None, height=dp_scaled(40), spacing=dp_scaled(10))
-        self.btn_night = self._create_styled_btn("[font=FA]\uf186[/font]  NIGHT MODE")
-        self.btn_night.bind(on_release=lambda *_: self._toggle_night_mode())
-        night_row.add_widget(self.btn_night)
+        self.btn_night_reduction = self._create_styled_btn("[font=FA]\uf186[/font]  NIGHT REDUCTION")
+        self.btn_night_reduction.bind(on_release=lambda *_: self._toggle_night_reduction())
+        night_row.add_widget(self.btn_night_reduction)
         self.panel.add_widget(night_row)
 
         self._set_controls_disabled(True)
@@ -119,7 +121,7 @@ class ClimateHubOverlay(ControlOverlay):
         event = Clock.schedule_once(lambda _dt: setattr(self, "_user_active", False), 0.4)
         self._deferred_events.append(event)
 
-    def _toggle_night_mode(self):
+    def _toggle_night_reduction(self):
         if self._locked:
             return
         self._night_reduction_enabled = not self._night_reduction_enabled
@@ -135,6 +137,8 @@ class ClimateHubOverlay(ControlOverlay):
         self.lbl_live_hum.text = f"Live Humidity: {state.live_humidity:.1f} {state.humidity_unit}" if state.live_humidity is not None else "Live Humidity: --"
         self.lbl_live_vpd.text = f"Live VPD: {state.live_vpd:.2f} {state.vpd_unit}" if state.live_vpd is not None else "Live VPD: --"
         self.panel.set_accent(state.accent)
+        phase = self._PHASE_NAMES.get(state.plant_phase, "UNKNOWN")
+        self.header.title_label.text = f"CLIMATE HUB • {phase}"
 
     def _apply_server_state(self, state):
         if self._user_active:
@@ -162,8 +166,8 @@ class ClimateHubOverlay(ControlOverlay):
         preset = self._stage != "custom"
         self.btn_phase.background_color = (0.0, 0.65, 0.35, 0.85) if preset else (0.35, 0.35, 0.4, 0.9)
         self.btn_phase.color = (0, 0, 0, 1) if preset else (1, 1, 1, 1)
-        self.btn_night.background_color = (0.35, 0.42, 1.0, 0.9) if self._night_reduction_enabled else (0.15, 0.15, 0.15, 1)
-        self.btn_night.color = (0, 0, 0, 1) if self._night_reduction_enabled else (1, 1, 1, 1)
+        self.btn_night_reduction.background_color = (0.35, 0.42, 1.0, 0.9) if self._night_reduction_enabled else (0.15, 0.15, 0.15, 1)
+        self.btn_night_reduction.color = (0, 0, 0, 1) if self._night_reduction_enabled else (1, 1, 1, 1)
 
     def _set_controls_disabled(self, disabled):
         self.climate_editor.set_disabled(disabled)

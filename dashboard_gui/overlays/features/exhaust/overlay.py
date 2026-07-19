@@ -8,10 +8,8 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
-from dashboard_gui.overlays.components.climate_targets_editor import ClimateTargetsEditor
-from dashboard_gui.overlays.components.labeled_slider import LabeledSlider
 from dashboard_gui.overlays.components.status_colors import StatusColors
-from dashboard_gui.overlays.features.shared.climate_targets import ClimateTargets
+from dashboard_gui.overlays.components.unified_slider import UnifiedSlider
 from dashboard_gui.overlays.infrastructure.control_overlay import ControlOverlay
 from dashboard_gui.overlays.infrastructure.contracts import OverlayKey
 from .state_adapter import ExhaustFanStateAdapter
@@ -21,23 +19,21 @@ EXHAUST_PICTURE = os.path.join("dashboard_gui", "assets", "hardware_pics", "vivo
 
 
 class ExhaustFanOverlay(ControlOverlay):
-    _PHASE_NAMES = {0: "DAY", 1: "SUNSET", 2: "NIGHT", 3: "SUNRISE"}
-
     def __init__(self, parent_header, **kwargs):
         self._target_mode = "auto"
         self._chaos_enabled = False
-        self._night_reduction_enabled = True
         super().__init__(
             parent_header,
             overlay_key=OverlayKey("exhaust"),
             command_type="exhaust_fan",
             adapter=ExhaustFanStateAdapter(),
             title="EXHAUST FAN CONTROL",
-            panel_spacing=8,
+            panel_spacing=10,
+            header_height=40,
             **kwargs,
         )
 
-        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(80), spacing=dp_scaled(10))
+        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(180), spacing=dp_scaled(10))
         top.add_widget(Image(source=EXHAUST_PICTURE, size_hint=(None, 1), width=dp_scaled(180)))
 
         middle = BoxLayout(orientation="vertical", size_hint_x=0.75)
@@ -62,42 +58,34 @@ class ExhaustFanOverlay(ControlOverlay):
         top.add_widget(right)
         self.panel.add_widget(top)
 
-        self.speed = LabeledSlider(
-            "FAN SPEED RANGE",
-            slider_kwargs={"range_min": 0, "range_max": 100, "min": 20, "max": 65, "mode": "range"},
+        self.panel.add_widget(Widget(size_hint_y=None, height=dp_scaled(10)))
+        self.panel.add_widget(Label(text="SPEED RANGE (MIN - MAX)", font_size=sp_scaled(20), color=(0, 1, 0, 0.5), size_hint_y=None, height=dp_scaled(15)))
+        self.range_slider = UnifiedSlider(
+            min=20,
+            max=65,
+            range_min=0,
+            range_max=100,
+            mode="range",
+            size_hint_y=None,
+            height=dp_scaled(50),
         )
-        self.range_slider = self.speed.slider
         self.range_slider.bind(
             min_value=self._on_speed_change,
             max_value=self._on_speed_change,
             on_touch_down=self._control_touch_down,
             on_touch_up=self._control_touch_up,
         )
-        self.panel.add_widget(self.speed)
-
-        self.climate_editor = ClimateTargetsEditor(
-            defaults=ClimateTargets(),
-            on_change=self._on_climate_change,
-            on_touch_down=self._control_touch_down,
-            on_touch_up=self._control_touch_up,
-        )
-        self.temp_slider, self.hum_slider, self.vpd_slider = self.climate_editor.sliders
-        self.lbl_temp = self.climate_editor.temp.value_label
-        self.lbl_hum = self.climate_editor.humidity.value_label
-        self.lbl_vpd = self.climate_editor.vpd.value_label
-        self.panel.add_widget(self.climate_editor)
+        self.panel.add_widget(self.range_slider)
         self.panel.add_widget(Widget())
 
         buttons = BoxLayout(size_hint_y=None, height=dp_scaled(40), spacing=dp_scaled(10))
         self.btn_man = self._create_styled_btn("MANUAL")
         self.btn_auto = self._create_styled_btn("AUTOMATIC")
         self.btn_chao = self._create_styled_btn("CHAOTIC")
-        self.btn_night = self._create_styled_btn("NIGHT")
         self.btn_man.bind(on_release=lambda *_: self._set_mode("manual"))
         self.btn_auto.bind(on_release=lambda *_: self._set_mode("auto"))
         self.btn_chao.bind(on_release=lambda *_: self._set_mode("chao"))
-        self.btn_night.bind(on_release=lambda *_: self._set_mode("night"))
-        for button in (self.btn_man, self.btn_auto, self.btn_chao, self.btn_night):
+        for button in (self.btn_man, self.btn_auto, self.btn_chao):
             buttons.add_widget(button)
         self.panel.add_widget(buttons)
 
@@ -109,12 +97,6 @@ class ExhaustFanOverlay(ControlOverlay):
             return
         text = f"{int(self.range_slider.min_value)}% - {int(self.range_slider.max_value)}%"
         self.lbl_val.text = text
-        self.speed.value_label.text = text
-        self._set_orange()
-
-    def _on_climate_change(self, _targets):
-        if not self._init_done or self._ui_lock or self._locked:
-            return
         self._set_orange()
 
     def _set_mode(self, mode):
@@ -122,8 +104,6 @@ class ExhaustFanOverlay(ControlOverlay):
             return
         if mode == "chao":
             self._chaos_enabled = not self._chaos_enabled
-        elif mode == "night":
-            self._night_reduction_enabled = not self._night_reduction_enabled
         elif mode in ("auto", "manual"):
             self._target_mode = mode
 
@@ -153,7 +133,6 @@ class ExhaustFanOverlay(ControlOverlay):
             self.lbl_reason1.color = (0.6, 0.6, 1, 1)
         else:
             self.lbl_reason1.color = (1, 1, 1, 0.8)
-        self.lbl_title.text = f"EXHAUST FAN CONTROL • {self._PHASE_NAMES.get(state.plant_phase, 'OFF')}"
 
     def _apply_server_state(self, state):
         if self._user_active:
@@ -162,27 +141,16 @@ class ExhaustFanOverlay(ControlOverlay):
         self.range_slider.max_value = state.target_max
         text = f"{state.target_min}% - {state.target_max}%"
         self.lbl_val.text = text
-        self.speed.value_label.text = text
-        self.climate_editor.apply(state.climate)
         self._target_mode = state.mode
         self._chaos_enabled = state.chaos_enabled
-        self._night_reduction_enabled = state.night_reduction_enabled
         self._apply_button_styles()
 
     def _build_command_kwargs(self, **overrides):
-        climate = self.climate_editor.values()
         return {
             "min": int(self.range_slider.min_value),
             "max": int(self.range_slider.max_value),
             "mode": overrides.get("mode", self._target_mode),
             "chaos": self._chaos_enabled,
-            "night_reduction": self._night_reduction_enabled,
-            "t_min": climate.temp_min,
-            "t_max": climate.temp_max,
-            "h_min": climate.humidity_min,
-            "h_max": climate.humidity_max,
-            "vpd_min": climate.vpd_min,
-            "vpd_max": climate.vpd_max,
         }
 
     def _apply_button_styles(self):
@@ -191,7 +159,6 @@ class ExhaustFanOverlay(ControlOverlay):
             (self.btn_man, self._target_mode == "manual", (0, 1, 0, 0.85)),
             (self.btn_auto, self._target_mode == "auto", (0, 0.7, 1, 0.85)),
             (self.btn_chao, self._chaos_enabled, (1, 0.5, 0, 0.85)),
-            (self.btn_night, self._night_reduction_enabled, (0.4, 0.4, 1, 0.85)),
         )
         for button, active, color in states:
             button.background_color = color if active else base
@@ -199,4 +166,3 @@ class ExhaustFanOverlay(ControlOverlay):
 
     def _set_controls_disabled(self, disabled):
         self.range_slider.disabled = disabled
-        self.climate_editor.set_disabled(disabled)

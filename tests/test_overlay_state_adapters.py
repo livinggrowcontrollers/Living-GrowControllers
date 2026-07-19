@@ -5,6 +5,7 @@ from dashboard_gui.overlays.features.exhaust.state_adapter import ExhaustFanStat
 from dashboard_gui.overlays.features.light.schedule import LightSchedule
 from dashboard_gui.overlays.features.light.state_adapter import LightStateAdapter
 from dashboard_gui.overlays.features.climate_hub.profiles import PROFILES, match_profile
+from dashboard_gui.overlays.features.climate_hub.state_adapter import ClimateHubStateAdapter
 
 
 class StateAdapterTests(unittest.TestCase):
@@ -22,24 +23,36 @@ class StateAdapterTests(unittest.TestCase):
         self.assertEqual((state.target_min, state.target_max, state.mode), (31, 77, "chao"))
         self.assertEqual((state.live_speed, state.rpm), (66, 910))
 
-    def test_exhaust_collects_fan_and_climate_state(self):
+    def test_exhaust_collects_only_fan_state(self):
         state = ExhaustFanStateAdapter.decode({
             "rev_exhaust": 4,
             "exhaust_fan_min": 25,
             "exhaust_fan_pct": 80,
             "exhaust_fan_mode": "auto",
+            "exhaust_fan": {"exhaust_fan_rpm": 1200},
+        })
+        self.assertEqual(state.revision, 4)
+        self.assertEqual((state.target_min, state.target_max), (25, 80))
+        self.assertEqual(state.rpm, 1200)
+        self.assertFalse(hasattr(state, "climate"))
+        self.assertFalse(hasattr(state, "night_reduction_enabled"))
+
+    def test_climate_hub_owns_climate_night_reduction_and_phase(self):
+        state = ClimateHubStateAdapter.decode({
+            "rev_exhaust": 4,
             "target_temp_min": 21.5,
             "target_temp_max": 27.5,
             "target_humidity_min": 44,
             "target_humidity_max": 63,
             "target_vpd_min": 0.9,
             "target_vpd_max": 1.4,
-            "exhaust_fan": {"exhaust_fan_rpm": 1200},
+            "exhaust_fan_night_reduction": False,
+            "plant_phase": 2,
         })
         self.assertEqual(state.revision, 4)
-        self.assertEqual((state.target_min, state.target_max), (25, 80))
         self.assertEqual((state.climate.temp_min, state.climate.vpd_max), (21.5, 1.4))
-        self.assertEqual(state.rpm, 1200)
+        self.assertFalse(state.night_reduction_enabled)
+        self.assertEqual(state.plant_phase, 2)
 
     def test_light_adapter_normalizes_legacy_manual_mode(self):
         state = LightStateAdapter.decode({

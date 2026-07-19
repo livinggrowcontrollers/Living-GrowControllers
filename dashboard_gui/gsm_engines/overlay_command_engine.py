@@ -22,6 +22,11 @@
 import time
 import web_client
 from dashboard_gui.circulation_fan_registry import fan_prefix, fan_revision_key, fan_gpio_keys, MAX_CIRCULATION_FANS
+
+
+CLIMATE_HUB_REVISION_KEY = "rev_exhaust"
+
+
 try:
     from dashboard_gui.ui.grow_controller_content.pin_matrix import validate_and_build_pins
 except Exception:
@@ -68,7 +73,7 @@ class OverlayCommandEngine:
     @staticmethod
     def _channel_key(mac, command_type, instance_id=None):
         if command_type in ("exhaust_fan", "climate_hub"):
-            return (mac, "exhaust", None)
+            return (mac, "climate_hub", None)
         if command_type == "circulation_fan":
             return (mac, "circulation_fan", int(instance_id or 1))
         return (mac, command_type, None)
@@ -197,91 +202,78 @@ class OverlayCommandEngine:
         return new_rev    
 
     # =========================================================================
-    # CLIMATE HUB COMMANDS (Interims-Brücke auf rev_exhaust)
+    # CLIMATE HUB COMMANDS
     # =========================================================================
-    
-    def send_climate_hub_command(self, mac, **kwargs):
-        """ 
-        Übergangslösung: Schreibt direkt auf rev_exhaust, da der ESP 
-        die Klima-Sollwerte bereits im Exhaust-Kontext verwaltet.
+
+    def _send_climate_hub_patch(self, mac, patch):
+        """Send one module patch through the Climate Hub revision channel.
+
+        ``rev_exhaust`` is retained only as the deployed WebDoc field name.
+        The latest unconfirmed patch is accumulated so asynchronously sent
+        requests cannot lose a lower revision when they arrive out of order.
         """
         current = self.get_latest_device_data(mac)
-        pending = self._pending_overlay_commands.get(self._channel_key(mac, "climate_hub"))
-        base = dict(current)
-        if pending:
-            base.update(pending["payload"])
-        
-        # Wir nutzen die echte, vorhandene Exhaust-Revision!
-        last_rev = int(current.get("rev_exhaust", 0))
-        new_rev = self._next_overlay_revision(mac, "climate_hub", last_rev)
-        
-        payload = {
-            # Climate Hub mirrors the complete Exhaust target aggregate.
-            "exhaust_fan_min": int(base.get("exhaust_fan_min", 20)),
-            "exhaust_fan_pct": int(base.get("exhaust_fan_pct", 65)),
-            "exhaust_fan_mode": base.get("exhaust_fan_mode", "auto"),
-            "exhaust_fan_chaos": bool(base.get("exhaust_fan_chaos_active", base.get("exhaust_fan_chaos", False))),
-            # Die primären Klima-Sollwerte vom Climate Hub Overlay
-            "target_temp_min": round(float(kwargs.get("t_min", base.get("target_temp_min", 22.0))), 1),
-            "target_temp_max": round(float(kwargs.get("t_max", base.get("target_temp_max", 28.0))), 1),
-            "target_humidity_min": int(kwargs.get("h_min", base.get("target_humidity_min", 45))),
-            "target_humidity_max": int(kwargs.get("h_max", base.get("target_humidity_max", 70))),
-            "target_vpd_min": round(float(kwargs.get("vpd_min", base.get("target_vpd_min", 0.8))), 1),
-            "target_vpd_max": round(float(kwargs.get("vpd_max", base.get("target_vpd_max", 1.5))), 1),
-            "exhaust_fan_night_reduction": bool(kwargs.get("night_reduction", base.get("exhaust_fan_night_reduction", True))),
-            
-            # Kennzeichnung für das Zielsystem auf dem ESP
-            "rev_exhaust": new_rev
-        }
-        
-        self._send_revisioned_payload(mac, "climate_hub", new_rev, payload)
-        print(f"[ClimateHub -> Exhaust-Bridge] TARGET-REV: {new_rev} (Sollwerte synchronisiert)")
-        return new_rev
-   
-   
-   
-   
-    # =========================================================================
-    # EXHAUST FAN COMMANDS (Target-Revision v2.0)
-    # =========================================================================
-    
+        snapshot_revision = int(current.get(CLIMATE_HUB_REVISION_KEY, 0))
+        channel_key = self._channel_key(mac, "climate_hub")
+        pending = self._pending_overlay_commands.get(channel_key)
 
+        payload = {}
+        if pending and int(pending["revision"]) > snapshot_revision:
+            payload.update(pending["payload"])
+        payload.pop(CLIMATE_HUB_REVISION_KEY, None)
+        payload.update(patch)
+
+        new_revision = self._next_overlay_revision(
+            mac,
+            "climate_hub",
+            snapshot_revision,
+        )
+        payload[CLIMATE_HUB_REVISION_KEY] = new_revision
+        self._send_revisioned_payload(
+            mac,
+            "climate_hub",
+            new_revision,
+            payload,
+        )
+        return new_revision
+
+    def send_climate_hub_command(self, mac, **kwargs):
+        """Update only Climate Hub targets and its Night Reduction policy."""
+        current = self.get_latest_device_data(mac)
+        patch = {
+            "target_temp_min": round(float(kwargs.get("t_min", current.get("target_temp_min", 22.0))), 1),
+            "target_temp_max": round(float(kwargs.get("t_max", current.get("target_temp_max", 28.0))), 1),
+            "target_humidity_min": int(kwargs.get("h_min", current.get("target_humidity_min", 45))),
+            "target_humidity_max": int(kwargs.get("h_max", current.get("target_humidity_max", 70))),
+            "target_vpd_min": round(float(kwargs.get("vpd_min", current.get("target_vpd_min", 0.8))), 1),
+            "target_vpd_max": round(float(kwargs.get("vpd_max", current.get("target_vpd_max", 1.5))), 1),
+            "exhaust_fan_night_reduction": bool(
+                kwargs.get(
+                    "night_reduction",
+                    current.get("exhaust_fan_night_reduction", True),
+                )
+            ),
+        }
+        new_revision = self._send_climate_hub_patch(mac, patch)
+        print(f"[ClimateHub] TARGET-REV: {new_revision}")
+        return new_revision
+
+    # =========================================================================
+    # EXHAUST FAN COMMANDS
+    # =========================================================================
 
     def send_exhaust_command(self, mac, **kwargs):
-        """ Erhöht rev_exhaust -> ESP schreibt erst bei Match in den Flash. """
+        """Update only the Exhaust actuator configuration."""
         current = self.get_latest_device_data(mac)
-        
-        last_rev = int(current.get("rev_exhaust", 0))
-        new_rev = self._next_overlay_revision(mac, "exhaust_fan", last_rev)
-        
-        payload = {
+        patch = {
             "exhaust_fan_min": int(kwargs.get("min", current.get("exhaust_fan_min", 20))),
             "exhaust_fan_pct": int(kwargs.get("max", current.get("exhaust_fan_pct", 65))),
             "exhaust_fan_mode": kwargs.get("mode", current.get("exhaust_fan_mode", "auto")),
             "exhaust_fan_chaos": bool(kwargs.get("chaos", current.get("exhaust_fan_chaos_active", False))),
-            "exhaust_fan_night_reduction":
-                bool(
-                    kwargs.get(
-                        "night_reduction",
-                        current.get(
-                            "exhaust_fan_night_reduction",
-                            True
-                        )
-                    )
-                ),
-            "target_temp_min": round(float(kwargs.get("t_min", current.get("target_temp_min", 22.0))), 1),
-            "target_temp_max": round(float(kwargs.get("t_max", current.get("target_temp_max", 28.0))), 1),
-            "target_humidity_min": int(kwargs.get("h_min", current.get("target_humidity_min", 40))),
-            "target_humidity_max": int(kwargs.get("h_max", current.get("target_humidity_max", 70))),
-            "target_vpd_min": round(float(kwargs.get("vpd_min", current.get("target_vpd_min", 0.8))), 1),
-            "target_vpd_max": round(float(kwargs.get("vpd_max", current.get("target_vpd_max", 1.5))), 1),
-            
-            "rev_exhaust": new_rev
         }
-        
-        self._send_revisioned_payload(mac, "exhaust_fan", new_rev, payload)
-        print(f"[Exhaust] TARGET-REV: {new_rev} | Mode: {payload['exhaust_fan_mode']}")
-        return new_rev
+        new_revision = self._send_climate_hub_patch(mac, patch)
+        print(f"[Exhaust] TARGET-REV: {new_revision} | Mode: {patch['exhaust_fan_mode']}")
+        return new_revision
 
     # =========================================================================
     # CIRCULATION FAN COMMANDS
@@ -399,31 +391,13 @@ class OverlayCommandEngine:
 
                 payload[key] = val
         # ================= BLUETOOTH TOGGLING (Bridge vs Scanner) =================
-        # Integrate BLE bridge/scan flags into the target-revision payload.
-        # Always include explicit target values (use kwargs if provided, otherwise current device state).
-        try:
-            current_bridge = bool(current.get("ble_bridge_enabled", True))
-        except Exception:
-            current_bridge = True
-        try:
-            current_scan = bool(current.get("ble_scan_enabled", True))
-        except Exception:
-            current_scan = True
-
+        # BLE-Zustände sind unabhängige Patches. Unbeteiligte Grow-Befehle dürfen
+        # keinen möglicherweise veralteten Zustand zurück an den ESP schreiben.
         if "ble_bridge" in kwargs:
-            payload["ble_bridge"] = bool(kwargs.get("ble_bridge", current.get("ble_bridge_enabled", True)))
-        else:
-            payload["ble_bridge"] = current_bridge
+            payload["ble_bridge"] = bool(kwargs["ble_bridge"])
 
         if "ble_scan" in kwargs:
-            payload["ble_scan"] = bool(kwargs.get("ble_scan"))
-        else:
-            payload["ble_scan"] = current_scan
-        # Debug: show BLE flags being sent so we can trace UI -> engine -> device
-        try:
-            print(f"[Overlay] Sending to {mac}: ble_bridge={payload.get('ble_bridge')} ble_scan={payload.get('ble_scan')} rev_grow={payload.get('rev_grow')}")
-        except Exception:
-            pass
+            payload["ble_scan"] = bool(kwargs["ble_scan"])
 
         # Abfahrt an den Web-Client
         web_client.WEB_CLIENT.send_control(mac, payload)

@@ -143,34 +143,7 @@ void setup() {
 
     power_manager_init();
 
-    // Initialize BLE subsystems according to persisted NVS values (authoritative)
-    {
-        Preferences p;
-        p.begin("grow", false);
-        bool bleScanPref = p.getBool("ble_scan_enabled", true);
-        bool bleBridgePref = p.getBool("ble_bridge_enabled", true);
-        p.end();
-
-        Serial.printf("Boot (NVS): BLEScanner enabled = %d | BLEBridge enabled = %d\n", bleScanPref ? 1 : 0, bleBridgePref ? 1 : 0);
-
-        // init scanner always (prepare), enforce enabled/disabled according to persisted flag
-        BLEScanner::init();
-        if (bleScanPref) {
-            BLEScanner::enable();
-        } else {
-            BLEScanner::disable();
-            Serial.println("BLE Scanner bleibt nach Boot deaktiviert (NVS)");
-        }
-
-        // init bridge and enforce
-        bleBridge.begin();
-        if (bleBridgePref) {
-            bleBridge.enable();
-        } else {
-            bleBridge.disable();
-            Serial.println("BLE Bridge bleibt nach Boot deaktiviert (NVS)");
-        }
-    }
+    grow_controller_start_ble();
 }    
 // ---------- LOOP ----------
 // ---------- LOOP ----------

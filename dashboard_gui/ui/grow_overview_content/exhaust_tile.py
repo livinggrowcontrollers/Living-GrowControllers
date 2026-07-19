@@ -199,15 +199,12 @@ class ExhaustTile(BoxLayout, StatusColors):
                
         reason1 = str(data.get("exhaust_fan_state_reason_1", "")).replace('_', ' ').upper()
         reason2 = str(data.get("exhaust_fan_state_reason_2", "")).replace('_', ' ').upper()
-        night = bool(data.get("exhaust_fan_night_reduction", False))
         chaos = bool(data.get("exhaust_fan_chaos_active", False))
+        mode = str(data.get("exhaust_fan_mode", "off")).upper()
 
-        night_txt = "ON" if night else "OFF"
         chaos_txt = "ON" if chaos else "OFF"
 
-        self.lbl_mode.text = (
-            f"NIGHT: {night_txt} | CHAOS: {chaos_txt}"
-        )
+        self.lbl_mode.text = f"MODE: {mode} | CHAOS: {chaos_txt}"
         self.prog_bar.value = speed
         self.prog_bar.max = 100
     

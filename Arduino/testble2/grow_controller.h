@@ -19,6 +19,7 @@ extern String _web_password;
 
 // Funktionen
 void grow_controller_init();
+void grow_controller_start_ble();
 void grow_controller_process_json(JsonObject doc);
 void grow_controller_get_status(JsonObject doc);
 int grow_controller_get_wifi_mode();

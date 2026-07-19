@@ -14,16 +14,11 @@ The editable hardware overlays are split by responsibility:
 2. `ControlOverlay` reads the latest online snapshot and never sends on open.
 3. A feature adapter converts protocol dictionaries into an immutable state.
 4. The feature overlay renders live values and applies confirmed target values.
-5. User changes submit a complete target through `OverlayCommandEngine`.
+5. User changes submit a feature-owned target patch through `OverlayCommandEngine`.
 6. `RevisionSession` remains pending until the ESP mirrors the revision.
 7. A retry resends the stored command envelope with the same revision.
 
-## Climate Hub
 
-Climate Hub is intentionally an experimental UI mirror. There is no dedicated
-ESP Climate Hub module. It edits the existing Exhaust climate target aggregate
-and therefore deliberately uses `rev_exhaust`. Exhaust stays fully independent;
-Climate Hub can be removed without changing the Exhaust feature.
 
 ## Circulation fan instances
 

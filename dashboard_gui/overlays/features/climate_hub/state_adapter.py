@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from dashboard_gui.overlays.components.status_colors import StatusColors
-from dashboard_gui.overlays.features.shared.climate_targets import ClimateTargets
 from dashboard_gui.overlays.features.shared.coercion import as_float, as_int
+from .targets import ClimateTargets
 
 
 @dataclass(frozen=True)
@@ -10,6 +10,7 @@ class ClimateHubState:
     revision: int
     climate: ClimateTargets
     night_reduction_enabled: bool
+    plant_phase: int
     live_temperature: object
     temperature_unit: str
     live_humidity: object
@@ -39,6 +40,7 @@ class ClimateHubStateAdapter:
                 vpd_max=as_float(raw.get("target_vpd_max"), 1.5),
             ),
             night_reduction_enabled=bool(raw.get("exhaust_fan_night_reduction", True)),
+            plant_phase=as_int(raw.get("plant_phase"), 0),
             live_temperature=None if temperature.get("value") is None else as_float(temperature.get("value")),
             temperature_unit=str(temperature.get("unit", "°C")),
             live_humidity=None if humidity.get("value") is None else as_float(humidity.get("value")),

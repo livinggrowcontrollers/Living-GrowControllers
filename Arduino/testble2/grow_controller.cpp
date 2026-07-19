@@ -17,6 +17,7 @@
 #include "ble_bridge.h"
 #include "sys_config.h"
 #include "hardware_init.h"
+#include "system_reset.h"
 // PATCHER BEGIN: CIRCULATION_INCLUDE
 #include "circulation_fan.h"
 #include "circulation_fan2.h"
@@ -42,6 +43,56 @@ static int _wifi_mode = 1;
 static uint32_t grow_controller_rev = 0;
 static bool _ble_bridge_enabled = true;
 static bool _ble_scan_enabled = true;
+static bool _ble_runtime_started = false;
+
+namespace {
+constexpr const char* BLE_BRIDGE_PREF_KEY = "ble_bridge";
+constexpr const char* BLE_SCAN_PREF_KEY = "ble_scan";
+constexpr bool BLE_BRIDGE_FACTORY_DEFAULT = true;
+constexpr bool BLE_SCAN_FACTORY_DEFAULT = true;
+
+void apply_ble_bridge_runtime_state() {
+    if (!_ble_runtime_started) return;
+
+    if (_ble_bridge_enabled) {
+        bleBridge.enable();
+    } else {
+        bleBridge.disable();
+    }
+}
+
+void apply_ble_scan_runtime_state() {
+    if (!_ble_runtime_started) return;
+
+    if (_ble_scan_enabled) {
+        BLEScanner::enable();
+    } else {
+        BLEScanner::disable();
+    }
+}
+
+bool set_ble_bridge_enabled(bool enabled, bool persist) {
+    if (persist && growPrefs.putBool(BLE_BRIDGE_PREF_KEY, enabled) != 1) {
+        Serial.println("[GROW] FEHLER: BLE-Bridge-Zustand konnte nicht gespeichert werden.");
+        return false;
+    }
+
+    _ble_bridge_enabled = enabled;
+    apply_ble_bridge_runtime_state();
+    return true;
+}
+
+bool set_ble_scan_enabled(bool enabled, bool persist) {
+    if (persist && growPrefs.putBool(BLE_SCAN_PREF_KEY, enabled) != 1) {
+        Serial.println("[GROW] FEHLER: BLE-Scanner-Zustand konnte nicht gespeichert werden.");
+        return false;
+    }
+
+    _ble_scan_enabled = enabled;
+    apply_ble_scan_runtime_state();
+    return true;
+}
+}
 
 
 
@@ -81,17 +132,33 @@ void grow_controller_init() {
     sysConfig.pin_bat_pull     = growPrefs.getInt("p_bat_pull", sysConfig.pin_bat_pull);
     grow_controller_rev = growPrefs.getUInt("rev_grow", 0);
 
-    // BLE enabled flags (defaults true)
-    _ble_bridge_enabled = growPrefs.getBool("ble_bridge_enabled", true);
-    _ble_scan_enabled = growPrefs.getBool("ble_scan_enabled", true);
-    // NEU: Den geladenen Zustand direkt an das BLE-Subsystem übergeben!
-    BLEScanner::init();
-
-    if (_ble_scan_enabled)
-        BLEScanner::enable();
-    else
-        BLEScanner::disable();
+    // Fehlende Werte bedeuten Werkseinstellung: Bridge und Scanner sind aktiv.
+    _ble_bridge_enabled = growPrefs.getBool(
+        BLE_BRIDGE_PREF_KEY,
+        BLE_BRIDGE_FACTORY_DEFAULT
+    );
+    _ble_scan_enabled = growPrefs.getBool(
+        BLE_SCAN_PREF_KEY,
+        BLE_SCAN_FACTORY_DEFAULT
+    );
     
+}
+
+void grow_controller_start_ble() {
+    if (_ble_runtime_started) return;
+
+    BLEScanner::init();
+    bleBridge.begin();
+    _ble_runtime_started = true;
+
+    apply_ble_scan_runtime_state();
+    apply_ble_bridge_runtime_state();
+
+    Serial.printf(
+        "[GROW] BLE-Startzustand: Scanner=%s | Bridge=%s\n",
+        _ble_scan_enabled ? "ON" : "OFF",
+        _ble_bridge_enabled ? "ON" : "OFF"
+    );
 }
 
 void grow_controller_save_state() {
@@ -135,15 +202,7 @@ void grow_controller_process_json(JsonObject doc) {
         }
     
         else if (cmd == "factory_reset") {
-            Serial.println("Factory Reset...");
-            // Erst BLE-spezifische gespeicherte MACs löschen, damit ein echter Factory-Reset erfolgt
-            BLEScanner::clear_saved_macs();
-            growPrefs.clear();   // 🔥 ALLES LÖSCHEN (Grow-Namespace)
-            // Nach Factory-Reset: Standardmäßig BLE Bridge + Scanner wieder aktivieren
-            growPrefs.putBool("ble_bridge_enabled", true);
-            growPrefs.putBool("ble_scan_enabled", true);
-            delay(500);
-            ESP.restart();
+            SystemReset::perform_factory_reset();
         }
     
         else if (cmd == "sync_time") {
@@ -218,38 +277,16 @@ void grow_controller_process_json(JsonObject doc) {
     // === BLE enable/disable via overlay ===
     if (doc.containsKey("ble_bridge")) {
         bool enable = doc["ble_bridge"];
-        _ble_bridge_enabled = enable;                   
-        
-        Preferences p;
-        p.begin("grow", false);
-        p.putBool("ble_bridge_enabled", enable);
-        p.end();
-        
-        if (enable) {
-            bleBridge.enable();
-            Serial.println("BLE Bridge aktiviert via Overlay.");
-        } else {
-            bleBridge.disable();
-            Serial.println("BLE Bridge deaktiviert via Overlay.");
+        if (set_ble_bridge_enabled(enable, true)) {
+            Serial.printf("BLE Bridge %s via Overlay.\n", enable ? "aktiviert" : "deaktiviert");
         }
     }
 
     // === BLE enable/disable via overlay ===
     if (doc.containsKey("ble_scan")) {
         bool enable = doc["ble_scan"].as<bool>();
-        _ble_scan_enabled = enable;
-
-        Preferences p;
-        p.begin("grow", false);
-        p.putBool("ble_scan_enabled", enable);
-        p.end();
-
-        if (enable) {
-            BLEScanner::enable();
-            Serial.println("✅ BLE Scanner AKTIVIERT via Overlay");
-        } else {
-            BLEScanner::disable();
-            Serial.println("⛔ BLE Scanner DEAKTIVIERT via Overlay");
+        if (set_ble_scan_enabled(enable, true)) {
+            Serial.printf("BLE Scanner %s via Overlay.\n", enable ? "aktiviert" : "deaktiviert");
         }
     }
 

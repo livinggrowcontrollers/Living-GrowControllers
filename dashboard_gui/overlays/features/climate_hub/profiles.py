@@ -1,4 +1,4 @@
-from dashboard_gui.overlays.features.shared.climate_targets import ClimateTargets
+from .targets import ClimateTargets
 
 
 PROFILES = {

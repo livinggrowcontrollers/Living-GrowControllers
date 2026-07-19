@@ -138,6 +138,8 @@ class GrowControllerScreen(Screen):
         self.scan_btn_footer.bind(on_release=self.toggle_ble_scan)
         btn_grid.add_widget(self.scan_btn_footer)
 
+        self._render_ble_controls()
+
         f_reset = GlassButton(text="[font=FA]\uf1f8[/font]\nFACTORY", markup=True, on_release=self.factory_reset, halign="center")
         f_reset.color = (1, 0.25, 0.25, 1)
         btn_grid.add_widget(f_reset)
@@ -339,8 +341,7 @@ class GrowControllerScreen(Screen):
         )
         if new_rev:
             self.ble_bridge_enabled = new_state
-            self.bridge_btn_footer.text = f"Bridge: {'ON' if new_state else 'OFF'}"
-            self.bridge_btn_footer.color = (0.2, 1, 0.4, 1) if new_state else (1, 1, 1, 1)
+            self._render_ble_controls()
 
     def toggle_ble_scan(self, *_):
         mac = GLOBAL_STATE.get_active_device_id()
@@ -358,9 +359,25 @@ class GrowControllerScreen(Screen):
         )
         if new_rev:
             self.ble_scan_enabled = new_state
-            # Button sofort aktualisieren
-            self.scan_btn_footer.text = f"Scanner: {'ON' if new_state else 'OFF'}"
-            self.scan_btn_footer.color = (0.2, 1, 0.4, 1) if new_state else (1, 1, 1, 1)
+            self._render_ble_controls()
+
+    def _render_ble_controls(self):
+        if hasattr(self, "bridge_btn_footer"):
+            self.bridge_btn_footer.text = f"Bridge: {'ON' if self.ble_bridge_enabled else 'OFF'}"
+            self.bridge_btn_footer.color = (
+                (0.2, 1, 0.4, 1)
+                if self.ble_bridge_enabled
+                else (1, 1, 1, 1)
+            )
+
+        if hasattr(self, "scan_btn_footer"):
+            self.scan_btn_footer.text = f"Scanner: {'ON' if self.ble_scan_enabled else 'OFF'}"
+            self.scan_btn_footer.color = (
+                (0.2, 1, 0.4, 1)
+                if self.ble_scan_enabled
+                else (1, 1, 1, 1)
+            )
+
     def set_ap_mode(self, *_):
         self._send_wifi_mode(0)
     
@@ -489,8 +506,11 @@ class GrowControllerScreen(Screen):
             self.rssi = ws.get("rssi", 0)
             
             # BLE enabled flags from device status
-            self.ble_bridge_enabled = bool(ws.get("ble_bridge_enabled", True))
-            self.ble_scan_enabled = bool(ws.get("ble_scan_enabled", True))
+            if "ble_bridge_enabled" in ws:
+                self.ble_bridge_enabled = bool(ws["ble_bridge_enabled"])
+            if "ble_scan_enabled" in ws:
+                self.ble_scan_enabled = bool(ws["ble_scan_enabled"])
+            self._render_ble_controls()
 
             # Reboot flag vom ESP lesen
             self.reboot_required = bool(ws.get("reboot_required", False))
