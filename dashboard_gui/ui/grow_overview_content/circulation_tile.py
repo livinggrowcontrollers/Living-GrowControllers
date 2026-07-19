@@ -2,20 +2,19 @@ import os
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
-from kivy.app import App
 from kivy.graphics import Color, RoundedRectangle, Line
 
 from dashboard_gui.ui.scaling_utils import sp_scaled, dp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
-from dashboard_gui.overlays.circulation_fan_overlay import CirculationFanOverlay
+from dashboard_gui.overlays.features.circulation.overlay import CirculationFanOverlay
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.overlays.components.status_colors import StatusColors
 from dashboard_gui.circulation_fan_registry import overlay_snapshot
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 CIRC_PIC = os.path.join(ASSET_ROOT, "hardware_pics", "mars_gaming.png")
 
-class CirculationTile(BoxLayout, BoxColorUpdater):
+class CirculationTile(BoxLayout, StatusColors):
 
     def __init__(self, fan_id=1, **kw):
         super().__init__(
@@ -201,11 +200,9 @@ class CirculationTile(BoxLayout, BoxColorUpdater):
     
         print(f"[DEBUG] CirculationTile clicked")
     
-        ui = GLOBAL_STATE.ui_handler
-        if getattr(ui, "active_circulation_fan_overlay", None):
-            ui.active_circulation_fan_overlay.close()
-    
-        overlay = CirculationFanOverlay(parent_header=self, fan_id=self.fan_id)
-        ui.active_circulation_fan_overlay = overlay
-        App.get_running_app().root.current_screen.add_widget(overlay)
+        GLOBAL_STATE.ui_handler.open_overlay(
+            "circulation",
+            lambda: CirculationFanOverlay(parent_header=self, fan_id=self.fan_id),
+            instance_id=self.fan_id,
+        )
         return True

@@ -23,7 +23,7 @@ from dashboard_gui.ui.grow_controller_content.controller_gpio_settings import Gp
 from dashboard_gui.ui.grow_controller_content.controller_ota_settings import OtaSettingsOverlay
 from dashboard_gui.ui.grow_controller_content.alternative_gpio_settings import AlternativeGpioSettings
 from dashboard_gui.ui.grow_controller_content.controller_command_status_popup import GrowCommandStatusPopup
-from dashboard_gui.overlays.base_revision_system import BaseRevisionSystem
+from dashboard_gui.overlays.infrastructure.revision_session import RevisionSession
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 
@@ -39,7 +39,7 @@ class GrowControllerScreen(Screen):
         self.root = BoxLayout(orientation="vertical")
         self.labels = {}  
         self.live_gpios = {}  
-        self.engine = BaseRevisionSystem()
+        self.engine = RevisionSession()
         
         self._init_done = True
         self._last_sent_rev = 0

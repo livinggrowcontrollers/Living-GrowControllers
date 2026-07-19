@@ -5,13 +5,12 @@ import time
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
-from kivy.app import App
 from kivy.graphics import Color, RoundedRectangle, Line
 
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.overlays.components.status_colors import StatusColors
 from dashboard_gui.ui.scaling_utils import sp_scaled, dp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
-from dashboard_gui.overlays.light_overlay import LightOverlay
+from dashboard_gui.overlays.features.light.overlay import LightOverlay
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
 from dashboard_gui.ui.common.logic.light_time import calculate_light_time
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
@@ -170,7 +169,7 @@ class LightTile(BoxLayout):
 
 
     def _update_box_color(self, brightness):
-        color = BoxColorUpdater.get_light_color(brightness)
+        color = StatusColors.get_light_color(brightness)
 
         self.glow_color.rgba = (*color, 0.35)
         self.border_color.rgba = (*color, 0.85)
@@ -264,11 +263,5 @@ class LightTile(BoxLayout):
         if not self.collide_point(*touch.pos):
             return super().on_touch_down(touch)
 
-        ui = GLOBAL_STATE.ui_handler
-        if getattr(ui, "active_light_overlay", None):
-            ui.active_light_overlay.close()
-
-        overlay = LightOverlay(parent_header=self)
-        ui.active_light_overlay = overlay
-        App.get_running_app().root.current_screen.add_widget(overlay)
+        GLOBAL_STATE.ui_handler.open_overlay("light", lambda: LightOverlay(parent_header=self))
         return True

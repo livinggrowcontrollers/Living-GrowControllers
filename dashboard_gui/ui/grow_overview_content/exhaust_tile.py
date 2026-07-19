@@ -1,7 +1,6 @@
 #exhaust_tile.py
 import os
 
-from kivy.app import App
 from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
@@ -9,13 +8,13 @@ from kivy.uix.label import Label
 
 from dashboard_gui.ui.scaling_utils import sp_scaled, dp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
-from dashboard_gui.overlays.exhaust_fan_overlay import ExhaustFanOverlay
+from dashboard_gui.overlays.features.exhaust.overlay import ExhaustFanOverlay
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.overlays.components.status_colors import StatusColors
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 FAN_PIC = os.path.join(ASSET_ROOT, "hardware_pics", "vivosun_t6.png")
 
-class ExhaustTile(BoxLayout, BoxColorUpdater):
+class ExhaustTile(BoxLayout, StatusColors):
 
     def __init__(self, **kw):
         super().__init__(
@@ -245,6 +244,5 @@ class ExhaustTile(BoxLayout, BoxColorUpdater):
     
         print(f"[DEBUG] ExhaustTile clicked")
     
-        overlay = ExhaustFanOverlay(parent_header=self)
-        App.get_running_app().root.current_screen.add_widget(overlay)
+        GLOBAL_STATE.ui_handler.open_overlay("exhaust", lambda: ExhaustFanOverlay(parent_header=self))
         return True

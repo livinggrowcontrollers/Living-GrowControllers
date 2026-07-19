@@ -1,13 +1,21 @@
+
+
 import os
 
 from kivy.uix.popup import Popup
 from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.label import Label
-from kivy.uix.dropdown import DropDown
-from kivy.uix.scrollview import ScrollView
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.scatter import Scatter
+from kivy.uix.stencilview import StencilView
+from kivy.clock import Clock
 from kivy.graphics import Color, RoundedRectangle, Rectangle
+from kivy.graphics.transformation import Matrix
+from kivy.uix.scrollview import ScrollView
 
 from dashboard_gui.ui.common.buttons.glass_button import GlassButton
 from dashboard_gui.ui.grow_controller_content.pin_matrix import REQUIRED_ROLES, get_pin_info
@@ -97,17 +105,42 @@ GPIO_POSITIONS = {
 IMAGE_SIZE = (900, 961)
 POPUP_SIZE = (1350, 700)
 
-# Berechnungen für das rein vertikale Layout:
-# Die Breite der Arbeitsfläche entspricht exakt der Breite des Sichtbereichs der ScrollView.
+# Sichtbereich für die zoombare GPIO-Arbeitsfläche.
 SCROLL_VIEW_WIDTH = POPUP_SIZE[0] - 40
 SCROLL_VIEW_HEIGHT = POPUP_SIZE[1] - 100
 
-# Arbeitsfläche: Breite ist starr an den Viewport gekoppelt, Höhe ist massiv vergrößert (z.B. 2000px)
+# Bild, GPIO-Buttons und Beschriftungen teilen sich diese feste Koordinatenbasis.
+# Sie wird als Ganzes von Scatter skaliert, damit die Buttons immer exakt auf dem Bild bleiben.
 WORKSPACE_SIZE = (SCROLL_VIEW_WIDTH, 1000)
 
 # Horizontal zentrieren wir das Bild auf der fixen Breite, vertikal setzen wir es mittig in das Riesen-Widget
 OFFSET_X = (WORKSPACE_SIZE[0] - IMAGE_SIZE[0]) / 2
 OFFSET_Y = (WORKSPACE_SIZE[1] - IMAGE_SIZE[1]) / 2
+
+
+class ZoomableGpioCanvas(Scatter):
+    """Scatter with the ImageViewer's explicit mouse-wheel zoom behaviour."""
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos) and touch.is_mouse_scrolling:
+            if touch.button == "scrolldown":
+                self.zoom(1.1, touch.pos)
+            elif touch.button == "scrollup":
+                self.zoom(0.9, touch.pos)
+            return True
+        return super().on_touch_down(touch)
+
+    def zoom(self, factor, anchor_pos):
+        """Scale around the cursor/gesture anchor without moving its GPIO target."""
+        old_scale = self.scale
+        new_scale = max(self.scale_min, min(self.scale_max, old_scale * factor))
+        if new_scale == old_scale:
+            return
+        scale_factor = new_scale / old_scale
+        self.apply_transform(
+            Matrix().scale(scale_factor, scale_factor, scale_factor),
+            anchor=anchor_pos,
+        )
 
 
 class AlternativeGpioSettings(Popup):
@@ -131,18 +164,28 @@ class AlternativeGpioSettings(Popup):
             root.bg = RoundedRectangle(pos=root.pos, size=root.size, radius=[12])
         root.bind(pos=lambda s, v: setattr(root.bg, "pos", v), size=lambda s, v: setattr(root.bg, "size", v))
 
-        # 2. ScrollView: do_scroll_x ist jetzt auf FALSE gesetzt
-        self.scroll_view = ScrollView(
-            size_hint=(None, None), 
+        # 2. Beschnittener Sichtbereich mit einer frei verschieb- und zoombaren Ebene.
+        # Scatter transformiert Bild, Pin-Buttons und Labels gemeinsam.
+        self.viewport = StencilView(
+            size_hint=(None, None),
             size=(SCROLL_VIEW_WIDTH, SCROLL_VIEW_HEIGHT),
-            do_scroll_x=False,  # Seitliches Scrollen komplett deaktiviert
-            do_scroll_y=True
         )
-        root.add_widget(self.scroll_view)
+        root.add_widget(self.viewport)
 
-        # 3. Arbeitsfläche
+        self.gpio_canvas = ZoomableGpioCanvas(
+            size_hint=(None, None),
+            size=WORKSPACE_SIZE,
+            do_rotation=False,
+            do_translation=True,
+            do_scale=True,
+            scale_min=0.45,
+            scale_max=3.5,
+        )
+        self.viewport.add_widget(self.gpio_canvas)
+
+        # 3. Feste Arbeitsfläche innerhalb der transformierbaren Ebene.
         self.workspace = Widget(size_hint=(None, None), size=WORKSPACE_SIZE)
-        self.scroll_view.add_widget(self.workspace)
+        self.gpio_canvas.add_widget(self.workspace)
 
         with self.workspace.canvas.before:
             Color(1, 1, 1, 1)
@@ -156,8 +199,8 @@ class AlternativeGpioSettings(Popup):
         self.pin_labels = {}
         self.create_gpio_buttons()
 
-        # Start-Scrollposition vertikal mittig setzen (0.5), horizontal ist egal da do_scroll_x=False
-        self.scroll_view.scroll_y = 0.5
+        # Nach dem ersten Layout die komplette Matrix passend in den Sichtbereich legen.
+        Clock.schedule_once(self._fit_gpio_canvas, 0)
 
         # Schließen-Button
         close = GlassButton(text="SCHLIESSEN", size_hint=(None, None), size=(180, 50))
@@ -165,8 +208,41 @@ class AlternativeGpioSettings(Popup):
         close_container.add_widget(close)
         root.add_widget(close_container)
 
+        # Die Buttons sind zusätzlich zum Pinch/Mausrad da, damit Zoom auf
+        # jedem Gerät zuverlässig erreichbar bleibt.
+        zoom_controls = AnchorLayout(anchor_x="right", anchor_y="bottom", padding=[20, 20, 20, 20])
+        zoom_row = FloatLayout(size_hint=(None, None), size=(156, 50))
+        zoom_out = GlassButton(text="−", size_hint=(None, None), size=(48, 50), pos=(0, 0))
+        zoom_reset = GlassButton(text="FIT", size_hint=(None, None), size=(54, 50), pos=(51, 0))
+        zoom_in = GlassButton(text="+", size_hint=(None, None), size=(48, 50), pos=(108, 0))
+        zoom_out.bind(on_release=lambda *_: self._zoom_gpio(0.85))
+        zoom_reset.bind(on_release=self._fit_gpio_canvas)
+        zoom_in.bind(on_release=lambda *_: self._zoom_gpio(1.18))
+        for control in (zoom_out, zoom_reset, zoom_in):
+            zoom_row.add_widget(control)
+        zoom_controls.add_widget(zoom_row)
+        root.add_widget(zoom_controls)
+
         self.content = root
         close.bind(on_release=self.dismiss)
+
+    def _fit_gpio_canvas(self, *_):
+        """Show the complete GPIO matrix initially; wheel/pinch can zoom from here."""
+        viewport_w, viewport_h = self.viewport.size
+        workspace_w, workspace_h = WORKSPACE_SIZE
+        if not viewport_w or not viewport_h:
+            return
+
+        self.gpio_canvas.scale = min(viewport_w / workspace_w, viewport_h / workspace_h)
+        scaled_w = workspace_w * self.gpio_canvas.scale
+        scaled_h = workspace_h * self.gpio_canvas.scale
+        self.gpio_canvas.pos = (
+            self.viewport.x + (viewport_w - scaled_w) / 2,
+            self.viewport.y + (viewport_h - scaled_h) / 2,
+        )
+
+    def _zoom_gpio(self, factor):
+        self.gpio_canvas.zoom(factor, self.viewport.center)
 
     # ... [Restliche Methoden wie _get_selected_gpios, _apply_button_state, open_gpio_menu, select_function bleiben exakt gleich] ...
 
@@ -285,31 +361,40 @@ class AlternativeGpioSettings(Popup):
 
         btn.background_color = color_map.get(role, (.9, .9, .9, 1))
     def open_gpio_menu(self, gpio):
-        dropdown = DropDown(auto_width=False, width=260)
-
         info_roles, info_text = get_pin_info(gpio)
-        title = Label(
-            text=f"[b]GPIO {gpio}[/b]\n[size=14]{info_text}[/size]",
+        menu = Popup(
+            title=f"GPIO {gpio} – FUNKTION WÄHLEN",
+            size_hint=(None, None),
+            size=(440, 580),
+            background="",
+            background_color=(0.04, 0.04, 0.06, 0.98),
+        )
+        content = BoxLayout(orientation="vertical", spacing=10, padding=[14, 12])
+        info_label = Label(
+            text=info_text,
             markup=True,
             size_hint_y=None,
-            height=60,
+            height=58,
+            halign="center",
+            valign="middle",
+            color=(0.75, 0.85, 0.95, 1),
         )
-        dropdown.add_widget(title)
-        with dropdown.canvas.before:
-            Color(0.03, 0.03, 0.03, 0.98)
-            dropdown.bg = RoundedRectangle(
-                pos=dropdown.pos,
-                size=dropdown.size,
-                radius=[10]
-            )
+        info_label.bind(size=lambda widget, *_: setattr(widget, "text_size", widget.size))
+        content.add_widget(info_label)
 
-        dropdown.bind(
-            pos=lambda s, v: setattr(dropdown.bg, "pos", v),
-            size=lambda s, v: setattr(dropdown.bg, "size", v),
-        )
-        disable_btn = GlassButton(text="DEAKTIVIERT", size_hint_y=None, height=42)
-        disable_btn.bind(on_release=lambda x: (self.select_function(gpio, None), dropdown.dismiss()))
-        dropdown.add_widget(disable_btn)
+        scroll = ScrollView(do_scroll_x=False, bar_width=8)
+        choices = GridLayout(cols=1, size_hint_y=None, spacing=7, padding=[2, 2])
+        choices.bind(minimum_height=choices.setter("height"))
+        scroll.add_widget(choices)
+        content.add_widget(scroll)
+
+        def choose(function):
+            self.select_function(gpio, function)
+            menu.dismiss()
+
+        disable_btn = GlassButton(text="DEAKTIVIERT", size_hint_y=None, height=46)
+        disable_btn.bind(on_release=lambda *_: choose(None))
+        choices.add_widget(disable_btn)
 
         for key, required_role in REQUIRED_ROLES.items():
             if required_role not in info_roles:
@@ -319,13 +404,17 @@ class AlternativeGpioSettings(Popup):
             btn = GlassButton(
                 text=f"{display}   [{required_role}]",
                 size_hint_y=None,
-                height=42
-            )            
-            
-            btn.bind(on_release=lambda x, k=key: (self.select_function(gpio, k), dropdown.dismiss()))
-            dropdown.add_widget(btn)
+                height=46,
+                halign="left",
+                valign="middle",
+                padding=[14, 0],
+            )
+            btn.bind(size=lambda widget, *_: setattr(widget, "text_size", widget.size))
+            btn.bind(on_release=lambda _, k=key: choose(k))
+            choices.add_widget(btn)
 
-        dropdown.open(self.pin_buttons[gpio])
+        menu.content = content
+        menu.open()
 
     def select_function(self, gpio, function):
         panel = getattr(self, "gpio_panel", None)

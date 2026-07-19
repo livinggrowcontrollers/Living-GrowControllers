@@ -11,7 +11,7 @@ from kivy.metrics import dp
 import time
 import os
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.overlays.components.status_colors import StatusColors
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 
 # -------------------------------------------------------
@@ -46,13 +46,13 @@ class ExternalIcon(BoxLayout):
     def set_external(self, present):
         self._present = bool(present)
 
-        icon, text = BoxColorUpdater.get_external_state(self._present)
+        icon, text = StatusColors.get_external_state(self._present)
 
         if present is None:
             return color (0.6, 0.6, 0.6, 1),
         else:
 
-            color = (*BoxColorUpdater.get_external_color(), 1)
+            color = (*StatusColors.get_external_color(), 1)
 
         self.icon.text = icon
         self.icon.color = color

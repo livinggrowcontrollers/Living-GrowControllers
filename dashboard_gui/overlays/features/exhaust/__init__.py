@@ -1,0 +1,1 @@
+"""Exhaust fan overlay feature."""

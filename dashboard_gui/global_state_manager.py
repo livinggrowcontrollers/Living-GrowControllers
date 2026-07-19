@@ -151,6 +151,13 @@ class GlobalStateManager:
         
         # Der GSM sagt nur: "OCE, kümmere dich drum!"
         return self.overlay_engine.process_command(mac, cmd_type, **kwargs)
+
+    def retry_overlay_command(self, cmd_type, instance_id=None):
+        """Resend the last pending target with its original revision."""
+        mac = self.get_active_device_id()
+        if not mac:
+            return None
+        return self.overlay_engine.retry_command(mac, cmd_type, instance_id=instance_id)
     
     
     # ---------------------------------------------------------

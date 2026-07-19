@@ -4,10 +4,8 @@ from kivy.uix.boxlayout import BoxLayout
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
-from dashboard_gui.overlays.light_overlay import LightOverlay
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
-from kivy.uix.label import Label
-from kivy.app import App
+from dashboard_gui.overlays.features.light.overlay import LightOverlay
+from dashboard_gui.overlays.components.status_colors import StatusColors
 
 
 class LightControl(BoxLayout):
@@ -48,7 +46,7 @@ class LightControl(BoxLayout):
             self.icon.color = (0.5, 0.5, 0.5, 0.5)
             return
     
-        color = BoxColorUpdater.get_light_color(brightness)
+        color = StatusColors.get_light_color(brightness)
         self.icon.color = (*color, 1)
 
     def is_active(self):
@@ -62,14 +60,5 @@ class LightControl(BoxLayout):
         
         ui = GLOBAL_STATE.ui_handler
         
-        # Sicherstellen, dass wir nicht beide Overlays gleichzeitig offen haben
-        if getattr(ui, "active_fan_overlay", None):
-            ui.active_fan_overlay.close()
-
-        if getattr(ui, "active_light_overlay", None):
-            ui.active_light_overlay.close()
-        else:
-            overlay = LightOverlay(parent_header=self)
-            ui.active_light_overlay = overlay
-            App.get_running_app().root.current_screen.add_widget(overlay)
+        ui.open_overlay("light", lambda: LightOverlay(parent_header=self))
         return True

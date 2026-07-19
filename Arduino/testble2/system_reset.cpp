@@ -39,8 +39,32 @@ void SystemReset::perform_factory_reset() {
     prefs.clear();
     prefs.end();
 
+    // Climate policy and Exhaust hardware configuration
+    prefs.begin("climate_hub", false);
+    prefs.clear();
+    prefs.end();
+
+    prefs.begin("exhaust_fan", false);
+    prefs.clear();
+    prefs.end();
+
+    prefs.begin("circulation_fan", false);
+    prefs.clear();
+    prefs.end();
+
+    prefs.begin("circ_fan_2", false);
+    prefs.clear();
+    prefs.end();
+
+    prefs.begin("circ_fan_3", false);
+    prefs.clear();
+    prefs.end();
+
     Serial.println("[RESET] grow gelöscht");
     Serial.println("[RESET] light gelöscht");
+    Serial.println("[RESET] climate_hub gelöscht");
+    Serial.println("[RESET] exhaust_fan gelöscht");
+    Serial.println("[RESET] circulation fans gelöscht");
 
     delay(2000);
 
@@ -68,7 +92,10 @@ void SystemReset::update() {
             static uint32_t last_ticker = 0;
             if (millis() - last_ticker > 1000) {
                 last_ticker = millis();
-                Serial.printf("[RESET] Haltedauer: %d / 10 Sekunden...\n", elapsed / 1000);
+                Serial.printf(
+                    "[RESET] Haltedauer: %lu / 10 Sekunden...\n",
+                    static_cast<unsigned long>(elapsed / 1000)
+                );
             }
 
             // 10 Sekunden erreicht?

@@ -2,8 +2,7 @@
 title = ESPGrowcontroller
 package.name = espgrowcontroller
 package.domain = org.hackintosh1980
-# package.name/domain sind die einzige Quelle fuer den Android-Namespace.
-# Die Service-Klasse wird zur Laufzeit aus dem installierten Paketnamen ermittelt.
+#####undbedingt ble service.py abndern bei namensnderung!und ja keine binde und unterstriche verwenden!
 
 source.include_exts = py,kv,png,jpg,json,ttf,bin
 include_patterns = garden/**/*
@@ -21,7 +20,10 @@ fullscreen = 1
 
 # Nur Font Awesome Solid soll eingebunden werden
 android.add_assets = assets/fonts/fa-solid-900.ttf
-requirements = python3,setuptools,kivy,pyjnius,pillow==9.5.0,certifi,six,kivy_garden.graph,zeroconf,ifaddr
+
+# Python fest auf 3.11 pinnen, damit das System nicht eigenmächtig auf 3.14 springt
+requirements = python3==3.11.9,setuptools,kivy,pyjnius,pillow==9.5.0,certifi,six,kivy_garden.graph,zeroconf,ifaddr
+
 # (list) Services to declare
 android.add_src = src/main/java
 services = ble_service:services/ble_service.py
@@ -36,22 +38,15 @@ android.ndk_api = 29
 android.debug = True
 android.archs = arm64-v8a
 
-# --- HIER SIND DIE FIXES FÜR DIE ALLGEMEINGÜLTIGKEIT ---
+# --- GENERISCHE PFADE (AKTIVIERTE ORIGINALE PFADE) ---
+android.sdk_path = ~/.buildozer/android/platform/android-sdk
+android.ndk_path = ~/.buildozer/android/platform/android-ndk-r25b
 
-# SDK und NDK Pfade auskommentieren! 
-# Buildozer nutzt dann automatisch den Standardpfad des aktuellen Users (~/.buildozer/android/platform/...)
-# android.sdk_path = 
-# android.ndk_path = 
-
-# Falls du eine ganz bestimmte NDK-Version erzwingen willst (r25b), übergibst du sie so:
-android.ndk = 25b
-
-# p4a.source_dir komplett auskommentieren, außer du arbeitest aktiv an einem eigenen Fork von python-for-android.
-# Wenn auskommentiert, lädt Buildozer die passende Version automatisch in das User-Verzeichnis.
-# p4a.source_dir = 
+# Hier ist dein echtes p4a-Verzeichnis – gerettet und nutzerunabhängig gemacht!
+p4a.source_dir = ~/python-for-android
 
 p4a.build_threads = 6
 p4a.extra_args = --allow-minsdk-ndkapi-mismatch
 android.gradle_version = 8.0.2
-# android.build_tools_version = 34.0.0
+android.build_tools_version = 34.0.0
 android.logcat_filters = *:I python:D

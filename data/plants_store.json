@@ -1,7 +1,7 @@
 {
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 18,
+      "rev_plant_planner": 30,
       "plants": [
         {
           "slot": 0,
@@ -21,9 +21,9 @@
           "favorite": false,
           "picture": 4,
           "last_watered": 1784348170,
-          "last_fertilized": 0,
+          "last_fertilized": 1784437820,
           "estimated_veg_days": 30,
-          "estimated_flower_days": 60,
+          "estimated_flower_days": 68,
           "harvest_date": "",
           "germination_start": "2026-05-01",
           "seedling_start": "",
@@ -35,11 +35,11 @@
         {
           "slot": 1,
           "used": true,
-          "name": " COPY",
+          "name": " Krautr\u00fcbe II",
           "strain": "",
           "breeder": "",
           "phenotype": "",
-          "pot_size": "",
+          "pot_size": "10.9",
           "medium": "",
           "light": "",
           "location": "",
@@ -48,11 +48,11 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 2,
+          "picture": 6,
           "last_watered": 1784348173,
-          "last_fertilized": 0,
+          "last_fertilized": 1784449542,
           "estimated_veg_days": 30,
-          "estimated_flower_days": 60,
+          "estimated_flower_days": 68,
           "harvest_date": "",
           "germination_start": "",
           "seedling_start": "",
@@ -78,7 +78,7 @@
           "dry_weight": "",
           "favorite": false,
           "picture": 4,
-          "last_watered": 1784348170,
+          "last_watered": 0,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
           "estimated_flower_days": 60,

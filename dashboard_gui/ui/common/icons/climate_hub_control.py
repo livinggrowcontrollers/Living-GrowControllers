@@ -1,6 +1,5 @@
 # dashboard_gui/ui/common/icons/climate_hub_control.py
 
-from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 
 from dashboard_gui.global_state_manager import GLOBAL_STATE
@@ -34,15 +33,9 @@ class ClimateHubControl(BoxLayout):
             return False
             
         ui = GLOBAL_STATE.ui_handler
-        from dashboard_gui.overlays.climate_hub_overlay import ClimateHubOverlay
+        from dashboard_gui.overlays.features.climate_hub.overlay import ClimateHubOverlay
         
-        # Falls das Overlay bereits offen ist, schließen – andernfalls neu erzeugen
-        if getattr(ui, "active_climate_hub_overlay", None):
-            ui.active_climate_hub_overlay.close()
-        else:
-            overlay = ClimateHubOverlay(parent_header=self)
-            ui.active_climate_hub_overlay = overlay
-            App.get_running_app().root.current_screen.add_widget(overlay)
+        ui.open_overlay("climate_hub", lambda: ClimateHubOverlay(parent_header=self))
         return True
 
     def set_active(self, active=True, color=None):

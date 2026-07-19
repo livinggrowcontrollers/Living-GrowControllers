@@ -3,7 +3,6 @@
 #include "power_manager.h"
 #include "sensor.h"
 #include "ble_bridge.h"
-#include "logic_helper.h"
 #include "hardware_init.h"
 #include "ota_manager.h"
 
@@ -14,6 +13,7 @@
 // PATCHER END: CIRCULATION_INCLUDE
 
 #include "exhaust_fan.h" 
+#include "climate_hub.h"
 #include "sys_config.h"
 #include "web_server.h" 
 #include "light_control.h"
@@ -26,10 +26,6 @@
 #include "plant_planner.h" 
 ESPWatch watch;
 BLEBridge bleBridge;
-uint32_t device_confirmed_rev = 0;
-
-
-
 // DIE EINZIGE DEFINITION DES SERVERS
 WebServer server(80); 
 
@@ -106,6 +102,7 @@ void setup() {
 
     // 3. Licht NACH stabiler Zeitbasis
     light_init();
+    climate_hub_init();
 
     Serial.println(">>> Hardware läuft (TIMEBASE STABIL) <<<");
 
@@ -120,28 +117,12 @@ void setup() {
 
     // 5. BACKGROUND
     // PATCHER BEGIN: CIRCULATION_INIT
-    if (sysConfig.pin_circ_fan == -1 || sysConfig.pin_circ_tacho == -1) {
-        Serial.println("Circulation Fan1 disabled (sysConfig). ");
-    } else {
-        circulation_fan_init(sysConfig.pin_circ_fan, sysConfig.pin_circ_tacho);
-    }
-    if (sysConfig.pin_circ_fan2 == -1 || sysConfig.pin_circ_tacho2 == -1) {
-        Serial.println("Circulation Fan2 disabled (sysConfig). ");
-    } else {
-        circulation_fan2_init(sysConfig.pin_circ_fan2, sysConfig.pin_circ_tacho2);
-    }
-    if (sysConfig.pin_circ_fan3 == -1 || sysConfig.pin_circ_tacho3 == -1) {
-        Serial.println("Circulation Fan3 disabled (sysConfig). ");
-    } else {
-        circulation_fan3_init(sysConfig.pin_circ_fan3, sysConfig.pin_circ_tacho3);
-    }
+    circulation_fan_init(sysConfig.pin_circ_fan, sysConfig.pin_circ_tacho);
+    circulation_fan2_init(sysConfig.pin_circ_fan2, sysConfig.pin_circ_tacho2);
+    circulation_fan3_init(sysConfig.pin_circ_fan3, sysConfig.pin_circ_tacho3);
 // PATCHER END: CIRCULATION_INIT
 
-    if (sysConfig.pin_exh_fan == -1 || sysConfig.pin_exh_tacho == -1) {
-        Serial.println("Exhaust Fan disabled (sysConfig).");
-    } else {
-        exhaust_fan_init((uint8_t)sysConfig.pin_exh_fan, (uint8_t)sysConfig.pin_exh_tacho);
-    }
+    exhaust_fan_init(sysConfig.pin_exh_fan, sysConfig.pin_exh_tacho);
     plant_planner_init();
 
     // ============================================================
@@ -199,6 +180,8 @@ void loop() {
     SystemReset::update();         // <--- 3. PERMANENT DEN KNOPF ÜBERWACHEN
     
         
+    climate_hub_update();
+
     // PATCHER BEGIN: CIRCULATION_UPDATE
     circulation_fan_update();
     circulation_fan2_update();
@@ -207,10 +190,6 @@ void loop() {
         
     
     exhaust_fan_update(); 
-
-    // Beide Klimawerte sauber an das Lichtmodul übergeben (Push-Prinzip)
-    light_control_set_humidity(getInternalHumidity());
-    light_control_set_temperature(getTempIn()); // <-- DIESE ZEILE HAT GEFEHLT!
 
     light_update();                // Berechnet stur den Lichtzustand anhand der Systemzeit
     power_manager_update();

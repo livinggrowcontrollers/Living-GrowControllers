@@ -2,6 +2,8 @@
 # dashboard_gui/ui_screen_button_engine.py
 class UIManager:
     def __init__(self, gsm):
+        from dashboard_gui.overlays.infrastructure.overlay_manager import OverlayManager
+
         self.gsm = gsm  # Rückreferenz auf den Boss (GSM)
         self.broadcast_buttons = [] # Alle Screen-Referenzen zentral hier
         self.active_inspector = None
@@ -9,6 +11,7 @@ class UIManager:
         self.active_circulation_fan_overlay = None
         self.active_exhaust_fan_overlay = None
         self.active_climate_hub_overlay = None
+        self.overlay_manager = OverlayManager(self)
         # -------------------------------------------------
         # Navigation History
         # -------------------------------------------------
@@ -22,6 +25,15 @@ class UIManager:
             "grow_controller": None, "plant_planner": None,
             "grow_overview": None
         }
+
+    def open_overlay(self, kind, factory, instance_id=None, host=None):
+        """Open or toggle one application-wide control overlay."""
+        from kivy.app import App
+        from dashboard_gui.overlays.infrastructure.contracts import OverlayKey
+
+        if host is None:
+            host = App.get_running_app().root.current_screen
+        return self.overlay_manager.open(OverlayKey(kind, instance_id), factory, host)
 
     def attach_screen(self, name, ref):
         """Registriert einen Screen im Manager."""

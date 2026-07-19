@@ -12,7 +12,7 @@
 #   - Unified look and feel across all overlays
 #   - Future-proof for light_overlay 2-point expansion
 ###############################################################################
-# dashboard_gui/overlays/unified_slider.py
+# Canonical slider implementation for control overlays.
 from kivy.uix.widget import Widget
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty, AliasProperty
 from kivy.graphics import Color, RoundedRectangle, Ellipse, Line

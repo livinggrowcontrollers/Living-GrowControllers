@@ -43,6 +43,10 @@ class IconButton(ButtonBehavior, IconLabel):
         if tuple(self.color) != tuple(color):
             self.color = color
 
+    def set_capability(self, capability):
+        """Render the visual state already resolved by the Header capability model."""
+        self.set_icon(capability["icon"], capability["color"])
+
     def update_callback(self, callback):
         if callback is self._cap_callback:
             return
@@ -418,14 +422,15 @@ class DeviceRow(BoxLayout):
         for index, cap in enumerate(caps[:8]):
             if index < len(self.cap_widgets):
                 icon_widget = self.cap_widgets[index]
-                icon_widget.set_icon(cap["icon"], cap["color"])
+                icon_widget.set_capability(cap)
                 icon_widget.update_callback(lambda *_args, _cap_type=cap["type"]: self._open_capability(_cap_type))
             else:
                 icon_widget = IconButton(
                     text=cap["icon"],
-                    font_size=26,
+                    font_size=sp_scaled(24),
                     color=cap["color"]
                 )
+                icon_widget.set_capability(cap)
                 icon_widget.update_callback(lambda *_args, _cap_type=cap["type"]: self._open_capability(_cap_type))
                 self.cap_widgets.append(icon_widget)
                 self.cap_container.add_widget(icon_widget)

@@ -221,7 +221,7 @@ Sie schreibt niemals Hardware.
 Jedes Overlay benutzt
 
 ```
-BaseRevisionSystem
+RevisionSession
 ```
 
 Dadurch bekommt jedes Overlay automatisch
@@ -245,7 +245,7 @@ Die Revision wird von der Command Engine erzeugt.
 
 ---
 
-# 8. BaseRevisionSystem
+# 8. RevisionSession
 
 Diese Klasse ist die komplette State Machine.
 
@@ -572,7 +572,7 @@ User
 Overlay
  │
  ▼
-BaseRevisionSystem
+RevisionSession
  │
  ▼
 OverlayCommandEngine
@@ -605,7 +605,7 @@ get_status()
 rev zurück
  │
  ▼
-BaseRevisionSystem
+RevisionSession
  │
  ▼
 Pending beendet
@@ -619,7 +619,7 @@ Grünes Sync-Symbol
 Die Verantwortlichkeiten sind strikt getrennt:
 
 * **Overlay:** Benutzerinteraktion und Anzeige.
-* **BaseRevisionSystem:** Verwaltung von Revisionen, Pending-, Retry- und Sync-Status.
+* **RevisionSession:** Verwaltung von Revisionen, Pending-, Retry- und Sync-Status.
 * **OverlayCommandEngine:** Erzeugt die nächste Revision und sendet den vollständigen Target-Zustand.
 * **ESP:** Übernimmt neue Target-Werte nur bei neuer Revision, speichert sie bei Bedarf persistent und bestätigt die Revision.
 * **Hardware-Loop:** Führt den Target-Zustand asynchron aus (`effective` folgt `current`).

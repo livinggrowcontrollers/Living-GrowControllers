@@ -32,20 +32,12 @@ void circulation_fan3_get_status(JsonObject doc);
 // Modul-Funktionen
 void circulation_fan3_init(int pin, int tacho_pin);
 void circulation_fan3_update();
-void circulation_fan3_set_speed(int percent);
-void circulation_fan3_set_mode(circulation_fan3Mode mode);
-void circulation_fan3_set_min_speed(int percent);
-void circulation_fan3_save_state();
+void circulation_fan3_apply_climate_factor(float factor);
 void circulation_fan3_reconfigure();
 
 int circulation_fan3_get_rpm();
 
 // DER NEUE POSTBOTE:
 void circulation_fan3_process_json(JsonObject doc);
-
-// Externs für handleData (können später weg)
-extern int current_circulation_fan3_speed;
-extern int current_circulation_fan3_min_speed;
-extern circulation_fan3Mode current_circulation_fan3_mode;
 
 #endif

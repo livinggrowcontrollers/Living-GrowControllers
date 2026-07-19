@@ -7,9 +7,9 @@
 #include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
+#include "climate_hub.h"
 #include "light_control.h"
 #include "power_manager.h"
-#include "logic_helper.h"
 #include <WiFi.h>
 #include "esp_wifi.h"
 #include <ArduinoJson.h>
@@ -28,9 +28,6 @@ extern WebServer server;
 extern String get_current_time_str();
 
 extern int current_rev;
-extern float currentVPD;      
-extern float currentVPDIn;    
-extern float currentVPDLeaf;
 // Die alten festen Zugänge fliegen raus. Wir holen die dynamischen Variablen:
 extern String _web_username;
 extern String _web_password;
@@ -113,6 +110,7 @@ void handleData() {
     obj["mac"] = WiFi.macAddress();
     
     exhaust_fan_get_status(obj);
+    climate_hub_get_status(obj);
 
     // PATCHER BEGIN: CIRCULATION_GET_STATUS
     circulation_fan_get_status(obj);
@@ -149,7 +147,7 @@ void handleControlJSON() {
             current_rev = obj["rev"]; 
         }
 
-        exhaust_fan_process_json(obj); 
+        climate_hub_process_json(obj);
         // PATCHER BEGIN: CIRCULATION_JSON_UPDATE
         circulation_fan_process_json(obj);
         circulation_fan2_process_json(obj);

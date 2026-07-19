@@ -22,12 +22,9 @@
 #include <Preferences.h> // NEU: Für persistente Speicherung
 #include "sys_config.h"
 #include "hardware_init.h"
-#include "sys_config.h"
 
 
 static bool circulation_fan2_enabled = true;
-#define CIRC_FAN_PULSES_PER_REV 2
-#define CIRC_FAN_DEBOUNCE_US 500
 // Variablen mit sicheren Startwerten
 static int _circulation_fan2_pin = -1;
 static int _tacho2_pin = -1;
@@ -37,10 +34,11 @@ static int current_circ_fan2_pin = -1;
 static int current_circ_tacho2_pin = -1;
 
 Preferences circulation_fan2Prefs;
-int current_circulation_fan2_speed = 10;
-circulation_fan2Mode current_circulation_fan2_mode = circulation_fan2_MODE_NATURAL; // Direkt mit Natural starten
-int current_circulation_fan2_min_speed = 0; // Standardmäßig 20% Min-Speed
-int effective_circulation_fan2_speed = 0;    // Das ist das SPEED_NOW (Ist)
+static int current_circulation_fan2_speed = 10;
+static circulation_fan2Mode current_circulation_fan2_mode = circulation_fan2_MODE_NATURAL;
+static int current_circulation_fan2_min_speed = 0;
+static int effective_circulation_fan2_speed = 0;
+static float circulation_fan2_climate_factor = 1.0f;
 volatile uint32_t circulation_fan2_pulse_count = 0;
 static uint32_t last_circulation_fan2_rpm_check = 0;
 static int current_circulation_fan2_rpm = 0;
@@ -48,8 +46,11 @@ static int current_circulation_fan2_rpm = 0;
 static uint32_t last_circulation_fan2_pulse_time = 0;
 static uint32_t circulation_fan2_rev = 0;     // ← NEU: Eigenes Revision für dieses Modul
 
+static void circulation_fan2_set_speed(int percent);
+static void circulation_fan2_set_mode(circulation_fan2Mode mode);
+
 // Hilfsfunktion: Speichern
-void circulation_fan2_save_state() {
+static void circulation_fan2_save_state() {
     circulation_fan2Prefs.putInt("speed", current_circulation_fan2_speed);
     circulation_fan2Prefs.putInt("mode", (int)current_circulation_fan2_mode);
     circulation_fan2Prefs.putInt("min_speed", current_circulation_fan2_min_speed);
@@ -59,16 +60,25 @@ void IRAM_ATTR count_circ_fan2_pulse() {
     uint32_t now = micros();
     // Nutze den korrekten Namen: last_circulation_fan2_pulse_time
     if (now - last_circulation_fan2_pulse_time > 800) { 
-        circulation_fan2_pulse_count++;
+        circulation_fan2_pulse_count = circulation_fan2_pulse_count + 1;
         last_circulation_fan2_pulse_time = now;
     }
 }
 
 void circulation_fan2_init(int pin, int tacho_pin) {
+    circulation_fan2Prefs.begin("circ_fan_2", false);
+    current_circulation_fan2_speed = circulation_fan2Prefs.getInt("speed", 60);
+    current_circulation_fan2_mode = (circulation_fan2Mode)circulation_fan2Prefs.getInt("mode", 1);
+    current_circulation_fan2_min_speed = circulation_fan2Prefs.getInt("min_speed", 20);
+
     // Runtime-Check: Pin -1 deaktiviert Modul
     if (pin == -1 || tacho_pin == -1) {
         Serial.println("circulation_fan2_init: Pin = -1 -> Modul deaktiviert.");
         circulation_fan2_enabled = false;
+        current_circ_fan2_pin = -1;
+        current_circ_tacho2_pin = -1;
+        current_circulation_fan2_rpm = -256;
+        effective_circulation_fan2_speed = -256;
         return;
     }
 
@@ -80,12 +90,6 @@ void circulation_fan2_init(int pin, int tacho_pin) {
     current_circ_tacho2_pin = _tacho2_pin;
     
     ledcAttach(_circulation_fan2_pin, 25000, 8);
-    
-    circulation_fan2Prefs.begin("circulation_fan2", false);
-    current_circulation_fan2_speed = circulation_fan2Prefs.getInt("speed", 60);
-    // WICHTIG: Fallback auf 1 (NATURAL), falls nichts gespeichert ist
-    current_circulation_fan2_mode = (circulation_fan2Mode)circulation_fan2Prefs.getInt("mode", 1); 
-    current_circulation_fan2_min_speed = circulation_fan2Prefs.getInt("min_speed", 20);
     
     // 3. Tacho Setup
     if (tacho_pin != 255) {
@@ -142,6 +146,11 @@ void circulation_fan2_reconfigure() {
     }
 
     circulation_fan2_enabled = true;
+    if (current_circulation_fan2_rpm < 0) {
+        current_circulation_fan2_rpm = 0;
+        circulation_fan2_pulse_count = 0;
+        last_circulation_fan2_rpm_check = millis();
+    }
 
     // 4. SCHRITT: PWM neu binden
     if (current_circ_fan2_pin != _circulation_fan2_pin) {
@@ -162,31 +171,32 @@ void circulation_fan2_reconfigure() {
     Serial.printf("Circulation Fan aktiv -> PWM GPIO %d, Tacho GPIO %d\n", _circulation_fan2_pin, _tacho2_pin);
 }
 
-void circulation_fan2_set_speed(int percent) {
+static void circulation_fan2_set_speed(int percent) {
     if (!circulation_fan2_enabled || _circulation_fan2_pin == 255 || current_circ_fan2_pin == -1) return;
     current_circulation_fan2_speed = constrain(percent, 0, 100);
     
     circulation_fan2_save_state();
 
     if(current_circulation_fan2_mode == circulation_fan2_MODE_MANUAL) {
+        effective_circulation_fan2_speed = (int)(
+            current_circulation_fan2_speed * circulation_fan2_climate_factor + 0.5f
+        );
         uint32_t duty = 0;
-        if (current_circulation_fan2_speed > 0) {
-            duty = map(current_circulation_fan2_speed, 1, 100, 65, 255);
+        if (effective_circulation_fan2_speed > 0) {
+            duty = map(effective_circulation_fan2_speed, 1, 100, 65, 255);
         }
         ledcWrite(_circulation_fan2_pin, duty);
     }
 }
 
-void circulation_fan2_set_mode(circulation_fan2Mode mode) {
+static void circulation_fan2_set_mode(circulation_fan2Mode mode) {
     if (!circulation_fan2_enabled) return;
     current_circulation_fan2_mode = mode;
     circulation_fan2_save_state(); // Modus speichern
 }
 
-// NEU: Damit du auch den Min-Speed von extern (Web/UI) setzen kannst
-void circulation_fan2_set_min_speed(int percent) {
-    current_circulation_fan2_min_speed = constrain(percent, 0, 100);
-    circulation_fan2_save_state();
+void circulation_fan2_apply_climate_factor(float factor) {
+    circulation_fan2_climate_factor = constrain(factor, 0.0f, 1.0f);
 }
 
 
@@ -223,7 +233,9 @@ void circulation_fan2_update() {
     
     // Falls Manuell: Der effektive Wert ist einfach das Target
     if (current_circulation_fan2_mode == circulation_fan2_MODE_MANUAL) {
-        effective_circulation_fan2_speed = current_circulation_fan2_speed;
+        effective_circulation_fan2_speed = (int)(
+            current_circulation_fan2_speed * circulation_fan2_climate_factor + 0.5f
+        );
         uint32_t duty = 0;
         if (effective_circulation_fan2_speed > 0) {
             duty = map(effective_circulation_fan2_speed, 1, 100, 65, 255);
@@ -246,7 +258,10 @@ void circulation_fan2_update() {
         int diff = current_circulation_fan2_speed - current_circulation_fan2_min_speed;
         if (diff < 0) diff = 0; 
 
-        effective_circulation_fan2_speed = current_circulation_fan2_min_speed + (int)(diff * mix_factor);
+        const int base_speed = current_circulation_fan2_min_speed + (int)(diff * mix_factor);
+        effective_circulation_fan2_speed = (int)(
+            base_speed * circulation_fan2_climate_factor + 0.5f
+        );
         
         uint32_t duty = 0;
         if (effective_circulation_fan2_speed > 0) {
@@ -263,20 +278,20 @@ void circulation_fan2_process_json(JsonObject doc) {
 
 
     // 2. Daten-Revision (Flash relevant)
-    if (doc.containsKey("rev_circfan2")) {
+    if (!doc["rev_circfan2"].isNull()) {
         uint32_t received_rev = doc["rev_circfan2"];
         if (received_rev > circulation_fan2_rev) {
             circulation_fan2_rev = received_rev;
 
-            if (doc.containsKey("circulation_fan2_pct")) {
+            if (!doc["circulation_fan2_pct"].isNull()) {
                 current_circulation_fan2_speed = constrain((int)doc["circulation_fan2_pct"], 0, 100);
                 flash_changed = true;
             }
-            if (doc.containsKey("circulation_fan2_min")) {
+            if (!doc["circulation_fan2_min"].isNull()) {
                 current_circulation_fan2_min_speed = constrain((int)doc["circulation_fan2_min"], 0, 100);
                 flash_changed = true;
             }
-            if (doc.containsKey("circulation_fan2_mode")) {
+            if (!doc["circulation_fan2_mode"].isNull()) {
                 String m = doc["circulation_fan2_mode"];
                 if (m == "nat") current_circulation_fan2_mode = circulation_fan2_MODE_NATURAL;
                 else if (m == "chao") current_circulation_fan2_mode = circulation_fan2_MODE_CHAOTIC;

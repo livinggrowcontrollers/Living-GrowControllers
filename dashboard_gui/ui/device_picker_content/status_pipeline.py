@@ -2,7 +2,6 @@
 
 from kivy.clock import Clock
 from dashboard_gui.data_buffer import BUFFER
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
 from dashboard_gui.ui.common.header_capabilities import build_header_capabilities, build_header_state
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.formatters import UIFormatter
@@ -194,7 +193,12 @@ class DeviceStatusPipeline:
                                 break
 
                 payload["caps"] = [
-                    {"type": cap["id"], "icon": cap["icon"], "color": cap["color"]}
+                    {
+                        "type": cap["id"],
+                        "icon": cap["icon"],
+                        "color": cap["color"],
+                        "value": cap.get("value"),
+                    }
                     for cap in build_header_capabilities(build_header_state(matched_frame))
                     if cap["show_in_picker"] and cap["enabled"]
                 ]

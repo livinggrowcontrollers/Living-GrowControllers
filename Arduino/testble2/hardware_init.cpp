@@ -2,7 +2,6 @@
 #include "hardware_init.h"
 #include "sensor.h"
 #include "sys_config.h"
-#include "exhaust_fan.h"
 extern TwoWire I2C_Sensor;
 extern TwoWire I2C_RTC;
 
@@ -92,8 +91,5 @@ void init_hardware() {
 void hardware_reconfigure()
 {
     Serial.println("========== Hardware Runtime Reconfigure ==========");
-
-    exhaust_fan_reconfigure();
-
     Serial.println("========== Hardware Reconfigure Done ==========");
 }

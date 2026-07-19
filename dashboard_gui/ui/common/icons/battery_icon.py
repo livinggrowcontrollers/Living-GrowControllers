@@ -5,7 +5,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
+from dashboard_gui.overlays.components.status_colors import StatusColors
 
 #######BATTERY
 class BatteryIcon(BoxLayout):
@@ -30,8 +30,8 @@ class BatteryIcon(BoxLayout):
         self.add_widget(self.text_label)
 
     def set_voltage(self, voltage):
-        icon, text = BoxColorUpdater.get_battery_state(voltage)
+        icon, text = StatusColors.get_battery_state(voltage)
 
         self.icon.text = icon
         self.text_label.text = text
-        self.icon.color = (*BoxColorUpdater.get_battery_color(voltage), 1)
+        self.icon.color = (*StatusColors.get_battery_color(voltage), 1)

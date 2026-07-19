@@ -75,9 +75,7 @@
 #include "light_control.h"
 #include <time.h>
 #include <Preferences.h>
-#include "sys_config.h"      // <--- WICHTIG: Hier kommt PIN_LIGHT her
-#include "sensor.h"      // <--- Für is_sensor_value_valid()
-#include "exhaust_fan.h"
+#include "sys_config.h"
 
 
 
@@ -85,10 +83,9 @@ time_t light_start_unix = 0;
 uint32_t light_duration_sec = 43200;  // Sekunden
 int target_brightness = 0;
 int effective_brightness = 0;
-bool light_climate_override = false;
+static bool light_climate_override = false;
+static float climate_brightness_factor = 1.0f;
 String light_state_reason = "manual";
-float light_current_temp = -256.0f;
-float light_current_humidity = -256.0f;
 
 // ===== 15-MINUTEN-RASTER (ab jetzt) =====
 int l_target_h = 8;         // Stunden (0-23)
@@ -97,7 +94,6 @@ int l_target_dur = 720;     // MINUTEN (nicht Stunden!) --> 720 min = 12h
 int l_target_sunrise = 60;  // MINUTEN (15er-Raster)
 int l_target_sunset = 60;   // MINUTEN (15er-Raster)
 LightMode current_light_mode = LIGHT_MODE_MANUAL;
-extern uint32_t current_rev;
 static uint32_t light_rev = 0;              // ← NEU: Eigenes Revision für das Licht-Modul
 
 static bool light_module_enabled = true;
@@ -333,84 +329,6 @@ void light_update() {
                 }
             }
         
-            // =====================================================
-            // 🌡️ CLIMATE OVERRIDE
-            // =====================================================
-        
-            if (light_climate_override) {
-            
-                bool temp_valid =
-                    is_sensor_value_valid(light_current_temp);
-            
-                bool hum_valid =
-                    is_sensor_value_valid(light_current_humidity);
-            
-                if (temp_valid && hum_valid) {
-            
-                    float climate_limit = 1.0f;
-            
-                    // ========================================
-                    // TEMP HIGH
-                    // ========================================
-            
-                    if (light_current_temp > target_temp_max) {
-            
-                        climate_limit =
-                            min(climate_limit, 0.85f);
-                    }
-            
-                    // ========================================
-                    // HUM LOW
-                    // ========================================
-            
-                    if (light_current_humidity <
-                        (float)target_humidity_min) {
-            
-                        climate_limit =
-                            min(climate_limit, 0.90f);
-                    }
-            
-                    // ========================================
-                    // HUM HIGH
-                    // ========================================
-            
-                    if (light_current_humidity >
-                        (float)target_humidity_max) {
-            
-                        climate_limit =
-                            min(climate_limit, 0.95f);
-                    }
-            
-                    // ========================================
-                    // HARD LIMIT
-                    // ========================================
-            
-                    climate_limit =
-                        constrain(
-                            climate_limit,
-                            0.75f,
-                            1.0f
-                        );
-            
-                    // ========================================
-                    // APPLY ONCE
-                    // ========================================
-            
-                    effective_brightness =
-                        (int)(
-                            (float)effective_brightness *
-                            climate_limit +
-                            0.5f
-                        );
-            
-                    effective_brightness =
-                        constrain(
-                            effective_brightness,
-                            0,
-                            100
-                        );
-                }
-            }
         }
 
         // -------------------------------------------------
@@ -444,6 +362,18 @@ void light_update() {
 
         effective_brightness =
             target_brightness;
+    }
+
+    if (
+        current_light_mode == LIGHT_MODE_TIMER
+        && light_climate_override
+        && effective_brightness > 0
+    ) {
+        effective_brightness = constrain(
+            static_cast<int>(effective_brightness * climate_brightness_factor + 0.5f),
+            0,
+            100
+        );
     }
 
     // =====================================================
@@ -606,27 +536,6 @@ LightPhase light_get_current_phase() {
     return LIGHT_PHASE_DAY;
 }
 
-PlantPhase getPlantPhase() {
-
-    LightPhase lp =
-        light_get_current_phase();
-
-    switch (lp) {
-
-        case LIGHT_PHASE_SUNRISE:
-            return SUNRISE_WAKEUP;
-
-        case LIGHT_PHASE_SUNSET:
-            return SUNSET_TRANSITION;
-
-        case LIGHT_PHASE_DAY:
-            return DAY_TRANSPIRE;
-
-        case LIGHT_PHASE_NIGHT:
-        default:
-            return NIGHT_RECOVERY;
-    }
-}
 // DIESE BEIDEN HIER MÜSSEN UNBEDINGT UNTER DER UPDATE FUNKTION STEHEN:
 int light_get_effective_brightness() {
     return effective_brightness;
@@ -701,21 +610,12 @@ void light_set_mode(LightMode m) {
     light_update();
 }
 
-void light_control_set_humidity(float humidity) {
-    if (is_sensor_value_valid(humidity)) {
-        light_current_humidity = humidity;
-    } else {
-        //Serial.println("light_control: rejected invalid humidity value");
-    }
+void light_apply_climate_factor(float factor) {
+    climate_brightness_factor = constrain(factor, 0.0f, 1.0f);
 }
 
-
-void light_control_set_temperature(float temperature) {
-    if (is_sensor_value_valid(temperature)) {
-        light_current_temp = temperature;
-    } else {
-        //Serial.println("light_control: rejected invalid temperature value");
-    }
+bool light_climate_override_enabled() {
+    return light_climate_override;
 }
 // 15-Minuten-Raster Validierung
 int _round_to_15min(int minutes) {

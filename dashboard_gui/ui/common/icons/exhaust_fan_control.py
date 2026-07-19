@@ -3,9 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
-from kivy.uix.label import Label
-from kivy.app import App
+from dashboard_gui.overlays.components.status_colors import StatusColors
 
 
 
@@ -41,7 +39,7 @@ class ExhaustFanControl(BoxLayout):
             return
     
         try:
-            color = BoxColorUpdater.get_rpm_color(rpm)
+            color = StatusColors.get_rpm_color(rpm)
             self.icon.color = (*color, 1)
 
         except Exception:
@@ -60,12 +58,7 @@ class ExhaustFanControl(BoxLayout):
         
         # Hier importieren wir nun das spezifische Exhaust-Overlay
         # Pfad ggf. anpassen, falls die Datei anders heißt
-        from dashboard_gui.overlays.exhaust_fan_overlay import ExhaustFanOverlay
+        from dashboard_gui.overlays.features.exhaust.overlay import ExhaustFanOverlay
         
-        if getattr(ui, "active_exhaust_fan_overlay", None):
-            ui.active_exhaust_fan_overlay.close()
-        else:
-            overlay = ExhaustFanOverlay(parent_header=self)
-            ui.active_exhaust_fan_overlay = overlay
-            App.get_running_app().root.current_screen.add_widget(overlay)
+        ui.open_overlay("exhaust", lambda: ExhaustFanOverlay(parent_header=self))
         return True

@@ -1,9 +1,8 @@
-# dashboard_gui/ui/common/logic/box_icon_color_updater.py
+# dashboard_gui/overlays/components/status_colors.py
+"""Canonical color mapping for overlay panels, tiles and header icons."""
 
 
-
-
-class BoxColorUpdater:
+class StatusColors:
 
     def __init__(self):
         self.glow_color = None

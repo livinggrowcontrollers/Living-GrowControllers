@@ -2,51 +2,61 @@
   {
     "address": "827482CC-A977-43D7-835E-8E8B6978E66A",
     "gatt_raw": null,
-    "timestamp": "2026-07-19T03:52:23.325+0000",
+    "timestamp": "2026-07-19T13:29:38.281+0000",
     "name": "growmaster-1d3c",
-    "rssi": -79,
-    "adv_raw": "D302A2119C009C009C009C009C0001A3000009",
-    "log_raw": "D302A2119C009C009C009C009C0001A3000009",
-    "note": "raw"
-  },
-  {
-    "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
-    "gatt_raw": null,
-    "timestamp": "2026-07-19T03:52:25.119+0000",
-    "name": "growmaster-d064",
-    "rssi": -48,
-    "adv_raw": "D302A2110925124C094212309C0001AA00000A",
-    "log_raw": "D302A2110925124C094212309C0001AA00000A",
-    "note": "raw"
-  },
-  {
-    "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
-    "gatt_raw": null,
-    "timestamp": "2026-07-19T03:52:18.510+0000",
-    "name": "sps",
-    "rssi": -40,
-    "adv_raw": "A8097B10003B9D0008",
-    "log_raw": "A8097B10003B9D0008",
-    "note": "raw"
-  },
-  {
-    "address": "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21",
-    "gatt_raw": null,
-    "timestamp": "2026-07-19T03:51:17.359+0000",
-    "name": "TP351S (987A)",
-    "rssi": -69,
-    "adv_raw": "C2DF0028213301",
-    "log_raw": "C2DF0028213301",
+    "rssi": -74,
+    "adv_raw": "D302A2119C009C009C009C009C000059000035",
+    "log_raw": "D302A2119C009C009C009C009C000059000035",
     "note": "raw"
   },
   {
     "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "gatt_raw": null,
-    "timestamp": "2026-07-19T03:52:05.024+0000",
+    "timestamp": "2026-07-19T13:29:39.490+0000",
     "name": "ThermoBeacon2",
-    "rssi": -55,
-    "adv_raw": "190019060000F1F06D0E7401E302FFFFFFFF5C946700",
-    "log_raw": "190019060000F1F06D0E7401E302FFFFFFFF5C946700",
+    "rssi": -48,
+    "adv_raw": "190019060000F1F06D0E79016802FFFFFFFFBD1B6800",
+    "log_raw": "190019060000F1F06D0E79016802FFFFFFFFBD1B6800",
     "note": "raw"
+  },
+  {
+    "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
+    "gatt_raw": null,
+    "timestamp": "2026-07-19T13:29:38.297+0000",
+    "name": "growmaster-d064",
+    "rssi": -51,
+    "adv_raw": "D302A211098E0DF509B20DD99C00019507A03B",
+    "log_raw": "D302A211098E0DF509B20DD99C00019507A03B",
+    "note": "raw"
+  },
+  {
+    "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
+    "gatt_raw": null,
+    "timestamp": "2026-07-19T13:29:31.689+0000",
+    "name": "sps",
+    "rssi": -47,
+    "adv_raw": "0F0AE40D00377E0008",
+    "log_raw": "0F0AE40D00377E0008",
+    "note": "raw"
+  },
+  {
+    "address": "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21",
+    "gatt_raw": null,
+    "timestamp": "2026-07-19T13:28:30.804+0000",
+    "name": "TP351S (987A)",
+    "rssi": -73,
+    "adv_raw": "C285010A213301",
+    "log_raw": "C285010A213301",
+    "note": "raw"
+  },
+  {
+    "address": "FF-FF-A1-00-00-01",
+    "gatt_raw": null,
+    "timestamp": "2026-07-19T12:38:57.424+0000",
+    "name": "LGS_NODE_17",
+    "rssi": -57,
+    "adv_raw": "7445A111097F0FE370",
+    "log_raw": "7445A111097F0FE370",
+    "note": "ch_17_active"
   }
 ]

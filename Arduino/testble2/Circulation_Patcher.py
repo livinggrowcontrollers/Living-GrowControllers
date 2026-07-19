@@ -44,20 +44,16 @@ def marker_lines(marker_id: str, count: int) -> list[str]:
     instances = range(1, count + 1)
 
     if marker_id == "CIRCULATION_INIT":
-        lines: list[str] = []
-        for i in instances:
-            s = suffix(i)
-            lines.extend([
-                f"if (sysConfig.pin_circ_fan{s} == -1 || sysConfig.pin_circ_tacho{s} == -1) {{",
-                f'    Serial.println("Circulation Fan{i} disabled (sysConfig). ");',
-                "} else {",
-                f"    {fan_name(i)}_init(sysConfig.pin_circ_fan{s}, sysConfig.pin_circ_tacho{s});",
-                "}",
-            ])
-        return lines
+        return [
+            f"{fan_name(i)}_init(sysConfig.pin_circ_fan{suffix(i)}, sysConfig.pin_circ_tacho{suffix(i)});"
+            for i in instances
+        ]
 
     if marker_id == "CIRCULATION_UPDATE":
         return [f"{fan_name(i)}_update();" for i in instances]
+
+    if marker_id == "CIRCULATION_CLIMATE_APPLY":
+        return [f"{fan_name(i)}_apply_climate_factor(circulationFactor);" for i in instances]
 
     if marker_id == "CIRCULATION_INCLUDE":
         return [f'#include "{fan_name(i)}.h"' for i in instances]
@@ -172,6 +168,10 @@ def instance_source(text: str, instance: int) -> str:
     s = suffix(instance)
     replacements = (
         # Specific names first; generic prefixes follow afterwards.
+        # ESP32 Preferences namespaces may contain at most 15 characters.
+        # Fan 1 keeps its deployed namespace; generated instances use short,
+        # unique namespaces instead of invalid `circulation_fan2/3` names.
+        (r'"circulation_fan"', f'"circ_fan_{instance}"'),
         (r"\brev_circfan\b", f"rev_circfan{s}"),
         (r"\bcount_circ_fan_pulse\b", f"count_circ_fan{s}_pulse"),
         (r"\bcurrent_circ_fan_pin\b", f"current_circ_fan{s}_pin"),

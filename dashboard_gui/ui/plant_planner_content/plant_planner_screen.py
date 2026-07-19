@@ -24,7 +24,7 @@ from dashboard_gui.ui.common.buttons.glass_button import GlassButton
 from dashboard_gui.ui.plant_planner_content.plant_card import PlantCard
 from dashboard_gui.ui.plant_planner_content.plant_editor import PlantEditorPopup
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
-from dashboard_gui.overlays.base_revision_system import BaseRevisionSystem
+from dashboard_gui.overlays.infrastructure.revision_session import RevisionSession
 from dashboard_gui.ui.grow_controller_content.controller_command_status_popup import GrowCommandStatusPopup
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 
@@ -47,7 +47,7 @@ class PlantPlannerScreen(Screen):
         self.search_text = ""
         self._loaded_device_id = None
 
-        self.engine = BaseRevisionSystem()
+        self.engine = RevisionSession()
         self._last_sent_rev = 0               # NEU: Trackt die letzte gesendete PP-Revision
         self._pending_popup = None    
         
@@ -543,6 +543,16 @@ class PlantPlannerScreen(Screen):
             normalized = copy.deepcopy(plant)
             normalized["slot"] = slot
             normalized["used"] = True
+            for key, default in (
+                ("estimated_veg_days", 30),
+                ("estimated_flower_days", 60),
+            ):
+                try:
+                    normalized[key] = max(
+                        1, min(3650, int(normalized.get(key, default)))
+                    )
+                except (TypeError, ValueError):
+                    normalized[key] = default
             slots[slot] = normalized
         return slots
     
@@ -558,7 +568,7 @@ class PlantPlannerScreen(Screen):
         self._loaded_device_id = device_id
         self._last_sent_rev = 0
         self._pending_popup = None
-        self.engine = BaseRevisionSystem()
+        self.engine = RevisionSession()
         self.plants = []
         self.build_ui()
 

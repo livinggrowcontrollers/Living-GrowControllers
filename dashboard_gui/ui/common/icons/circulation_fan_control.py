@@ -3,10 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.common.icons.icon_label import IconLabel
-from dashboard_gui.ui.common.logic.box_icon_color_updater import BoxColorUpdater
-from kivy.uix.label import Label
-
-from kivy.app import App
+from dashboard_gui.overlays.components.status_colors import StatusColors
 
 
 
@@ -39,7 +36,7 @@ class CirculationFanControl(BoxLayout):
             return
     
         try:
-            color = BoxColorUpdater.get_rpm_color(rpm)
+            color = StatusColors.get_rpm_color(rpm)
             self.icon.color = (*color, 1)
 
         except Exception:
@@ -57,18 +54,13 @@ class CirculationFanControl(BoxLayout):
             return False
         
         # Lokaler Import verhindert Verzögerungen beim App-Start
-        from dashboard_gui.overlays.circulation_fan_overlay import CirculationFanOverlay
+        from dashboard_gui.overlays.features.circulation.overlay import CirculationFanOverlay
         ui = GLOBAL_STATE.ui_handler
         
-        # Sicherstellen, dass Overlays sich gegenseitig schließen
-        if getattr(ui, "active_light_overlay", None):
-            ui.active_light_overlay.close()
-
-        if getattr(ui, "active_circulation_fan_overlay", None):
-            ui.active_circulation_fan_overlay.close()
-        else:
-            overlay = CirculationFanOverlay(parent_header=self, fan_id=self.fan_id)
-            ui.active_circulation_fan_overlay = overlay
-            App.get_running_app().root.current_screen.add_widget(overlay)
+        ui.open_overlay(
+            "circulation",
+            lambda: CirculationFanOverlay(parent_header=self, fan_id=self.fan_id),
+            instance_id=self.fan_id,
+        )
             
         return True

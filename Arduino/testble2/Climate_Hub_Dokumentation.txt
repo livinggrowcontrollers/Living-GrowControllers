@@ -1,0 +1,51 @@
+Climate Hub – Modulgrenzen und Datenfluss
+==========================================
+
+Verantwortung
+-------------
+climate_hub.cpp ist der einzige Besitzer der globalen Klimaziele, der
+Night-Policy, der Pflanzenphase und der Klima-/Exhaust-Sammelrevision.
+Das Modul liest den kanonischen Innensensor sowie den BLE-Außensensor,
+berechnet VPD und Umweltentscheidungen und verteilt ausschließlich flüchtige
+Laufzeitvorgaben an die Aktormodule.
+
+Aktormodule
+-----------
+- exhaust_fan.cpp besitzt PWM, Tacho, Min/Max, Modus, Chaos und RPM.
+- light_control.cpp besitzt Lichtzeitplan, Rampen, Zielhelligkeit und PWM.
+- circulation_fan*.cpp besitzt pro Instanz Fan-Target, Modus, RPM und PWM.
+
+Aktormodule lesen keine Klimaziele und keine Zustände anderer Aktormodule.
+Climate-Hub-Vorgaben verändern weder Modulrevisionen noch gespeicherte
+User-Targets.
+
+WebDoc-Kompatibilität
+---------------------
+HTTP-Routen, Authentifizierung, JSON-Struktur und Feldnamen bleiben
+unverändert. Die historischen Namen rev_exhaust und
+exhaust_fan_night_reduction existieren ausschließlich am Protokollrand.
+Intern gehören beide Zustände Climate Hub.
+
+Persistenz
+----------
+Climate Hub verwendet die NVS-Namespace climate_hub. Beim ersten Start nach
+dem Refactor werden t_min, t_max, h_min, h_max, vpd_min, vpd_max und night_red
+einmalig aus exhaust_fan übernommen. Erst nach erfolgreichem Schreiben werden
+die alten Schlüssel entfernt. Es gibt kein dauerhaftes Fallback und keinen
+zweiten Besitzer.
+
+Night-Policy
+------------
+Der gespeicherte Schalter aktiviert oder deaktiviert die automatische
+Nachtregelung. Die tatsächliche Phase stammt aus dem Lichtzeitplan:
+
+0 = DAY_TRANSPIRE
+1 = SUNSET_TRANSITION
+2 = NIGHT_RECOVERY
+3 = SUNRISE_WAKEUP
+
+Circulation-Instanzen
+---------------------
+Änderungen erfolgen ausschließlich in source_path/circulation_fan.cpp und
+source_path/circulation_fan.h. Circulation_Patcher.py erzeugt daraus alle
+Instanzen und verbindet exakt die ausgewählte Anzahl direkt mit Climate Hub.

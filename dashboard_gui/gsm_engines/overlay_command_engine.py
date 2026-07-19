@@ -63,6 +63,37 @@ class OverlayCommandEngine:
     def __init__(self, gsm):
         self.gsm = gsm
         self._pending_plant_revs = {}
+        self._pending_overlay_commands = {}
+
+    @staticmethod
+    def _channel_key(mac, command_type, instance_id=None):
+        if command_type in ("exhaust_fan", "climate_hub"):
+            return (mac, "exhaust", None)
+        if command_type == "circulation_fan":
+            return (mac, "circulation_fan", int(instance_id or 1))
+        return (mac, command_type, None)
+
+    def _next_overlay_revision(self, mac, command_type, snapshot_revision, instance_id=None):
+        key = self._channel_key(mac, command_type, instance_id)
+        pending = self._pending_overlay_commands.get(key)
+        pending_revision = int(pending["revision"]) if pending else 0
+        return max(int(snapshot_revision), pending_revision) + 1
+
+    def _send_revisioned_payload(self, mac, command_type, revision, payload, instance_id=None):
+        key = self._channel_key(mac, command_type, instance_id)
+        envelope = {"revision": int(revision), "payload": dict(payload)}
+        self._pending_overlay_commands[key] = envelope
+        web_client.WEB_CLIENT.send_control(mac, envelope["payload"])
+        return envelope["revision"]
+
+    def retry_command(self, mac, command_type, instance_id=None):
+        """Retry the latest envelope without allocating another revision."""
+        key = self._channel_key(mac, command_type, instance_id)
+        envelope = self._pending_overlay_commands.get(key)
+        if not envelope:
+            return None
+        web_client.WEB_CLIENT.send_control(mac, dict(envelope["payload"]))
+        return int(envelope["revision"])
 
     def _is_valid_overlay_snapshot(self, frame, webserver):
         if not isinstance(frame, dict) or not isinstance(webserver, dict):
@@ -175,29 +206,35 @@ class OverlayCommandEngine:
         die Klima-Sollwerte bereits im Exhaust-Kontext verwaltet.
         """
         current = self.get_latest_device_data(mac)
+        pending = self._pending_overlay_commands.get(self._channel_key(mac, "climate_hub"))
+        base = dict(current)
+        if pending:
+            base.update(pending["payload"])
         
         # Wir nutzen die echte, vorhandene Exhaust-Revision!
         last_rev = int(current.get("rev_exhaust", 0))
-        new_rev = last_rev + 1
+        new_rev = self._next_overlay_revision(mac, "climate_hub", last_rev)
         
         payload = {
-            # Beibehalten der bestehenden Lüfter-Sollwerte aus dem Buffer
-
-            
+            # Climate Hub mirrors the complete Exhaust target aggregate.
+            "exhaust_fan_min": int(base.get("exhaust_fan_min", 20)),
+            "exhaust_fan_pct": int(base.get("exhaust_fan_pct", 65)),
+            "exhaust_fan_mode": base.get("exhaust_fan_mode", "auto"),
+            "exhaust_fan_chaos": bool(base.get("exhaust_fan_chaos_active", base.get("exhaust_fan_chaos", False))),
             # Die primären Klima-Sollwerte vom Climate Hub Overlay
-            "target_temp_min": round(float(kwargs.get("t_min", current.get("target_temp_min", 22.0))), 1),
-            "target_temp_max": round(float(kwargs.get("t_max", current.get("target_temp_max", 28.0))), 1),
-            "target_humidity_min": int(kwargs.get("h_min", current.get("target_humidity_min", 45))),
-            "target_humidity_max": int(kwargs.get("h_max", current.get("target_humidity_max", 70))),
-            "target_vpd_min": round(float(kwargs.get("vpd_min", current.get("target_vpd_min", 0.8))), 1),
-            "target_vpd_max": round(float(kwargs.get("vpd_max", current.get("target_vpd_max", 1.5))), 1),
-            "exhaust_fan_night_reduction": bool(kwargs.get("night_reduction", current.get("exhaust_fan_night_reduction", True))),
+            "target_temp_min": round(float(kwargs.get("t_min", base.get("target_temp_min", 22.0))), 1),
+            "target_temp_max": round(float(kwargs.get("t_max", base.get("target_temp_max", 28.0))), 1),
+            "target_humidity_min": int(kwargs.get("h_min", base.get("target_humidity_min", 45))),
+            "target_humidity_max": int(kwargs.get("h_max", base.get("target_humidity_max", 70))),
+            "target_vpd_min": round(float(kwargs.get("vpd_min", base.get("target_vpd_min", 0.8))), 1),
+            "target_vpd_max": round(float(kwargs.get("vpd_max", base.get("target_vpd_max", 1.5))), 1),
+            "exhaust_fan_night_reduction": bool(kwargs.get("night_reduction", base.get("exhaust_fan_night_reduction", True))),
             
             # Kennzeichnung für das Zielsystem auf dem ESP
             "rev_exhaust": new_rev
         }
         
-        web_client.WEB_CLIENT.send_control(mac, payload)
+        self._send_revisioned_payload(mac, "climate_hub", new_rev, payload)
         print(f"[ClimateHub -> Exhaust-Bridge] TARGET-REV: {new_rev} (Sollwerte synchronisiert)")
         return new_rev
    
@@ -215,7 +252,7 @@ class OverlayCommandEngine:
         current = self.get_latest_device_data(mac)
         
         last_rev = int(current.get("rev_exhaust", 0))
-        new_rev = last_rev + 1
+        new_rev = self._next_overlay_revision(mac, "exhaust_fan", last_rev)
         
         payload = {
             "exhaust_fan_min": int(kwargs.get("min", current.get("exhaust_fan_min", 20))),
@@ -242,7 +279,7 @@ class OverlayCommandEngine:
             "rev_exhaust": new_rev
         }
         
-        web_client.WEB_CLIENT.send_control(mac, payload)
+        self._send_revisioned_payload(mac, "exhaust_fan", new_rev, payload)
         print(f"[Exhaust] TARGET-REV: {new_rev} | Mode: {payload['exhaust_fan_mode']}")
         return new_rev
 
@@ -257,7 +294,7 @@ class OverlayCommandEngine:
         prefix = fan_prefix(fan_id)
         revision_key = fan_revision_key(fan_id)
         last = int(current.get(revision_key, 0))
-        new_rev = last + 1
+        new_rev = self._next_overlay_revision(mac, "circulation_fan", last, instance_id=fan_id)
         
         payload = {
             f"{prefix}_min": int(kwargs.get("min", 20)),
@@ -266,7 +303,7 @@ class OverlayCommandEngine:
             revision_key: new_rev
         }
         
-        web_client.WEB_CLIENT.send_control(mac, payload)
+        self._send_revisioned_payload(mac, "circulation_fan", new_rev, payload, instance_id=fan_id)
         return new_rev 
 
 # =========================================================================
@@ -397,7 +434,7 @@ class OverlayCommandEngine:
     def send_light_command(self, mac, **kwargs):
         current = self.get_latest_device_data(mac)
         last = int(current.get("rev_light", 0))
-        new_rev = last + 1
+        new_rev = self._next_overlay_revision(mac, "light", last)
         
         payload = {
             "light_pct": int(kwargs.get("pct", current.get("light_pct", 0))),
@@ -411,7 +448,7 @@ class OverlayCommandEngine:
             "rev_light": new_rev
         }
         
-        web_client.WEB_CLIENT.send_control(mac, payload)
+        self._send_revisioned_payload(mac, "light", new_rev, payload)
         return new_rev
 
     # =========================================================================

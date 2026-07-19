@@ -1,0 +1,1 @@
+"""Light control overlay feature."""
