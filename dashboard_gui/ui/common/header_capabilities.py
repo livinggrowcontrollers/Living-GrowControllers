@@ -9,6 +9,12 @@ def build_header_state(frame):
     frame = frame or {}
     web = frame.get("webserver", {})
     health = frame.get("health", {})
+    climate_target_keys = (
+        "target_temp_min", "target_temp_max",
+        "target_humidity_min", "target_humidity_max",
+        "target_vpd_min", "target_vpd_max",
+    )
+    climate_hub_active = all(web.get(key) is not None for key in climate_target_keys)
     return {
         "light": web.get("light_pct"),
         "circulation_fans": {fan_id: fan_snapshot(web, fan_id) for fan_id in range(1, MAX_CIRCULATION_FANS + 1)},
@@ -16,7 +22,8 @@ def build_header_state(frame):
         "battery": health.get("battery", {}).get("voltage") or web.get("battery_voltage"),
         "external": any(frame.get(channel, {}).get("external", {}).get("present", False) for channel in ("adv", "gatt", "webserver")),
         "external2": bool(health.get("external2", {}).get("present") or web.get("external2", {}).get("present", False)),
-        "climate_hub": bool(frame.get("climate_hub") or web.get("climate_hub", False)),
+        "climate_hub": climate_hub_active,
+        "climate_hub_color": BoxColorUpdater.get_climate_color(web),
         "broadcast_available": False,
     }
 
@@ -48,7 +55,7 @@ def build_header_capabilities(state, push_active=False):
         {"id": "external2", "label": "External Sensor 2", "icon": "\uf2c9", "enabled": bool(state.get("external2")),
          "color": (*BoxColorUpdater.get_external_color(), 1), "show_in_picker": False},
         {"id": "climate_hub", "label": "Climate Hub", "icon": "\uf0c2", "enabled": bool(state.get("climate_hub")),
-         "color": (*BoxColorUpdater.get_external_color(), 1), "show_in_picker": True},
+         "color": (*state.get("climate_hub_color", (0.35, 0.35, 0.35)), 1), "show_in_picker": True},
         {"id": "push_message", "label": "Push Messages", "icon": "\uf0f3", "enabled": bool(push_active),
          "color": (0.6, 0.6, 0.6, 1), "show_in_picker": False},
     ))

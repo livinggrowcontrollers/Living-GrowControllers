@@ -34,6 +34,7 @@ from dashboard_gui.ui.common.icons.push_message_icon import PushMessageIcon
 from dashboard_gui.ui.common.icons.climate_hub_control import ClimateHubControl
 from dashboard_gui.ui.common.icons.inactive_items_icon import InactiveItemsIcon
 from dashboard_gui.circulation_fan_registry import fan_snapshot
+from dashboard_gui.ui.common.header_capabilities import build_header_state
 
 
 #--------------------------------------------------------
@@ -72,6 +73,7 @@ class HeaderBar(BoxLayout):
             "circulation_fans": {},
             "exhaust_fan_rpm": None,
             "climate_hub": False,
+            "climate_hub_color": (0.35, 0.35, 0.35),
             "broadcast": False
         }        
         
@@ -534,10 +536,13 @@ class HeaderBar(BoxLayout):
     
         # EIN EINZIGER APPLY
         self._apply_state()
-        # Climate hub presence
-        self._state["climate_hub"] = bool(frame.get("climate_hub") or web_ch.get("climate_hub", False))
+        # Climate Hub uses the same canonical target-based truth as the
+        # inactivity overlay and device picker.
+        climate_state = build_header_state(frame)
+        self._state["climate_hub"] = climate_state["climate_hub"]
+        self._state["climate_hub_color"] = climate_state["climate_hub_color"]
         try:
-            self.climate_hub.set_active(self._state["climate_hub"])
+            self.climate_hub.set_active(self._state["climate_hub"], self._state["climate_hub_color"])
         except Exception:
             pass
         self._last_frame = frame.copy()          # <--- WICHTIG

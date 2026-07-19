@@ -174,11 +174,18 @@ void handleGetPlants() {
     if (!server.authenticate(_web_username.c_str(), _web_password.c_str())) return server.requestAuthentication();
     sendStandardHeaders();
 // STATIC statt DYNAMIC verhindert das Zerstückeln des Speichers
-    static DynamicJsonDocument doc(6144);
+    // Zehn vollstaendige Slots liegen bereits bei rund 4.5 KB Nutzdaten;
+    // ArduinoJson braucht zusaetzlich Speicher fuer seine Objektstruktur.
+    static DynamicJsonDocument doc(12288);
     doc.clear(); // WICHTIG: Vor jeder Nutzung leeren!
     JsonObject obj = doc.to<JsonObject>();
 
     plant_planner_get_status(obj); 
+
+    if (doc.overflowed()) {
+        server.send(507, "application/json", "{\"error\":\"plant_payload_overflow\"}");
+        return;
+    }
 
     String response;
     serializeJson(doc, response);
@@ -192,7 +199,10 @@ void handleControlPlantsJSON() {
     if (server.hasArg("plain")) {
         DynamicJsonDocument doc(8192);
         DeserializationError error = deserializeJson(doc, server.arg("plain"));
-        if (error) return;
+        if (error) {
+            server.send(400, "application/json", "{\"error\":\"invalid_plant_json\"}");
+            return;
+        }
 
         JsonObject obj = doc.as<JsonObject>();
 
@@ -204,6 +214,8 @@ void handleControlPlantsJSON() {
         String response;
         serializeJson(res, response);
         server.send(200, "application/json", response);
+    } else {
+        server.send(400, "application/json", "{\"error\":\"missing_body\"}");
     }
 }
 

@@ -143,8 +143,15 @@ class WebClientThread(threading.Thread):
             if not targets:
                 return
 
+            endpoint = (
+                "/control/plants"
+                if "rev_plant_planner" in payload
+                else "/control"
+            )
             for base_url in targets:
-                if network_worker.send_control_request(base_url, payload, user, pw):
+                if network_worker.send_control_request(
+                    base_url, payload, user, pw, endpoint=endpoint
+                ):
                     break # Erfolg, weiteren Loop abbrechen
 
         threading.Thread(target=_async_send, daemon=True).start()

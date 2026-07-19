@@ -1,102 +1,127 @@
-# dashboard_gui/ui/dashboard_content/metric_registry.py
+"""Config-driven appearance for dashboard and fullscreen metrics.
+
+Theme definitions live in ``data/themes/*.json``.  The registry keeps the
+existing ``MetricRegistry.get(metric_id)`` API so widgets stay independent of
+the loading mechanism.
+"""
+
+from copy import deepcopy
+import json
+from pathlib import Path
+
+import config
+
 
 class MetricRegistry:
-
     DEFAULT_STYLE = {
         "sz_val": 26,
         "sz_name": 16,
         "sz_unit": 16,
         "sz_trend": 20,
         "color_sub": "#bbbbbb",
-        "decimals": 2
+        "decimals": 2,
     }
+    FALLBACK_COLOR = [1, 1, 1, 1]
+    LEGACY_THEME_ALIASES = {"tiles": "standard", "tiles2": "blossom", "tiles3": "aurora"}
 
-    METRICS = {
-        "temp_in": {
-            "name": "Temperature Internal",
-            "unit": "°C",
-            "color": "temp_internal",
-            "style": {
-                "decimals": 1
-            }
-        },
-        "hum_in": {
-            "name": "Humidity Internal",
-            "unit": "%",
-            "color": "hum_internal",
-        },
-    }
-    
-    
-    # ZENTRALE FARBDEFINITION: Technisch-seriös mit Geräte-Nuancen 🛠️
-    COLORS = {
-        # --- TEMPERATUREN (Orange-Palette) ---
-        "temp_internal": [0.90, 0.40, 0.15, 1],  # Sattes Tech-Orange (Hauptwert)
-        "temp_external": [0.70, 0.30, 0.10, 1],  # Dunkleres Rost-Orange (Dezent im Hintergrund)
-        "temp_ble":      [1.00, 0.55, 0.25, 1],  # Helles Amber-Orange (Signalisiert Funk/BLE)
+    _loaded_theme = None
+    _theme_data = None
 
-        # --- FEUCHTIGKEIT (Blau-Palette) ---
-        "hum_internal":  [0.12, 0.53, 0.90, 1],  # Hydro-Blau (Hauptwert)
-        "hum_external":  [0.08, 0.38, 0.68, 1],  # Tiefsee-Blau (Dezent im Hintergrund)
-        "hum_ble":       [0.30, 0.68, 1.00, 1],  # Eis-Blau / Sky Blue (Signalisiert Funk/BLE)
+    @classmethod
+    def theme_directory(cls):
+        return Path(config.DATA) / "themes"
 
-        # --- VPD (Indigo/Lila-Palette) ---
-        "vpd_internal":  [0.44, 0.30, 0.82, 1],  # Slate-Purple (Hauptwert)
-        "vpd_external":  [0.32, 0.20, 0.62, 1],  # Deep Indigo
-        "vpd_ble":       [0.58, 0.45, 0.95, 1],  # Helles Lavendel-Standard
+    @classmethod
+    def available_themes(cls):
+        """Return selectable JSON themes, with standard always available."""
+        directory = cls.theme_directory()
+        names = {"standard"}
+        if directory.exists():
+            names.update(path.stem for path in directory.glob("*.json"))
+        return tuple(sorted(names))
 
-        # --- SONSTIGE ---
-        "green":         [0.18, 0.65, 0.43, 1],  # Mint-Grün (Lüfter & Pflanze)
-        "bat":           [0.82, 0.65, 0.12, 1],  # Signal-Gelb (Batterie)
-        "white":         [0.44, 0.30, 0.82, 1],  # Reines Weiß (Neutral)
-    }
+    @classmethod
+    def normalize_theme(cls, theme):
+        theme = cls.LEGACY_THEME_ALIASES.get(str(theme or ""), str(theme or ""))
+        return theme if theme in cls.available_themes() else "standard"
 
-    METRICS = {
-        # Intern
-        "temp_in":  {"name": "Temperature Internal", "unit": "—", "color": "temp_internal"},
-        "hum_in":   {"name": "Humidity Internal", "unit": "%", "color": "hum_internal"},
-        "vpd_in":   {"name": "VPD Internal", "unit": "kPa", "color": "vpd_internal"},
+    @classmethod
+    def reload(cls):
+        """Drop the cached JSON. The next get() reads the active theme."""
+        cls._loaded_theme = None
+        cls._theme_data = None
 
-        # Extern
-        "temp_ex":  {"name": "Temperature External", "unit": "—", "color": "temp_external"},
-        "hum_ex":   {"name": "Humidity External", "unit": "%", "color": "hum_external"},
-        "vpd_ex":   {"name": "VPD External", "unit": "kPa", "color": "vpd_external"},
+    @classmethod
+    def _read_theme(cls, theme_name, visited=None):
+        visited = set() if visited is None else visited
+        if theme_name in visited:
+            raise ValueError(f"Theme inheritance loop: {theme_name}")
+        visited.add(theme_name)
 
-        # BLE Outside
-        "ble_temp_outside": {"name": "BLE Outside Temperature", "unit": "—", "color": "temp_ble"},
-        "ble_hum_outside":  {"name": "BLE Outside Humidity", "unit": "%", "color": "hum_ble"},
-        "ble_vpd_outside":  {"name": "BLE Outside VPD", "unit": "kPa", "color": "vpd_ble"},
+        path = cls.theme_directory() / f"{theme_name}.json"
+        with path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+        if not isinstance(data, dict):
+            raise ValueError(f"Theme '{theme_name}' must be a JSON object")
 
-        # BLE Inside
-        "ble_temp_inside": {"name": "BLE Inside Temperature", "unit": "—", "color": "temp_ble"},
-        "ble_hum_inside":  {"name": "BLE Inside Humidity", "unit": "%", "color": "hum_ble"},
-        "ble_vpd_inside":  {"name": "BLE Inside VPD", "unit": "kPa", "color": "vpd_ble"},
+        parent_name = data.get("extends")
+        parent = cls._read_theme(parent_name, visited) if parent_name else {}
+        return cls._merge_theme(parent, data)
 
-        # Specials
-        "leaf_temp":           {"name": "Leaf Temperature", "unit": "—", "color": "green"},
-        "vpd_leaf":            {"name": "VPD Leaf", "unit": "kPa", "color": "vpd_internal"},
-        "circulation_fan_rpm": {"name": "Circulation Fan", "unit": "RPM", "color": "green"},
-        "exhaust_fan_rpm":     {"name": "Exhaust Fan", "unit": "RPM", "color": "green"},
-        "v_bat":               {"name": "Battery", "unit": "V", "color": "bat"},
+    @staticmethod
+    def _merge_theme(parent, child):
+        def merge(left, right):
+            result = deepcopy(left)
+            for key, value in right.items():
+                if isinstance(value, dict) and isinstance(result.get(key), dict):
+                    result[key] = merge(result[key], value)
+                else:
+                    result[key] = deepcopy(value)
+            return result
 
-        "rssi":                {"name": "RSSI", "unit": "dBm", "color": "white"},
-        "signal_quality":      {"name": "Signal Quality", "unit": "%", "color": "white"},
-    }
+        return merge(parent, child)
 
+    @classmethod
+    def _active_data(cls):
+        theme = cls.normalize_theme(config.get_theme())
+        if cls._theme_data is not None and cls._loaded_theme == theme:
+            return cls._theme_data
 
+        try:
+            data = cls._read_theme(theme)
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            print(f"[MetricRegistry] Theme '{theme}' unavailable: {error}; using standard")
+            data = cls._read_theme("standard")
+            theme = "standard"
+
+        cls._loaded_theme = theme
+        cls._theme_data = data
+        return data
 
     @classmethod
     def get(cls, key):
-        cfg = cls.METRICS.get(key, {})
+        data = cls._active_data()
+        metric = data.get("metrics", {}).get(key, {})
+        color_name = metric.get("color")
+        base_color = data.get("colors", {}).get(color_name, cls.FALLBACK_COLOR)
+        if not isinstance(base_color, list) or len(base_color) != 4:
+            base_color = cls.FALLBACK_COLOR
 
-        base_color = cls.COLORS.get(cfg.get("color"), [1, 1, 1, 1])
-
-        style = {**cls.DEFAULT_STYLE, **cfg.get("style", {})}
-
-        return {
-            "name": cfg.get("name", key.upper()),
-            "unit": cfg.get("unit", ""),
-            "color": base_color,
-            "glow": [*base_color[:3], 0.28],
-            "style": style
+        style = {
+            **cls.DEFAULT_STYLE,
+            **data.get("default_style", {}),
+            **metric.get("style", {}),
         }
+        return {
+            "name": metric.get("name", key.replace("_", " ").title()),
+            "unit": metric.get("unit", ""),
+            "color": list(base_color),
+            "glow": [*base_color[:3], 0.28],
+            "style": style,
+        }
+
+    @classmethod
+    def presentation(cls, surface):
+        """Return the global visual roles for ``tile`` or ``fullscreen``."""
+        presentation = cls._active_data().get("presentation", {})
+        return deepcopy(presentation.get(surface, {}))

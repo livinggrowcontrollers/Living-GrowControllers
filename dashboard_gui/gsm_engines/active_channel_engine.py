@@ -124,6 +124,13 @@ class ActiveChannelEngine:
             item = lst[self.active_index]
             device_id = item.get("device_id") if isinstance(item, dict) else item
 
+            # Der PlantPlanner darf niemals den State des vorherigen ESP bis
+            # zum naechsten globalen Tick sichtbar oder bedienbar halten.
+            if hasattr(self.gatt_config_engine, "gsm") and self.gatt_config_engine.gsm:
+                planner = self.gatt_config_engine.gsm.ui_handler.get_screen("plant_planner")
+                if planner and hasattr(planner, "on_device_changed"):
+                    planner.on_device_changed(device_id)
+
             if hasattr(self.gatt_config_engine, "gsm") and self.gatt_config_engine.gsm:
                 gsm = self.gatt_config_engine.gsm
                 allowed = gsm.tile_engine.get_active_tiles(device_id, self.active_channel)

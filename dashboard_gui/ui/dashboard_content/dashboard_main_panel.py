@@ -34,6 +34,10 @@ class DashboardMainPanel(GridLayout):
             tile = ChartTile(key)
             self.tile_map[key] = tile
             setattr(self, f"tile_{key}", tile)
+
+    def refresh_metric_theme(self):
+        for tile in self.tile_map.values():
+            tile.refresh_metric_theme()
         
     # (update_from_data & _apply_tile_visibility bleiben logisch intakt wie vorher)
 

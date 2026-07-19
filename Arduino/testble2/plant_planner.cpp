@@ -130,9 +130,13 @@ void plant_planner_get_status(JsonObject doc) {
     
     JsonArray plantsArr = ppObj["plants"].to<JsonArray>();
     
-    // Serialisiere alle 10 Slots (auch die leeren, damit Python sie kennt)
+    // Zehn Slots sind nur die Kapazitaetsgrenze. Uebertragen werden
+    // ausschliesslich tatsaechlich belegte Pflanzen.
     for (uint8_t slot = 0; slot < PLANT_PLANNER_MAX_SLOTS; slot++) {
         const Plant& p = system_plants[slot];
+        if (!p.used) {
+            continue;
+        }
         JsonObject pObj = plantsArr.add<JsonObject>();
         
         pObj["slot"] = slot;  // WICHTIG: Slot-Index für Identifikation
@@ -179,9 +183,13 @@ void plant_planner_save_state() {
     tempDoc["rev"] = plant_planner_rev;
     JsonArray arr = tempDoc["plants"].to<JsonArray>();
 
-    // Speichere alle 10 Slots
+    // Auch im Flash nur existierende Pflanzen speichern. Der Slot bleibt als
+    // stabile Identitaet erhalten, obwohl das JSON-Array kompakt ist.
     for (uint8_t slot = 0; slot < PLANT_PLANNER_MAX_SLOTS; slot++) {
         const Plant& p = system_plants[slot];
+        if (!p.used) {
+            continue;
+        }
         JsonObject pObj = arr.add<JsonObject>();
         
         pObj["slot"] = slot;

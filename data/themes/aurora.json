@@ -1,0 +1,38 @@
+{
+  "label": "Aurora",
+  "extends": "standard",
+  "default_style": {
+    "color_sub": "#a9c5d8"
+  },
+  "presentation": {
+    "tile": {
+      "background": [0.03, 0.1, 0.14, 0.52],
+      "title_color": [0.82, 0.96, 1, 1],
+      "stats_color": [0.65, 0.9, 0.96, 0.85],
+      "axis_color": [0.55, 0.84, 0.95, 0.58],
+      "formatter": {"color_sub": "#a9c5d8", "sz_name": 17}
+    },
+    "fullscreen": {
+      "title_color": [0.78, 0.96, 1, 1],
+      "value_color": "#dcfbff",
+      "stats_color": [0.62, 0.9, 0.96, 0.9],
+      "axis_color": [0.54, 0.86, 0.96, 0.68],
+      "graph_label_color": [0.58, 0.86, 0.96, 0.58],
+      "formatter": {"color_sub": "#a9c5d8", "color_value": "#dcfbff", "sz_val": 72}
+    }
+  },
+  "colors": {
+    "temp_internal": [1.0, 0.58, 0.2, 1],
+    "temp_external": [0.82, 0.34, 0.1, 1],
+    "temp_ble": [1.0, 0.78, 0.35, 1],
+    "hum_internal": [0.0, 0.82, 0.83, 1],
+    "hum_external": [0.0, 0.55, 0.62, 1],
+    "hum_ble": [0.25, 0.95, 0.9, 1],
+    "vpd_internal": [0.35, 0.55, 1.0, 1],
+    "vpd_external": [0.2, 0.33, 0.82, 1],
+    "vpd_ble": [0.5, 0.75, 1.0, 1],
+    "green": [0.3, 0.95, 0.55, 1],
+    "bat": [0.95, 0.9, 0.25, 1],
+    "white": [0.72, 0.94, 1.0, 1]
+  }
+}

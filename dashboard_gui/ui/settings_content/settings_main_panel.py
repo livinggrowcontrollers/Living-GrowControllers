@@ -152,6 +152,26 @@ class SettingsMainPanel(BoxLayout):
         unit_block.add_widget(btn_row_unit)
         container_left.add_widget(unit_block)
 
+        # Metric theme. The choice is collected first and saved only when the
+        # user presses Save, so Cancel remains non-destructive.
+        theme_block = BoxLayout(orientation="vertical", size_hint_y=None, height=dp_scaled(72), spacing=dp_scaled(6))
+        theme_top = BoxLayout(size_hint_y=None, height=dp_scaled(26))
+        theme_label = Label(text="Metric Theme:", size_hint=(0.6, 1), font_size=sp_scaled(18), halign="left", valign="middle")
+        self.selected_theme = config.get_theme()
+        self.theme_selected_label = Label(text=self.selected_theme.title(), size_hint=(0.4, 1), font_size=sp_scaled(18), halign="right", valign="middle")
+        theme_top.add_widget(theme_label)
+        theme_top.add_widget(self.theme_selected_label)
+        theme_buttons_row = BoxLayout(size_hint_y=None, height=dp_scaled(36), spacing=dp_scaled(8))
+        self.theme_buttons = {}
+        for theme, label in [("standard", "Standard"), ("blossom", "Blossom"), ("aurora", "Aurora")]:
+            button = Button(text=label, font_size=sp_scaled(14), background_color=(0.4, 0.7, 1, 1) if theme == self.selected_theme else (0.3, 0.3, 0.3, 1))
+            button.bind(on_release=lambda _button, selected=theme: self._set_theme(selected))
+            self.theme_buttons[theme] = button
+            theme_buttons_row.add_widget(button)
+        theme_block.add_widget(theme_top)
+        theme_block.add_widget(theme_buttons_row)
+        container_left.add_widget(theme_block)
+
         # Language Row (Rechts) - label and selected value above compact buttons
         lang_block = BoxLayout(orientation="vertical", size_hint_y=None, height=dp_scaled(72), spacing=dp_scaled(6))
         lang_top = BoxLayout(size_hint_y=None, height=dp_scaled(26))
@@ -232,7 +252,7 @@ class SettingsMainPanel(BoxLayout):
     def _collect(self):
         out = {k: v.value for k, v in self.inputs.items()}
         out["temperature_unit"] = self.temp_unit
-        out["theme"] = config.get_theme()
+        out["theme"] = self.selected_theme
         # Die Kanäle sind durch add_slider bereits in self.inputs[key].value
         return out
 
@@ -255,15 +275,10 @@ class SettingsMainPanel(BoxLayout):
                 row.height = 0
 
     def _set_theme(self, theme):
-        import config
-        cfg = config._init()
-        cfg["theme"] = theme
-        config.save(cfg)
-    
+        self.selected_theme = theme
+        self.theme_selected_label.text = theme.title()
         for t, btn in self.theme_buttons.items():
-            btn.background_color = (0.4,0.7,1,1) if t==theme else (0.3,0.3,0.3,1)
-    
-        print(f"[SETTINGS] Theme switched to {theme}")
+            btn.background_color = (0.4, 0.7, 1, 1) if t == theme else (0.3, 0.3, 0.3, 1)
     
     
     def _show_dev_popup(self, enabled: bool):

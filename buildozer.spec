@@ -2,7 +2,8 @@
 title = ESPGrowcontroller
 package.name = espgrowcontroller
 package.domain = org.hackintosh1980
-#####undbedingt ble service.py abndern bei namensnderung!und ja keine binde und unterstriche verwenden!
+# package.name/domain sind die einzige Quelle fuer den Android-Namespace.
+# Die Service-Klasse wird zur Laufzeit aus dem installierten Paketnamen ermittelt.
 
 source.include_exts = py,kv,png,jpg,json,ttf,bin
 include_patterns = garden/**/*

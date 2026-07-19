@@ -16,6 +16,8 @@ else:
     DATA = os.path.join(BASE, "data")
 
 CONFIG_PATH = os.path.join(DATA, "config.json")
+METRIC_THEMES = ("standard", "blossom", "aurora")
+LEGACY_THEME_ALIASES = {"tiles": "standard", "tiles2": "blossom", "tiles3": "aurora"}
 
 DEFAULTS = {
     "devices": {},
@@ -33,7 +35,7 @@ DEFAULTS = {
     "humidity_offset": 0.0,
     "leaf_offset": 0.0,
     "developer_mode": False,
-    "theme": "tiles",   # tiles | tiles2 | tiles3
+    "theme": "standard",
     "lgs_mesh_channel_send": 17,  # Default Kanal 17
     "lgs_mesh_channel_recv": 17,  # Default Kanal 17
     "language": "en",  # "en", "es", "de"
@@ -175,9 +177,13 @@ def set_devices_full(dev_dict):
     save(cfg)
 
 def get_theme():
-    return _init().get("theme", "tiles")
+    theme = LEGACY_THEME_ALIASES.get(_init().get("theme", "standard"), _init().get("theme", "standard"))
+    return theme if theme in METRIC_THEMES else "standard"
 
 def set_theme(theme: str):
+    theme = LEGACY_THEME_ALIASES.get(theme, theme)
+    if theme not in METRIC_THEMES:
+        raise ValueError(f"Unknown metric theme: {theme}")
     cfg = _init()
     cfg["theme"] = theme
     save(cfg)

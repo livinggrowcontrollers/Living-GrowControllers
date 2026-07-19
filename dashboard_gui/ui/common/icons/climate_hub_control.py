@@ -45,11 +45,10 @@ class ClimateHubControl(BoxLayout):
             App.get_running_app().root.current_screen.add_widget(overlay)
         return True
 
-    def set_active(self, active=True):
+    def set_active(self, active=True, color=None):
         self._active = bool(active)
-        # Adjust visual subtly
         if self._active:
-            self.icon.color = (0.3, 1, 1, 1)
+            self.icon.color = (*(color or (0.3, 1, 1)), 1)
         else:
             self.icon.color = (0.75, 0.75, 0.75, 1)
 

@@ -7,6 +7,29 @@ PATH_WEB_DUMP = os.path.join(config.DATA, "web_dump.json")
 PATH_PLANTS_STORE = os.path.join(config.DATA, "plants_store.json")
 PATH_SETTINGS_SYNC = os.path.join(config.DATA, "settings_sync.json")
 
+def _compact_plant_payload(plant_payload):
+    """Entfernt Legacy-Leerslots, ohne Slot-IDs existierender Pflanzen zu ändern."""
+    if not isinstance(plant_payload, dict):
+        return plant_payload
+
+    compact = dict(plant_payload)
+    pp = compact.get("plant_planner")
+    if not isinstance(pp, dict):
+        return compact
+
+    compact_pp = dict(pp)
+    plants = pp.get("plants", [])
+    if isinstance(plants, list):
+        compact_pp["plants"] = [
+            plant for plant in plants
+            if isinstance(plant, dict)
+            and plant.get("used", False)
+            and isinstance(plant.get("slot"), int)
+            and 0 <= plant["slot"] < 10
+        ]
+    compact["plant_planner"] = compact_pp
+    return compact
+
 def load_plants_at_boot():
     """Lädt die lokalen Pflanzen-Daten beim Booten in den RAM-Cache."""
     cache = {}
@@ -14,7 +37,17 @@ def load_plants_at_boot():
     if os.path.exists(PATH_PLANTS_STORE):
         try:
             with open(PATH_PLANTS_STORE, "r", encoding="utf-8") as f:
-                cache = json.load(f)
+                raw_cache = json.load(f)
+                cache = {
+                    mac: _compact_plant_payload(content)
+                    for mac, content in raw_cache.items()
+                }
+                if cache != raw_cache:
+                    tmp_path = PATH_PLANTS_STORE + ".tmp"
+                    with open(tmp_path, "w", encoding="utf-8") as out:
+                        json.dump(cache, out, indent=2)
+                    os.replace(tmp_path, PATH_PLANTS_STORE)
+                    print("[Storage] Legacy-Leerslots aus Pflanzen-Cache entfernt.")
                 for mac, content in cache.items():
                     if "plant_planner" in content:
                         revs[mac] = content["plant_planner"].get("rev_plant_planner", 0)
@@ -37,7 +70,7 @@ def save_web_dump(current_data):
 
 def save_heavy_plant_data(mac, plant_payload, local_plants_cache):
     """Speichert empfangene Heavy-Plant-Daten ab."""
-    local_plants_cache[mac] = plant_payload
+    local_plants_cache[mac] = _compact_plant_payload(plant_payload)
     tmp_path = PATH_PLANTS_STORE + ".tmp"
     try:
         with open(tmp_path, "w", encoding="utf-8") as f:

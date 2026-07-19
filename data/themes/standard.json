@@ -1,0 +1,59 @@
+{
+  "label": "Standard",
+  "default_style": {
+    "color_sub": "#bbbbbb",
+    "decimals": 2
+  },
+  "presentation": {
+    "tile": {
+      "background": [0.08, 0.08, 0.1, 0.4],
+      "title_color": [1, 1, 1, 0.9],
+      "stats_color": [1, 1, 1, 0.7],
+      "axis_color": [1, 1, 1, 0.4],
+      "formatter": {"color_sub": "#bbbbbb", "sz_val": 26, "sz_name": 16, "sz_unit": 16, "sz_trend": 20}
+    },
+    "fullscreen": {
+      "title_color": [1, 1, 1, 0.9],
+      "value_color": "#ffffff",
+      "stats_color": [0.8, 0.8, 0.8, 0.8],
+      "axis_color": [1, 1, 1, 0.5],
+      "graph_label_color": [1, 1, 1, 0.4],
+      "formatter": {"color_sub": "#cccccc", "color_value": "#ffffff", "sz_val": 70, "sz_unit": 30, "sz_trend": 45}
+    }
+  },
+  "colors": {
+    "temp_internal": [0.9, 0.4, 0.15, 1],
+    "temp_external": [0.7, 0.3, 0.1, 1],
+    "temp_ble": [1.0, 0.55, 0.25, 1],
+    "hum_internal": [0.12, 0.53, 0.9, 1],
+    "hum_external": [0.08, 0.38, 0.68, 1],
+    "hum_ble": [0.3, 0.68, 1.0, 1],
+    "vpd_internal": [0.44, 0.3, 0.82, 1],
+    "vpd_external": [0.32, 0.2, 0.62, 1],
+    "vpd_ble": [0.58, 0.45, 0.95, 1],
+    "green": [0.18, 0.65, 0.43, 1],
+    "bat": [0.82, 0.65, 0.12, 1],
+    "white": [0.85, 0.85, 0.9, 1]
+  },
+  "metrics": {
+    "temp_in": {"name": "Temperature Internal", "unit": "—", "color": "temp_internal"},
+    "hum_in": {"name": "Humidity Internal", "unit": "%", "color": "hum_internal"},
+    "vpd_in": {"name": "VPD Internal", "unit": "kPa", "color": "vpd_internal"},
+    "temp_ex": {"name": "Temperature External", "unit": "—", "color": "temp_external"},
+    "hum_ex": {"name": "Humidity External", "unit": "%", "color": "hum_external"},
+    "vpd_ex": {"name": "VPD External", "unit": "kPa", "color": "vpd_external"},
+    "ble_temp_outside": {"name": "BLE Outside Temperature", "unit": "—", "color": "temp_ble"},
+    "ble_hum_outside": {"name": "BLE Outside Humidity", "unit": "%", "color": "hum_ble"},
+    "ble_vpd_outside": {"name": "BLE Outside VPD", "unit": "kPa", "color": "vpd_ble"},
+    "ble_temp_inside": {"name": "BLE Inside Temperature", "unit": "—", "color": "temp_ble"},
+    "ble_hum_inside": {"name": "BLE Inside Humidity", "unit": "%", "color": "hum_ble"},
+    "ble_vpd_inside": {"name": "BLE Inside VPD", "unit": "kPa", "color": "vpd_ble"},
+    "leaf_temp": {"name": "Leaf Temperature", "unit": "—", "color": "green"},
+    "vpd_leaf": {"name": "VPD Leaf", "unit": "kPa", "color": "vpd_internal"},
+    "circulation_fan_rpm": {"name": "Circulation Fan", "unit": "RPM", "color": "green"},
+    "exhaust_fan_rpm": {"name": "Exhaust Fan", "unit": "RPM", "color": "green"},
+    "v_bat": {"name": "Battery", "unit": "V", "color": "bat"},
+    "rssi": {"name": "RSSI", "unit": "dBm", "color": "white"},
+    "signal_quality": {"name": "Signal Quality", "unit": "%", "color": "white"}
+  }
+}

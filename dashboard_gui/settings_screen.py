@@ -60,13 +60,17 @@ class SettingsScreen(Screen):
         cfg["humidity_offset"] = float(values.get("humidity_offset", 0.0))
         cfg["leaf_offset"] = float(values.get("leaf_offset", 0.0))
         cfg["temperature_unit"] = values.get("temperature_unit", "C")
-        cfg["theme"] = values.get("theme", cfg.get("theme", "tiles"))
+        config.set_theme(values.get("theme", config.get_theme()))
     
         # LGS Mesh
         cfg["lgs_mesh_channel_send"] = int(values.get("lgs_mesh_channel_send", 17))
         cfg["lgs_mesh_channel_recv"] = int(values.get("lgs_mesh_channel_recv", 17))
         config.save(cfg)
         config.reload()
+
+        from dashboard_gui.ui.common.graph_chart_content.metric_registry import MetricRegistry
+        MetricRegistry.reload()
+        self._refresh_metric_theme()
     
         # ---------------------------------
         # Watchdog Live Update
@@ -94,6 +98,16 @@ class SettingsScreen(Screen):
     
         print("[SETTINGS] Save completed")
         GLOBAL_STATE.ui_handler.go_back() # Geht zurück zum Dashboard (oder vorheriger Screen)
+
+    def _refresh_metric_theme(self):
+        """Apply the newly saved metric palette without restarting the app."""
+        dashboard = GLOBAL_STATE.ui_handler.get_screen("dashboard")
+        if dashboard and hasattr(dashboard, "content"):
+            dashboard.content.refresh_metric_theme()
+
+        fullscreen = GLOBAL_STATE.ui_handler.get_screen("fullscreen")
+        if fullscreen and getattr(fullscreen, "current_key", None):
+            fullscreen.activate_tile(fullscreen.current_key)
         
     # -----------------------------
     # Cancel Handler

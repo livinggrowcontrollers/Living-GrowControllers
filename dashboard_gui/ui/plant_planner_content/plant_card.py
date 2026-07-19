@@ -37,6 +37,7 @@ class PlantCard(BoxLayout):
         on_delete=None,
         on_water=None,
         on_fertilize=None,
+        on_reset=None,
         **kwargs,
     ):
         # Hauptlayout bleibt vertikal, Padding leicht erhöht für edleren Look
@@ -269,8 +270,6 @@ class PlantCard(BoxLayout):
             width=dp_scaled(55),
             spacing=dp_scaled(3)
         )
-        
-        on_reset = kwargs.get("on_reset", None)
         
         reset_btn = GlassButton(
             text="[font=FA]\uf2f1[/font]"

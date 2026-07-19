@@ -9,12 +9,14 @@ from kivy.uix.button import Button
 import config 
 from dashboard_gui.ui.common.header_online import HeaderBar
 from dashboard_gui.ui.common.buttons.control_buttons import ControlButtons
+from dashboard_gui.ui.common.graph_chart_content.metric_registry import MetricRegistry
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 
 class FullScreenMainPanel(FloatLayout):
 
     def __init__(self, **kw):
         super().__init__(**kw)
+        self.presentation = MetricRegistry.presentation("fullscreen")
 
         # -------------------------------------------------
         # 1. HINTERGRUND INITIALISIERUNG
@@ -36,7 +38,7 @@ class FullScreenMainPanel(FloatLayout):
             y_grid_label=True,
             x_grid_label=False,
             padding=dp_scaled(10),
-            label_options={'color': [1, 1, 1, 0.4], 'bold': True},
+            label_options={'color': self.presentation.get("graph_label_color", [1, 1, 1, 0.4]), 'bold': True},
             size_hint=(1, 0.96),
             pos_hint={'x': 0, 'y': 0}
         )
@@ -60,7 +62,7 @@ class FullScreenMainPanel(FloatLayout):
         )
         self.labels_list = []
         for _ in range(5):
-            lbl = Label(text="", font_size=sp_scaled(24), color=(1, 1, 1, 0.5), bold=True, outline_width=1, outline_color=(0, 0, 0, 1))
+            lbl = Label(text="", font_size=sp_scaled(24), color=self.presentation.get("axis_color", [1, 1, 1, 0.5]), bold=True, outline_width=1, outline_color=(0, 0, 0, 1))
             self.labels_list.append(lbl)
             self.x_axis_labels.add_widget(lbl)
         self.add_widget(self.x_axis_labels)
@@ -71,14 +73,14 @@ class FullScreenMainPanel(FloatLayout):
             pos_hint={'center_x': 0.5, 'top': 0.85}, spacing=dp_scaled(-10)
         )
         
-        self.lbl_title = Label(text="--", font_size=sp_scaled(45), bold=True, color=(1, 1, 1, 0.9), outline_width=1, outline_color=(0, 0, 0, 1))
+        self.lbl_title = Label(text="--", font_size=sp_scaled(45), bold=True, color=self.presentation.get("title_color", [1, 1, 1, 0.9]), outline_width=1, outline_color=(0, 0, 0, 1))
         self.lbl_value = Label(
             text="--", font_size=sp_scaled(70), bold=True, markup=True,
             outline_width=3, outline_color=(0, 0, 0, 1)
         )
         self.lbl_sub = Label(
             text="avg: -- | min: -- | max: --", font_size=sp_scaled(24), bold=True,
-            color=(0.8, 0.8, 0.8, 0.8), outline_width=1, outline_color=(0, 0, 0, 1)
+            color=self.presentation.get("stats_color", [0.8, 0.8, 0.8, 0.8]), outline_width=1, outline_color=(0, 0, 0, 1)
         )
         self.hud.add_widget(self.lbl_title)
         self.hud.add_widget(self.lbl_value)
@@ -111,6 +113,14 @@ class FullScreenMainPanel(FloatLayout):
         self.controls.height = dp_scaled(40)
         self.controls.pos_hint = {'y': 0}
         self.add_widget(self.controls)
+
+    def apply_metric_theme(self, presentation=None):
+        self.presentation = presentation or MetricRegistry.presentation("fullscreen")
+        self.lbl_title.color = self.presentation.get("title_color", [1, 1, 1, 0.9])
+        self.lbl_sub.color = self.presentation.get("stats_color", [0.8, 0.8, 0.8, 0.8])
+        self.graph.label_options["color"] = self.presentation.get("graph_label_color", [1, 1, 1, 0.4])
+        for label in self.labels_list:
+            label.color = self.presentation.get("axis_color", [1, 1, 1, 0.5])
 
     def _update_bg(self, *_):
         self.bg_rect.pos = self.pos

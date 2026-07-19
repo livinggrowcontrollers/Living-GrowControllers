@@ -27,6 +27,8 @@ class ChartTile(ButtonBehavior, BoxLayout):
         self.unit = cfg.get("unit")
         self.color = cfg.get("color")
         self._glow_color = cfg.get("glow")
+        self.style = cfg.get("style", {})
+        self.presentation = MetricRegistry.presentation("tile")
         self._last_val = None
         self._last_avg = None
         self._last_min = None
@@ -37,7 +39,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
         # 1. MODERNISIERTER BACKGROUND (Jetzt noch transparenter!)
         # -------------------------------------------------
         with self.canvas.before:
-            Color(0.08, 0.08, 0.10, 0.40)
+            self.bg_color = Color(*self.presentation.get("background", [0.08, 0.08, 0.10, 0.40]))
         
             self.bg_rect = RoundedRectangle(
                 pos=self.pos,
@@ -58,7 +60,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
             valign="middle",
             font_size=sp_scaled((20)),
             bold=True,
-            color=(1,1,1,0.9),
+            color=self.presentation.get("title_color", [1, 1, 1, 0.9]),
             outline_width=1,
             outline_color=(0,0,0,0.15)
         )
@@ -104,7 +106,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
             text="avg: --", 
             font_size=sp_scaled(20), 
             bold=True,
-            color=(1, 1, 1, 0.7),    # Gedimmtes Weiß
+            color=self.presentation.get("stats_color", [1, 1, 1, 0.7]),
             size_hint=(None, None),
             size=(dp_scaled(140), dp_scaled(20)),
             pos_hint={'right': 0.96, 'top': 0.95}, 
@@ -121,8 +123,9 @@ class ChartTile(ButtonBehavior, BoxLayout):
             spacing=dp_scaled(20)
         )
         
-        self.lbl_min = Label(text="min: --", font_size=sp_scaled(18), bold=True, color=(1,1,1,0.7), halign="left")
-        self.lbl_max = Label(text="max: --", font_size=sp_scaled(18), bold=True, color=(1,1,1,0.7), halign="left")
+        stats_color = self.presentation.get("stats_color", [1, 1, 1, 0.7])
+        self.lbl_min = Label(text="min: --", font_size=sp_scaled(18), bold=True, color=stats_color, halign="left")
+        self.lbl_max = Label(text="max: --", font_size=sp_scaled(18), bold=True, color=stats_color, halign="left")
         
         for l in [self.lbl_min, self.lbl_max]:
             l.bind(size=lambda s, w: setattr(s, 'text_size', (w[0], None)))
@@ -139,7 +142,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
         )
         self.labels_list = []
         for _ in range(5):
-            lbl = Label(text="", font_size=sp_scaled(15), color=(1, 1, 1, 0.4), bold=True, halign="center")
+            lbl = Label(text="", font_size=sp_scaled(15), color=self.presentation.get("axis_color", [1, 1, 1, 0.4]), bold=True, halign="center")
             self.labels_list.append(lbl)
             self.x_axis_labels.add_widget(lbl)
         
@@ -171,12 +174,34 @@ class ChartTile(ButtonBehavior, BoxLayout):
         if last_val != self._last_val:
             self.lbl_main_info.text = UIFormatter.format_sensor_label(
                 name=self.title, value=last_val, unit=unit, trend=trend_icon,
-                sz_val=26, sz_name=16, sz_trend=20, sz_unit=16
+                style={**self.presentation.get("formatter", {}), **self.style},
             )
             self._last_val = last_val
     
         self._render_buffer(history, unit, buf_key)
         self._upd_mesh()
+
+    def refresh_metric_theme(self):
+        """Refresh appearance while preserving the tile's graph history."""
+        cfg = MetricRegistry.get(self.tile_id)
+        self.title = cfg["name"]
+        self.unit = cfg["unit"]
+        self.color = cfg["color"]
+        self._glow_color = cfg["glow"]
+        self.style = cfg["style"]
+        self.presentation = MetricRegistry.presentation("tile")
+        self.plot.color = self.color
+        self.plot_glow.color = self._glow_color
+        self.mesh_color.rgba = (*self.color[:3], 0.25)
+        self.bg_color.rgba = self.presentation.get("background", [0.08, 0.08, 0.10, 0.40])
+        self.lbl_main_info.color = self.presentation.get("title_color", [1, 1, 1, 0.9])
+        stats_color = self.presentation.get("stats_color", [1, 1, 1, 0.7])
+        self.lbl_avg.color = stats_color
+        self.lbl_min.color = stats_color
+        self.lbl_max.color = stats_color
+        for label in self.labels_list:
+            label.color = self.presentation.get("axis_color", [1, 1, 1, 0.4])
+        self._last_val = None
 
     def _render_empty_graph(self):
         clear_graph_series(self.plot, self.mesh, self.plot_glow)
@@ -239,9 +264,10 @@ class ChartTile(ButtonBehavior, BoxLayout):
 
         avg_v, mn_stat, mx_stat = GLOBAL_STATE.graph_engine.get_stats(buf_key)
         if avg_v is not None:
-            self.lbl_avg.text = f"avg: {avg_v:.2f} {unit}"
-            self.lbl_min.text = f"min: {mn_stat:.2f}{unit}"
-            self.lbl_max.text = f"max: {mx_stat:.2f}{unit}"
+            number_style = {**self.presentation.get("formatter", {}), **self.style}
+            self.lbl_avg.text = f"avg: {UIFormatter.format_number(avg_v, number_style)} {unit}"
+            self.lbl_min.text = f"min: {UIFormatter.format_number(mn_stat, number_style)}{unit}"
+            self.lbl_max.text = f"max: {UIFormatter.format_number(mx_stat, number_style)}{unit}"
 
     def reset(self):
         self.lbl_main_info.text = f"[color=#555555]{self.title}[/color]"

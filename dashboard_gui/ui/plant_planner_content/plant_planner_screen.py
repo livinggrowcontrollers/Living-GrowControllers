@@ -45,6 +45,7 @@ class PlantPlannerScreen(Screen):
         )
         self.plants = []
         self.search_text = ""
+        self._loaded_device_id = None
 
         self.engine = BaseRevisionSystem()
         self._last_sent_rev = 0               # NEU: Trackt die letzte gesendete PP-Revision
@@ -55,6 +56,7 @@ class PlantPlannerScreen(Screen):
         # Init-Revisions-Variablen entfernt, nur noch Tracking für normales Rev
 
         self._last_day = date.today()
+        self._build_generation = 0
         
         Clock.schedule_interval(
             self._check_day_rollover,
@@ -160,14 +162,27 @@ class PlantPlannerScreen(Screen):
     # =============================================================================
     def on_enter(self):
         """Wird aufgerufen, sobald der Screen sichtbar wird. Direktes Laden statt Handshake."""
-        Clock.schedule_once(lambda *_: self._force_reload_plants(), 0.1)
+        self._force_reload_plants()
 
     # =============================================================================
     # PUSH
     # =============================================================================
 
     def _push_plants_to_esp(self, plant_updates=None):
-        kwargs = {"plants": self.plants}
+        active_device = GLOBAL_STATE.get_active_device_id()
+        if not active_device or active_device != self._loaded_device_id:
+            print("[PlantPlanner] PUSH blockiert: Screen-State gehoert nicht zum aktiven Geraet")
+            return
+
+        # Intern nutzt der Screen weiterhin direkten Slot-Zugriff. Auf der
+        # Pipeline sind leere Slots jedoch keine Datensaetze.
+        kwargs = {
+            "plants": [
+                copy.deepcopy(plant)
+                for plant in self.plants
+                if plant.get("used", False)
+            ]
+        }
         if plant_updates is not None:
             kwargs = {"plant_updates": plant_updates}
 
@@ -182,13 +197,20 @@ class PlantPlannerScreen(Screen):
             print(f"[PlantPlanner] PUSH -> REV {new_rev}")
 
     def _force_reload_plants(self):
+        data = None
         mac = GLOBAL_STATE.get_active_device_id()
         if mac:
-            data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
-            self.update_from_global(data)
+            web_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac)
+            if web_data:
+                data = {
+                    "device_id": mac,
+                    "channel": "webserver",
+                    "webserver": web_data,
+                }
+                self.update_from_global(data)
 
         if data:
-            web_ch = data.get("webserver", {})
+            web_ch = data["webserver"]
             server_rev = int(web_ch.get("rev_plant_planner", 0))
             self.engine.mark_confirmed_snapshot(server_rev)
 
@@ -228,8 +250,9 @@ class PlantPlannerScreen(Screen):
     # =============================================================================
 
     def build_ui(self):
+        self._build_generation += 1
+        generation = self._build_generation
         self.body.clear_widgets()
-        Clock.unschedule(self._load_cards_progressive)
 
         filtered = self._filtered_plants()
 
@@ -244,9 +267,11 @@ class PlantPlannerScreen(Screen):
             self.body.add_widget(empty)
             return
 
-        self._load_cards_progressive(filtered, 0)
+        self._load_cards_progressive(filtered, 0, generation)
 
-    def _load_cards_progressive(self, plant_list, index, *args):
+    def _load_cards_progressive(self, plant_list, index, generation, *args):
+        if generation != self._build_generation:
+            return
         if index >= len(plant_list):
             return
 
@@ -266,21 +291,32 @@ class PlantPlannerScreen(Screen):
         )
         self.body.add_widget(card)
 
-        Clock.schedule_once(lambda dt: self._load_cards_progressive(plant_list, index + 1), 0)
+        Clock.schedule_once(
+            lambda dt: self._load_cards_progressive(
+                plant_list, index + 1, generation
+            ),
+            0,
+        )
 
     # =============================================================================
     # EDIT
     # =============================================================================
 
     def open_edit_popup(self, plant=None):
+        source_device = self._loaded_device_id
         popup = PlantEditorPopup(
             plant=plant,
-            on_save=self._on_popup_save
+            on_save=lambda updated, is_new, original: self._on_popup_save(
+                updated, is_new, original, source_device
+            )
         )
         popup.open()
 
-    def _on_popup_save(self, updated_plant, is_new, original_plant):
+    def _on_popup_save(self, updated_plant, is_new, original_plant, source_device=None):
         """Speichert Pflanze in den entsprechenden Slot (Slot-basiert)."""
+        if source_device != self._loaded_device_id:
+            print("[PlantPlanner] SAVE verworfen: Geraet wurde waehrend des Editors gewechselt")
+            return
         if is_new:
             # Finde freien Slot
             slot = self._find_free_slot()
@@ -328,6 +364,8 @@ class PlantPlannerScreen(Screen):
         """Aktualisiert einzelnes Feld (über Slot, nicht über Namen)."""
         timestamp = int(time.time())
         slot = plant.get("slot", -1)
+        if not self._is_current_plant(plant):
+            return
         
         if slot >= 0 and slot < len(self.plants):
             self.plants[slot][field_name] = timestamp
@@ -353,6 +391,8 @@ class PlantPlannerScreen(Screen):
     def reset_plant_actions(self, plant):
         """Setzt last_watered und last_fertilized für den Slot auf 0 zurück."""
         slot = plant.get("slot", -1)
+        if not self._is_current_plant(plant):
+            return
         
         if slot >= 0 and slot < len(self.plants):
             self.plants[slot]["last_watered"] = 0
@@ -376,6 +416,8 @@ class PlantPlannerScreen(Screen):
 
     def duplicate_plant(self, plant):
         """Dupliziert eine Pflanze in einen freien Slot."""
+        if not self._is_current_plant(plant):
+            return
         slot = self._find_free_slot()
         if slot == -1:
             print("[PlantPlanner] ERROR: No free slots for duplication!")
@@ -402,6 +444,8 @@ class PlantPlannerScreen(Screen):
 
     def delete_plant(self, plant):
         """Löscht eine Pflanze (setzt used=False, keine Verschiebung)."""
+        if not self._is_current_plant(plant):
+            return
         slot = plant.get("slot", -1)
         if slot >= 0 and slot < len(self.plants):
             self.plants[slot]["used"] = False
@@ -420,27 +464,19 @@ class PlantPlannerScreen(Screen):
     # SYNC & ROLLOVER
     # =============================================================================
     def _check_sync_status(self, dt):
-        data = GLOBAL_STATE.overlay_engine.get_buffer_data(
-            GLOBAL_STATE.get_active_device_id()
-        )
-        if not data:
+        active_device = GLOBAL_STATE.get_active_device_id()
+        if not active_device or active_device != self._loaded_device_id:
             return
 
-        web_ch = data.get("webserver", {})
+        web_ch = GLOBAL_STATE.overlay_engine.get_buffer_data(active_device)
+        if not web_ch:
+            return
         server_rev = int(web_ch.get("rev_plant_planner", 0))
 
         # 🔴 HARD REV GATE (WICHTIG!)
         # Wenn Server hinter uns ist → NICHTS tun, kein Retry-Spam
         if server_rev < self._last_sent_rev:
             return
-
-        # 🔥 retry handling (jetzt sauber kontrolliert)
-        if self.engine.is_pending(server_rev):
-            if self.engine.should_retry():
-                if self.engine.retry_allowed():
-                    self.engine.register_retry()
-                    self._push_plants_to_esp()
-                    return
 
         # optional: status holen (für später UI)
         status = self.engine.get_status(
@@ -468,17 +504,86 @@ class PlantPlannerScreen(Screen):
             if not self.plants[i].get("used", False):
                 return i
         return -1  # Alle Slots belegt
+
+    def _is_current_plant(self, plant):
+        """Blockiert verspätete Button-Events von Karten des vorherigen ESP."""
+        if not isinstance(plant, dict):
+            return False
+        slot = plant.get("slot", -1)
+        return (
+            isinstance(slot, int)
+            and 0 <= slot < len(self.plants)
+            and self.plants[slot] is plant
+        )
+
+    @staticmethod
+    def _normalize_slot_array(plants):
+        """Baut aus dem kompakten Transportarray eine interne 10-Slot-Ansicht."""
+        if not isinstance(plants, list) or len(plants) > 10:
+            return None
+
+        slots = [{"slot": slot, "used": False} for slot in range(10)]
+        seen = set()
+        for plant in plants:
+            if not isinstance(plant, dict):
+                return None
+            slot = plant.get("slot")
+            if (
+                not isinstance(slot, int)
+                or not 0 <= slot < 10
+                or slot in seen
+            ):
+                return None
+            seen.add(slot)
+
+            # Ein Eintrag im kompakten Array repraesentiert eine existierende
+            # Pflanze. Legacy used=false-Eintraege werden ignoriert.
+            if not plant.get("used", True):
+                continue
+            normalized = copy.deepcopy(plant)
+            normalized["slot"] = slot
+            normalized["used"] = True
+            slots[slot] = normalized
+        return slots
     
     # =============================================================================
     # UPDATE
     # =============================================================================
 
+    def on_device_changed(self, device_id):
+        """Trennt UI-, Revision- und Popup-State hart zwischen zwei ESPs."""
+        if device_id == self._loaded_device_id:
+            return
+
+        self._loaded_device_id = device_id
+        self._last_sent_rev = 0
+        self._pending_popup = None
+        self.engine = BaseRevisionSystem()
+        self.plants = []
+        self.build_ui()
+
+        if device_id:
+            web_data = GLOBAL_STATE.overlay_engine.get_buffer_data(device_id)
+            if web_data:
+                self.update_from_global({
+                    "device_id": device_id,
+                    "channel": "webserver",
+                    "webserver": web_data,
+                })
+
     def update_from_global(self, data):
-        """Synchronisiert alle 10 Slots vom ESP32 mit Schutz gegen Pseudo-Daten."""
+        """Synchronisiert das kompakte ESP-Array in die interne Slot-Ansicht."""
         if not data:
             self._clear_ui_to_empty()
             return
     
+        packet_device = data.get("device_id")
+        active_device = GLOBAL_STATE.get_active_device_id()
+        if packet_device and active_device and packet_device != active_device:
+            return
+        if packet_device != self._loaded_device_id:
+            self.on_device_changed(packet_device)
+
         self.header.update_from_global(data)
         web_ch = data.get("webserver", {})
         
@@ -506,11 +611,9 @@ class PlantPlannerScreen(Screen):
         if server_rev < self._last_sent_rev:
             return  # IGNORE OLD DATA (Ghost Protection)
 
-        new_plants = pp["plants"]
-        if len(new_plants) != 10:
-            return        
-        # 3. SCHUTZWAL: Ist die Liste leer oder fehlerhaft strukturiert?
-        if not isinstance(new_plants, list):
+        new_plants = self._normalize_slot_array(pp["plants"])
+        # 3. SCHUTZWAL: Ist die Liste fehlerhaft strukturiert?
+        if new_plants is None:
             return
 
         # Nur wenn echte, valide Daten da sind, updaten wir das RAM-Array

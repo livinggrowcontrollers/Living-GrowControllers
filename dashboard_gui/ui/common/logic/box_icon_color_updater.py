@@ -116,6 +116,51 @@ class BoxColorUpdater:
 
         return "\uf2c7", "EXT"
 
+    @staticmethod
+    def get_climate_color(data):
+        """Return one shared climate colour from live values and target ranges.
+
+        Grey means the Climate Hub is not configured, cyan means targets exist
+        but no live internal climate values are available yet, green is within
+        range, amber is a moderate deviation and red is a severe deviation.
+        """
+        data = data or {}
+        target_keys = (
+            "target_temp_min", "target_temp_max",
+            "target_humidity_min", "target_humidity_max",
+            "target_vpd_min", "target_vpd_max",
+        )
+        if any(data.get(key) is None for key in target_keys):
+            return (0.35, 0.35, 0.35)
+
+        internal = data.get("internal", {}) if isinstance(data.get("internal"), dict) else {}
+        temp = internal.get("temperature", {}).get("value") if isinstance(internal.get("temperature"), dict) else None
+        humidity = internal.get("humidity", {}).get("value") if isinstance(internal.get("humidity"), dict) else None
+        vpd_node = data.get("vpd_internal", {})
+        vpd = vpd_node.get("value") if isinstance(vpd_node, dict) else vpd_node
+        if any(value is None for value in (temp, humidity, vpd)):
+            return (0.3, 0.8, 1.0)
+
+        def deviation(value, lower, upper):
+            value, lower, upper = float(value), float(lower), float(upper)
+            span = max(upper - lower, 0.1)
+            if value < lower:
+                return (lower - value) / span
+            if value > upper:
+                return (value - upper) / span
+            return 0.0
+
+        worst = max(
+            deviation(temp, data["target_temp_min"], data["target_temp_max"]),
+            deviation(humidity, data["target_humidity_min"], data["target_humidity_max"]),
+            deviation(vpd, data["target_vpd_min"], data["target_vpd_max"]),
+        )
+        if worst == 0:
+            return (0.25, 1.0, 0.45)
+        if worst <= 0.35:
+            return (1.0, 0.72, 0.2)
+        return (1.0, 0.28, 0.2)
+
     def _update_box_color(self, rpm):
 
         color = self.get_rpm_color(rpm)

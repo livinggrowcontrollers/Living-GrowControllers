@@ -6,6 +6,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
+from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.clock import Clock
 
@@ -37,7 +38,8 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
         self._init_done = False
         self._locked = True
         self._ui_lock = False
-        self._stage = "seedling"
+        self._stage = "custom"
+        self._night_reduction_enabled = True
         
         # REVISION ENGINE INITIALISIERUNG (Gekoppelt an rev_exhaust)
         self.engine = BaseRevisionSystem()
@@ -85,8 +87,22 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
                                 width=dp_scaled(45), height=dp_scaled(45),
                                 background_color=(0, 0, 0, 0), color=(1, 1, 1, 1))
         self.sync_icon.bind(on_release=self._force_sync)
+
+        self.btn_phase = Button(
+            text="CUSTOM  [font=FA]\uf078[/font]",
+            markup=True,
+            font_size=sp_scaled(16),
+            size_hint=(None, 1),
+            width=dp_scaled(190),
+            background_normal="",
+            background_down="",
+            background_color=(0.0, 0.65, 0.35, 0.85),
+            color=(0, 0, 0, 1),
+        )
+        self.btn_phase.bind(on_release=self._open_stage_menu)
         
         title_row.add_widget(self.lbl_title)
+        title_row.add_widget(self.btn_phase)
         title_row.add_widget(self.sync_icon)
         self.panel.add_widget(title_row)
 
@@ -136,7 +152,7 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
         self.panel.add_widget(self.hum_slider)
 
         self.lbl_vpd = self._add_slider_label("VPD TARGET", "0.8 - 1.5")
-        self.vpd_slider = UnifiedSlider(min=8, max=15, range_min=1, range_max=20, mode='range', 
+        self.vpd_slider = UnifiedSlider(min=1, max=15, range_min=1, range_max=26, mode='range', 
                                       size_hint_y=None, height=dp_scaled(35))
         self.vpd_slider.bind(min_value=self._on_vpd_slider_change, max_value=self._on_vpd_slider_change,
                              on_touch_down=self._touch_down, on_touch_up=self._touch_up)
@@ -144,28 +160,13 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
 
         self.panel.add_widget(Widget())
 
-        # --- STAGE SELECTION BUTTON ROW ---
-        btn_row = BoxLayout(size_hint_y=None, height=dp_scaled(40), spacing=dp_scaled(10))
-        
-        self.btn_seedling = self._create_styled_btn("SEEDLING")
-        self.btn_vegetative = self._create_styled_btn("VEGETATIVE")
-        self.btn_flower = self._create_styled_btn("FLOWER")
-        self.btn_dry = self._create_styled_btn("DRY")
-        self.btn_custom = self._create_styled_btn("CUSTOM")
-        
-        self.btn_seedling.bind(on_release=lambda *_: self._set_stage("seedling"))
-        self.btn_vegetative.bind(on_release=lambda *_: self._set_stage("vegetative"))
-        self.btn_flower.bind(on_release=lambda *_: self._set_stage("flower"))
-        self.btn_dry.bind(on_release=lambda *_: self._set_stage("dry"))
-        self.btn_custom.bind(on_release=lambda *_: self._set_stage("custom"))
-        
-        btn_row.add_widget(self.btn_seedling)
-        btn_row.add_widget(self.btn_vegetative)
-        btn_row.add_widget(self.btn_flower)
-        btn_row.add_widget(self.btn_dry)
-        btn_row.add_widget(self.btn_custom)
-
-        self.panel.add_widget(btn_row)
+        # The bottom action belongs to the active climate profile: night
+        # reduction is shared with the existing Exhaust target pipeline.
+        night_row = BoxLayout(size_hint_y=None, height=dp_scaled(40), spacing=dp_scaled(10))
+        self.btn_night = self._create_styled_btn("[font=FA]\uf186[/font]  NIGHT MODE")
+        self.btn_night.bind(on_release=lambda *_: self._toggle_night_mode())
+        night_row.add_widget(self.btn_night)
+        self.panel.add_widget(night_row)
         
         # --- LOCK OVERLAY & SCHEDULING ---
         self.lock_overlay = LockOverlay(parent=self, panel=self.panel, unlock_callback=self._on_unlock)
@@ -189,46 +190,90 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
     def _on_env_slider_change(self, *args):
         if not self._init_done or self._ui_lock or self._locked: 
             return
-        self.lbl_temp.text = f"{self.temp_slider.min_value:.1f}° - {self.temp_slider.max_value:.1f}°"
-        self.lbl_hum.text = f"{int(self.hum_slider.min_value)}% - {int(self.hum_slider.max_value)}%"
+        self._set_custom_from_manual_input()
+        self._update_target_labels()
         self._set_orange()
 
     def _on_vpd_slider_change(self, *args):
         if not self._init_done or self._ui_lock or self._locked: 
             return
-        self.lbl_vpd.text = f"{self.vpd_slider.min_value/10.0:.1f} - {self.vpd_slider.max_value/10.0:.1f}"
+        self._set_custom_from_manual_input()
+        self._update_target_labels()
         self._set_orange()
 
-    def _set_stage(self, stage_name):
+    def _open_stage_menu(self, *_):
+        dropdown = DropDown(auto_dismiss=True, max_height=dp_scaled(300))
+        stages = (
+            ("seedling", "SEEDLING"),
+            ("vegetative", "VEG"),
+            ("flowering", "FLOWERING"),
+            ("drying", "DRYING"),
+            ("curing", "CURING"),
+            ("custom", "CUSTOM"),
+        )
+        for stage, label in stages:
+            button = Button(text=label, size_hint_y=None, height=dp_scaled(42), background_normal="", background_color=(0.12, 0.12, 0.14, 1))
+            button.bind(on_release=lambda _button, selected=stage: self._set_stage(selected, dropdown))
+            dropdown.add_widget(button)
+        dropdown.open(self.btn_phase)
+
+    def _set_stage(self, stage_name, dropdown=None):
         if self._locked:
             return
         self._stage = stage_name
         self._last_user_action = time.time()
         self._user_active = True
-        
-        self._apply_button_styles()
+
+        profiles = {
+            "seedling": (24.0, 27.0, 60, 70, 0.6, 0.9),
+            "vegetative": (24.0, 28.0, 55, 70, 0.8, 1.2),
+            "flowering": (22.0, 27.0, 45, 60, 1.2, 1.5),
+            "drying": (18.0, 22.0, 50, 60, 0.7, 1.0),
+            "curing": (18.0, 21.0, 55, 62, 0.6, 0.9),
+        }
+        if stage_name in profiles:
+            t_min, t_max, h_min, h_max, v_min, v_max = profiles[stage_name]
+            self._ui_lock = True
+            self.temp_slider.min_value, self.temp_slider.max_value = t_min, t_max
+            self.hum_slider.min_value, self.hum_slider.max_value = h_min, h_max
+            self.vpd_slider.min_value, self.vpd_slider.max_value = int(v_min * 10), int(v_max * 10)
+            self._ui_lock = False
+            self._update_target_labels()
+
+        self._apply_stage_controls()
+        if dropdown:
+            dropdown.dismiss()
         self._set_orange()
-        
+        self._send_current_state()
         Clock.schedule_once(lambda dt: setattr(self, "_user_active", False), 0.4)
 
-    def _apply_button_styles(self):
-        base_color = (0.15, 0.15, 0.15, 1)
-        active_color = (0, 1, 0, 0.85)
-        
-        self.btn_seedling.background_color = active_color if self._stage == "seedling" else base_color
-        self.btn_vegetative.background_color = active_color if self._stage == "vegetative" else base_color
-        self.btn_flower.background_color = active_color if self._stage == "flower" else base_color
-        self.btn_dry.background_color = active_color if self._stage == "dry" else base_color
-        self.btn_custom.background_color = active_color if self._stage == "custom" else base_color
+    def _set_custom_from_manual_input(self):
+        if self._stage != "custom":
+            self._stage = "custom"
+            self._apply_stage_controls()
 
-        def fix_contrast(btn, active):
-            btn.color = (0, 0, 0, 1) if active else (1, 1, 1, 1)
+    def _apply_stage_controls(self):
+        label = self._stage.upper() if self._stage != "vegetative" else "VEG"
+        self.btn_phase.text = f"{label}  [font=FA]\uf078[/font]"
+        self.btn_phase.background_color = (0.0, 0.65, 0.35, 0.85) if self._stage != "custom" else (0.35, 0.35, 0.4, 0.9)
+        self.btn_phase.color = (0, 0, 0, 1) if self._stage != "custom" else (1, 1, 1, 1)
+        self.btn_night.background_color = (0.35, 0.42, 1.0, 0.9) if self._night_reduction_enabled else (0.15, 0.15, 0.15, 1)
+        self.btn_night.color = (0, 0, 0, 1) if self._night_reduction_enabled else (1, 1, 1, 1)
 
-        fix_contrast(self.btn_seedling, self._stage == "seedling")
-        fix_contrast(self.btn_vegetative, self._stage == "vegetative")
-        fix_contrast(self.btn_flower, self._stage == "flower")
-        fix_contrast(self.btn_dry, self._stage == "dry")
-        fix_contrast(self.btn_custom, self._stage == "custom")
+    def _toggle_night_mode(self):
+        if self._locked:
+            return
+        self._night_reduction_enabled = not self._night_reduction_enabled
+        self._user_active = True
+        self._last_user_action = time.time()
+        self._apply_stage_controls()
+        self._send_current_state()
+        Clock.schedule_once(lambda dt: setattr(self, "_user_active", False), 0.4)
+
+    def _update_target_labels(self):
+        self.lbl_temp.text = f"{self.temp_slider.min_value:.1f}° - {self.temp_slider.max_value:.1f}°"
+        self.lbl_hum.text = f"{int(self.hum_slider.min_value)}% - {int(self.hum_slider.max_value)}%"
+        self.lbl_vpd.text = f"{self.vpd_slider.min_value / 10.0:.1f} - {self.vpd_slider.max_value / 10.0:.1f}"
 
     def _touch_down(self, instance, touch):
         if self._locked: 
@@ -264,7 +309,8 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
             h_max=int(self.hum_slider.max_value),
             vpd_min=round(self.vpd_slider.min_value / 10.0, 1),
             vpd_max=round(self.vpd_slider.max_value / 10.0, 1),
-            stage=stage
+            stage=stage,
+            night_reduction=self._night_reduction_enabled,
         )
 
         if new_rev:
@@ -298,11 +344,10 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
 
         self._ui_lock = False
 
-        self.lbl_temp.text = f"{t_min}° - {t_max}°"
-        self.lbl_hum.text = f"{h_min}% - {h_max}%"
-        self.lbl_vpd.text = f"{v_min:.1f} - {v_max:.1f}"
-
-        self._apply_button_styles()
+        self._night_reduction_enabled = bool(data.get("exhaust_fan_night_reduction", True))
+        self._update_target_labels()
+        self._apply_stage_controls()
+        self._update_climate_box_color(data)
         
         # Interims-Gekoppelt an die rev_exhaust vom ESP
         self._last_sent_rev = int(data.get('rev_exhaust', 0))
@@ -374,6 +419,7 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
                 if vpd_val is not None
                 else "Live VPD: --"
             )
+            self._update_climate_box_color(server_data)
 
         else:
             if self._init_done:
@@ -419,7 +465,7 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
         self._locked = False
         for s in [self.temp_slider, self.hum_slider, self.vpd_slider]:
             s.disabled = False
-        self._apply_button_styles()
+        self._apply_stage_controls()
 
     def _init_values(self, *_):
         mac = GLOBAL_STATE.get_active_device_id()
@@ -462,6 +508,11 @@ class ClimateHubOverlay(FloatLayout, BoxColorUpdater, ButtonStyleHelper, Backgro
     
         self.glow_line.rounded_rectangle = rect
         self.border_line.rounded_rectangle = rect
+
+    def _update_climate_box_color(self, data):
+        color = self.get_climate_color(data)
+        self.glow_color.rgba = (*color, 0.35)
+        self.border_color.rgba = (*color, 0.85)
     
     def close(self):
         if hasattr(self, '_update_event') and self._update_event:

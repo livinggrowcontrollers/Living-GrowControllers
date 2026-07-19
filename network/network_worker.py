@@ -46,11 +46,19 @@ def fetch_single_device(mac, dev_cfg, targets, registry, local_plants_cache, loc
                 esp_plant_rev = payload.get("rev_plant_planner", 0)
                 local_rev = local_plant_revs.get(mac, -1)
 
-                if esp_plant_rev > local_rev:
-                    fetch_heavy_plant_data(mac, base_url, user, pw, local_plants_cache, local_plant_revs)
+                # Der ESP ist die autoritative Quelle. Auch nach einem Reset
+                # (ESP-Revision kleiner als Cache) muss der Heavy-Cache ersetzt
+                # werden, sonst bleibt der Client dauerhaft auf Geisterdaten.
+                if esp_plant_rev != local_rev:
+                    fetch_heavy_plant_data(
+                        mac, base_url, user, pw,
+                        local_plants_cache, local_plant_revs,
+                    )
 
-                if mac in local_plants_cache:
-                    payload["plant_planner"] = local_plants_cache[mac].get("plant_planner", {})
+                cached = local_plants_cache.get(mac, {}).get("plant_planner", {})
+                cached_rev = int(cached.get("rev_plant_planner", -1)) if isinstance(cached, dict) else -1
+                if cached_rev == int(esp_plant_rev):
+                    payload["plant_planner"] = cached
 
                 registry.handle_success(mac)
                 return mac, payload, is_ap
@@ -80,17 +88,17 @@ def fetch_heavy_plant_data(mac, base_url, user, pw, local_plants_cache, local_pl
     except Exception as e:
         print(f"[NetworkWorker] Heavy Plant Fetch Error für {mac}: {e}")
 
-def send_control_request(base_url, payload, user, pw):
+def send_control_request(base_url, payload, user, pw, endpoint="/control"):
     """Sendet Steuerbefehle synchron ab (wird asynchron aufgerufen)."""
     try:
-        requests.post(
-            f"{base_url}/control",
+        response = requests.post(
+            f"{base_url}{endpoint}",
             json=payload,
             timeout=2.0,
             auth=(user, pw) if user else None,
             headers={'Connection': 'close'}
         )
-        return True
+        return 200 <= response.status_code < 300
     except:
         return False
 

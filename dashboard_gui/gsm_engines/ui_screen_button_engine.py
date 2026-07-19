@@ -8,6 +8,7 @@ class UIManager:
         self.active_light_overlay = None
         self.active_circulation_fan_overlay = None
         self.active_exhaust_fan_overlay = None
+        self.active_climate_hub_overlay = None
         # -------------------------------------------------
         # Navigation History
         # -------------------------------------------------

@@ -1,7 +1,6 @@
 # core.py – FINAL (stabil)
 # © 2025 Dominik Rosenthal
 
-import os
 from platform_utils import is_android as _platform_is_android
 
 import os
@@ -11,7 +10,9 @@ import config
 from bridge_manager import get_bridge
 from ble_watchdog_manager import BleDumpWatchdog
 from decoder import start_decoder_thread, stop_decoder_thread, update_bridge_state, step_decode
+import web_client
 from web_client import WebClientThread
+from android_service import load_service_class
 # ------------------------------------------------------------
 # 🔥 100 % zuverlässige Android-Erkennung
 # ------------------------------------------------------------
@@ -127,8 +128,9 @@ def start():
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         activity = PythonActivity.mActivity
 
-        # PythonService starten (Foreground)
-        ServiceBle = autoclass("org.hackintosh1980.espgrowcontroller.ServiceBle_service")
+        # Paketname wird aus der installierten App gelesen. buildozer.spec bleibt
+        # dadurch die einzige Quelle fuer package.name/package.domain.
+        ServiceBle = load_service_class(activity, autoclass)
         ServiceBle.start(activity, "BLE service running")
         print("[Core] BLE Python Service gestartet (Foreground)")
 
@@ -158,7 +160,11 @@ def start():
     # -----------------------------------------------------
     global _web_client
     try:
-        _web_client = WebClientThread(interval=config.get_refresh_interval())
+        # Polling und Commands muessen dieselbe Instanz benutzen.
+        if web_client.WEB_CLIENT.ident is not None:
+            web_client.WEB_CLIENT = WebClientThread()
+        _web_client = web_client.WEB_CLIENT
+        _web_client.interval = config.get_refresh_interval()
         _web_client.start()
         print("[Core] WebClient-Thread gestartet")
     except Exception as e:
@@ -491,7 +497,7 @@ def stop():
             PythonActivity = autoclass('org.kivy.android.PythonActivity')
             activity = PythonActivity.mActivity
             
-            ServiceBle = autoclass("org.hackintosh1980.espgrowcontroller.ServiceBle_service")
+            ServiceBle = load_service_class(activity, autoclass)
             # Stoppt den Service über die laufende Android-Activity
             ServiceBle.stop(activity)
             print("[Core] Android BLE Python Foreground Service gestoppt")
@@ -551,6 +557,7 @@ def _start_web_client_safe(dt):
         _web_client = WebClientThread(
             interval=config.get_refresh_interval()
         )
+        web_client.WEB_CLIENT = _web_client
         _web_client.start()
 
         print("[Core] WebClient-Thread separat gestartet")

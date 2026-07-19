@@ -88,6 +88,8 @@ class FullScreenView(Screen):
                 readable_name = self.tile_id.replace("_", " ").title()
 
         cfg = MetricRegistry.get(self.tile_id)
+        fullscreen_presentation = MetricRegistry.presentation("fullscreen")
+        self.layout.apply_metric_theme(fullscreen_presentation)
 
         main_col = cfg["color"]
         glow_col = cfg["glow"]
@@ -199,6 +201,8 @@ class FullScreenView(Screen):
 
         last_val = display_buf[-1]
         trend_icon = GLOBAL_STATE.get_trend_icon(self.current_key) or ""
+        metric_cfg = MetricRegistry.get(self.tile_id)
+        fullscreen_presentation = MetricRegistry.presentation("fullscreen")
         
         # NEU: Nutzung des zentralen Formatters für das große HUD-Value-Label
         self.lbl_value.text = UIFormatter.format_sensor_label(
@@ -206,14 +210,17 @@ class FullScreenView(Screen):
             value=last_val, 
             unit=self._active_unit, 
             trend=trend_icon,
-            sz_val=70,               # Entspricht deinem alten font_size=sp_scaled(70)
-            sz_unit=30,              # Entspricht deinem alten [size=int(dp_scaled(30))]
-            sz_trend=45              # Gleiche Größe für das Trend-Icon wie die Einheit
+            style={**fullscreen_presentation.get("formatter", {}), **metric_cfg.get("style", {})},
         )
 
         avg_v, mn_stat, mx_stat = GLOBAL_STATE.graph_engine.get_stats(self.current_key)
         if avg_v is not None:
-            self.lbl_sub.text = f"avg: {avg_v:.2f} {self._active_unit} | min: {mn_stat:.2f} {self._active_unit} | max: {mx_stat:.2f} {self._active_unit}"
+            number_style = {**fullscreen_presentation.get("formatter", {}), **metric_cfg.get("style", {})}
+            self.lbl_sub.text = (
+                f"avg: {UIFormatter.format_number(avg_v, number_style)} {self._active_unit} | "
+                f"min: {UIFormatter.format_number(mn_stat, number_style)} {self._active_unit} | "
+                f"max: {UIFormatter.format_number(mx_stat, number_style)} {self._active_unit}"
+            )
     
     
     def update_from_global(self, data):

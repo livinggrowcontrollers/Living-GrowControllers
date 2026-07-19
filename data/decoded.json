@@ -1,31 +1,31 @@
 [
   {
-    "timestamp": 1784408129.5978181,
+    "timestamp": 1784433124.7223082,
     "device_id": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
     "name": "LGS_Grow_Master",
     "adv": {
       "alive": true,
       "status": "active",
       "packet_counter": null,
-      "raw": "D302A211098D10CD09A410BC9C0001FC000052",
+      "raw": "D302A21109261246094012309C0001CA000005",
       "internal": {
         "temperature": {
-          "value": 24.68,
+          "value": 23.68,
           "unit": "°C"
         },
         "humidity": {
-          "value": 42.84,
+          "value": 46.56,
           "unit": "%"
         }
       },
       "external": {
         "present": true,
         "temperature": {
-          "value": 24.45,
+          "value": 23.42,
           "unit": "°C"
         },
         "humidity": {
-          "value": 43.01,
+          "value": 46.78,
           "unit": "%"
         }
       },
@@ -41,33 +41,33 @@
         }
       },
       "vpd_internal": {
-        "value": 1.776,
+        "value": 1.564,
         "unit": "kPa"
       },
       "vpd_external": {
-        "value": 1.747,
+        "value": 1.533,
         "unit": "kPa"
       },
-      "battery_voltage": 5.08,
+      "battery_voltage": 4.58,
       "dew_point_internal": {
-        "value": 11.2,
+        "value": 11.55,
         "unit": "°C"
       },
       "dew_point_external": {
-        "value": 11.05,
+        "value": 11.39,
         "unit": "°C"
       },
       "coord": {
         "internal": {
-          "x": 42.84,
-          "y": 24.68
+          "x": 46.56,
+          "y": 23.68
         },
         "external": {
-          "x": 43.01,
-          "y": 24.45
+          "x": 46.78,
+          "y": 23.42
         }
       },
-      "rssi": -59
+      "rssi": -51
     },
     "gatt": {
       "alive": false,
@@ -138,27 +138,27 @@
     "webserver": {
       "alive": true,
       "status": "active",
-      "timestamp": 1784408129.0279932,
+      "timestamp": 1784433124.165291,
       "dev_name": "LGS_Grow_Master",
       "fw_ver": "v2.8.6-singlefan",
       "ip": "192.168.2.20",
       "ssid": "Cudy-Indoor",
-      "target_temp_min": 22,
+      "target_temp_min": 18,
       "target_temp_max": 30,
-      "target_humidity_min": 40,
-      "target_humidity_max": 70,
-      "target_vpd_min": 0.8,
+      "target_humidity_min": 50,
+      "target_humidity_max": 69,
+      "target_vpd_min": 0.7,
       "target_vpd_max": 2.6,
       "exhaust_fan_mode": "auto",
-      "circulation_fan_mode": "nat",
+      "circulation_fan_mode": "chao",
       "plant_phase": 2,
       "plant_planner": {
-        "rev_plant_planner": 5,
+        "rev_plant_planner": 18,
         "plants": [
           {
             "slot": 0,
             "used": true,
-            "name": "",
+            "name": "Krautrübe",
             "strain": "",
             "breeder": "",
             "phenotype": "",
@@ -177,7 +177,7 @@
             "estimated_veg_days": 30,
             "estimated_flower_days": 60,
             "harvest_date": "",
-            "germination_start": "",
+            "germination_start": "2026-05-01",
             "seedling_start": "",
             "vegetative_start": "",
             "flowering_start": "",
@@ -208,15 +208,15 @@
             "harvest_date": "",
             "germination_start": "",
             "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
+            "vegetative_start": "2026-05-01",
+            "flowering_start": "2026-06-04",
             "drying_start": "",
             "curing_start": ""
           },
           {
             "slot": 2,
-            "used": false,
-            "name": "",
+            "used": true,
+            "name": "Krautrübe COPY",
             "strain": "",
             "breeder": "",
             "phenotype": "",
@@ -229,218 +229,15 @@
             "harvest_weight": "",
             "dry_weight": "",
             "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
+            "picture": 4,
+            "last_watered": 1784348170,
             "last_fertilized": 0,
             "estimated_veg_days": 30,
             "estimated_flower_days": 60,
             "harvest_date": "",
-            "germination_start": "",
+            "germination_start": "2026-05-01",
             "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 3,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 4,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 5,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 6,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 7,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 8,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 9,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
+            "vegetative_start": "2026-06-01",
             "flowering_start": "",
             "drying_start": "",
             "curing_start": ""
@@ -452,6 +249,12 @@
         "p_c_fan": 45,
         "p_c_tac": 2,
         "p_c_tac_pull": 1,
+        "p_c_fan2": -1,
+        "p_c_tac2": -1,
+        "p_c_tac2_pull": 1,
+        "p_c_fan3": -1,
+        "p_c_tac3": -1,
+        "p_c_tac3_pull": 1,
         "p_e_fan": 47,
         "p_e_tac": 1,
         "p_light": 21,
@@ -465,52 +268,52 @@
       },
       "internal": {
         "temperature": {
-          "value": 24.72,
+          "value": 23.72,
           "unit": "°C"
         },
         "humidity": {
-          "value": 42.82,
+          "value": 46.56,
           "unit": "%"
         }
       },
       "external": {
         "present": true,
         "temperature": {
-          "value": 24.46,
+          "value": 23.42,
           "unit": "°C"
         },
         "humidity": {
-          "value": 43.01,
+          "value": 46.78,
           "unit": "%"
         }
       },
       "vpd_internal": {
-        "value": 1.781,
+        "value": 1.568,
         "unit": "kPa"
       },
       "vpd_external": {
-        "value": 1.748,
+        "value": 1.533,
         "unit": "kPa"
       },
       "dew_point_internal": {
-        "value": 11.23,
+        "value": 11.59,
         "unit": "°C"
       },
       "dew_point_external": {
-        "value": 11.06,
+        "value": 11.39,
         "unit": "°C"
       },
       "coord": {
         "internal": {
-          "x": 42.82,
-          "y": 24.72
+          "x": 46.56,
+          "y": 23.72
         },
         "external": {
-          "x": 43.01,
-          "y": 24.46
+          "x": 46.78,
+          "y": 23.42
         }
       },
-      "battery_voltage": 4.053,
+      "battery_voltage": 3.96,
       "circulation_fan": {
         "circulation_fan_rpm": 0,
         "unit": "RPM"
@@ -519,13 +322,13 @@
         "exhaust_fan_rpm": 0,
         "unit": "RPM"
       },
-      "exhaust_fan_pct": 49,
+      "exhaust_fan_pct": 3,
       "circulation_fan_pct": 60,
       "light_pct": 0,
       "light_mode": "manual",
-      "uptime_esp_s": 422,
-      "free_heap": 149436,
-      "rssi": -54,
+      "uptime_esp_s": 15464,
+      "free_heap": 147228,
+      "rssi": -52,
       "external2": {
         "present": false,
         "leaf_temp": {
@@ -542,25 +345,29 @@
           {
             "name": "sps",
             "mac": "49:25:08:23:07:21"
+          },
+          {
+            "name": "ThermoBeacon2",
+            "mac": "f0:f1:00:00:06:19"
           }
         ],
         "outside": {
           "online": true,
           "temperature": {
-            "value": 26.04,
+            "value": 24.62,
             "unit": "°C"
           },
           "humidity": {
-            "value": 40.44,
+            "value": 42.42,
             "unit": "%"
           },
           "vpd": {
-            "value": 2.007,
+            "value": 1.783,
             "unit": "kPa"
           },
           "coord": {
-            "x": 40.44,
-            "y": 26.04
+            "x": 42.42,
+            "y": 24.62
           },
           "mac": "49:25:08:23:07:21",
           "name": "sps"
@@ -568,20 +375,20 @@
         "inside": {
           "online": true,
           "temperature": {
-            "value": 24.0,
+            "value": 23.25,
             "unit": "°C"
           },
           "humidity": {
-            "value": 42.375,
+            "value": 46.125,
             "unit": "%"
           },
           "vpd": {
-            "value": 1.719,
+            "value": 1.536,
             "unit": "kPa"
           },
           "coord": {
-            "x": 42.375,
-            "y": 24.0
+            "x": 46.125,
+            "y": 23.25
           },
           "mac": "f0:f1:00:00:06:19",
           "name": "ThermoBeacon2"
@@ -589,27 +396,39 @@
       },
       "health": {
         "signal": {
-          "rssi": -54
+          "rssi": -52
         }
       },
       "rtc_found": true,
-      "rtc_time": "22:55:29",
-      "system_time": "22:55:29",
+      "rtc_time": "05:52:04",
+      "system_time": "05:52:04",
       "rev": 0,
       "hostname": "growmaster-d064",
       "ip_address": "192.168.2.20",
       "mac": "E0:72:A1:A9:D0:64",
       "exhaust_fan_min": 0,
       "exhaust_fan_speed_now": 0,
-      "rev_exhaust": 367,
+      "rev_exhaust": 345,
       "exhaust_fan_chaos_active": false,
       "exhaust_fan_state_reason_1": "idle_balanced",
       "exhaust_fan_state_reason_2": "night_reduction",
       "exhaust_fan_night_reduction": true,
       "circulation_fan_speed_now": 51,
       "circulation_fan_min": 20,
-      "rev_circfan": 361,
-      "rev_plant_planner": 5,
+      "rev_circfan": 337,
+      "circulation_fan2_rpm": null,
+      "circulation_fan2_pct": null,
+      "circulation_fan2_speed_now": null,
+      "circulation_fan2_min": null,
+      "circulation_fan2_mode": "off",
+      "rev_circfan2": 0,
+      "circulation_fan3_rpm": null,
+      "circulation_fan3_pct": null,
+      "circulation_fan3_speed_now": null,
+      "circulation_fan3_min": null,
+      "circulation_fan3_mode": "off",
+      "rev_circfan3": 0,
+      "rev_plant_planner": 18,
       "light_target": 0,
       "l_start_h": 8,
       "l_start_m": 0,
@@ -618,13 +437,13 @@
       "l_sunset": 60,
       "light_climate_override": false,
       "light_remaining": -1,
-      "rev_light": 35,
+      "rev_light": 37,
       "light_state_reason": "MANUAL",
       "log_level": 2,
-      "max_alloc": 106484,
-      "heap_usage": 175688,
-      "boot_cause": "Software Reboot",
-      "rev_grow": 9,
+      "max_alloc": 102388,
+      "heap_usage": 177480,
+      "boot_cause": "Power Cut / Hard Reset",
+      "rev_grow": 24,
       "wifi_mode": 1,
       "ble_bridge_enabled": true,
       "ble_scan_enabled": true,
@@ -642,16 +461,16 @@
     "status": "active",
     "health": {
       "uptime": {
-        "value": 300.55613112449646,
+        "value": 60.03915810585022,
         "unit": "s"
       },
       "battery": {
         "value": null,
         "unit": "V",
-        "voltage": 4.053
+        "voltage": 3.96
       },
       "signal": {
-        "rssi": -54,
+        "rssi": -52,
         "unit": "dBm"
       }
     },
@@ -659,14 +478,14 @@
     "web_alive": true
   },
   {
-    "timestamp": 1784408129.5978181,
+    "timestamp": 1784433124.7223082,
     "device_id": "827482CC-A977-43D7-835E-8E8B6978E66A",
     "name": "LGS_Grow_Master",
     "adv": {
       "alive": true,
       "status": "active",
       "packet_counter": null,
-      "raw": "D302A2119C009C009C009C009C0003A5000081",
+      "raw": "D302A2119C009C009C009C009C0001A3000004",
       "internal": {
         "temperature": {
           "value": null,
@@ -707,7 +526,7 @@
         "value": null,
         "unit": "kPa"
       },
-      "battery_voltage": 9.33,
+      "battery_voltage": 4.19,
       "dew_point_internal": {
         "value": null,
         "unit": "°C"
@@ -726,7 +545,7 @@
           "y": null
         }
       },
-      "rssi": -80
+      "rssi": -81
     },
     "gatt": {
       "alive": false,
@@ -797,7 +616,7 @@
     "webserver": {
       "alive": true,
       "status": "active",
-      "timestamp": 1784408129.0279932,
+      "timestamp": 1784433124.165291,
       "dev_name": "LGS_Grow_Master",
       "fw_ver": "v2.8.6-singlefan",
       "ip": "192.168.2.39",
@@ -812,11 +631,11 @@
       "circulation_fan_mode": "nat",
       "plant_phase": 2,
       "plant_planner": {
-        "rev_plant_planner": 0,
+        "rev_plant_planner": 2,
         "plants": [
           {
             "slot": 0,
-            "used": false,
+            "used": true,
             "name": "",
             "strain": "",
             "breeder": "",
@@ -831,268 +650,7 @@
             "dry_weight": "",
             "favorite": false,
             "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 1,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 2,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 3,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 4,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 5,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 6,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 7,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 8,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
-            "last_fertilized": 0,
-            "estimated_veg_days": 30,
-            "estimated_flower_days": 60,
-            "harvest_date": "",
-            "germination_start": "",
-            "seedling_start": "",
-            "vegetative_start": "",
-            "flowering_start": "",
-            "drying_start": "",
-            "curing_start": ""
-          },
-          {
-            "slot": 9,
-            "used": false,
-            "name": "",
-            "strain": "",
-            "breeder": "",
-            "phenotype": "",
-            "pot_size": "",
-            "medium": "",
-            "light": "",
-            "location": "",
-            "notes": "",
-            "tags": "",
-            "harvest_weight": "",
-            "dry_weight": "",
-            "favorite": false,
-            "picture": 1,
-            "last_watered": 0,
+            "last_watered": 1784415185,
             "last_fertilized": 0,
             "estimated_veg_days": 30,
             "estimated_flower_days": 60,
@@ -1111,6 +669,12 @@
         "p_c_fan": 45,
         "p_c_tac": 2,
         "p_c_tac_pull": 1,
+        "p_c_fan2": -1,
+        "p_c_tac2": -1,
+        "p_c_tac2_pull": 1,
+        "p_c_fan3": -1,
+        "p_c_tac3": -1,
+        "p_c_tac3_pull": 1,
         "p_e_fan": 47,
         "p_e_tac": 1,
         "p_light": 21,
@@ -1118,7 +682,7 @@
         "p_i2c_scl": 5,
         "p_rtc_sda": 13,
         "p_rtc_scl": 14,
-        "p_bat": 6,
+        "p_bat": 12,
         "p_e_tac_pull": 1,
         "p_bat_pull": 0
       },
@@ -1169,7 +733,7 @@
           "y": null
         }
       },
-      "battery_voltage": 6.924,
+      "battery_voltage": 4.203,
       "circulation_fan": {
         "circulation_fan_rpm": 0,
         "unit": "RPM"
@@ -1182,8 +746,8 @@
       "circulation_fan_pct": 60,
       "light_pct": 0,
       "light_mode": "manual",
-      "uptime_esp_s": 660,
-      "free_heap": 154292,
+      "uptime_esp_s": 15404,
+      "free_heap": 148436,
       "rssi": -71,
       "external2": {
         "present": false,
@@ -1201,29 +765,25 @@
           {
             "name": "sps",
             "mac": "49:25:08:23:07:21"
-          },
-          {
-            "name": "ThermoBeacon2",
-            "mac": "f0:f1:00:00:06:19"
           }
         ],
         "outside": {
           "online": true,
           "temperature": {
-            "value": 26.04,
+            "value": 24.62,
             "unit": "°C"
           },
           "humidity": {
-            "value": 40.44,
+            "value": 42.42,
             "unit": "%"
           },
           "vpd": {
-            "value": 2.007,
+            "value": 1.783,
             "unit": "kPa"
           },
           "coord": {
-            "x": 40.44,
-            "y": 26.04
+            "x": 42.42,
+            "y": 24.62
           },
           "mac": "49:25:08:23:07:21",
           "name": "sps"
@@ -1231,20 +791,20 @@
         "inside": {
           "online": true,
           "temperature": {
-            "value": 24.0,
+            "value": 23.25,
             "unit": "°C"
           },
           "humidity": {
-            "value": 42.3125,
+            "value": 46.125,
             "unit": "%"
           },
           "vpd": {
-            "value": 1.721,
+            "value": 1.536,
             "unit": "kPa"
           },
           "coord": {
-            "x": 42.3125,
-            "y": 24.0
+            "x": 46.125,
+            "y": 23.25
           },
           "mac": "f0:f1:00:00:06:19",
           "name": "ThermoBeacon2"
@@ -1257,22 +817,34 @@
       },
       "rtc_found": false,
       "rtc_time": "offline",
-      "system_time": "22:55:29",
+      "system_time": "05:52:04",
       "rev": 0,
       "hostname": "growmaster-1d3c",
       "ip_address": "192.168.2.39",
       "mac": "20:6E:F1:9A:1D:3C",
       "exhaust_fan_min": 20,
       "exhaust_fan_speed_now": 25,
-      "rev_exhaust": 355,
+      "rev_exhaust": 328,
       "exhaust_fan_chaos_active": false,
       "exhaust_fan_state_reason_1": "sensor_fail",
       "exhaust_fan_state_reason_2": "crit_sensor_timeout",
       "exhaust_fan_night_reduction": true,
-      "circulation_fan_speed_now": 39,
+      "circulation_fan_speed_now": 57,
       "circulation_fan_min": 20,
-      "rev_circfan": 349,
-      "rev_plant_planner": 0,
+      "rev_circfan": 322,
+      "circulation_fan2_rpm": null,
+      "circulation_fan2_pct": null,
+      "circulation_fan2_speed_now": null,
+      "circulation_fan2_min": null,
+      "circulation_fan2_mode": "off",
+      "rev_circfan2": 0,
+      "circulation_fan3_rpm": null,
+      "circulation_fan3_pct": null,
+      "circulation_fan3_speed_now": null,
+      "circulation_fan3_min": null,
+      "circulation_fan3_mode": "off",
+      "rev_circfan3": 0,
+      "rev_plant_planner": 2,
       "light_target": 0,
       "l_start_h": 8,
       "l_start_m": 0,
@@ -1284,10 +856,10 @@
       "rev_light": 0,
       "light_state_reason": "MANUAL",
       "log_level": 2,
-      "max_alloc": 110580,
-      "heap_usage": 170832,
+      "max_alloc": 102388,
+      "heap_usage": 176272,
       "boot_cause": "Software Reboot",
-      "rev_grow": 16,
+      "rev_grow": 20,
       "wifi_mode": 1,
       "ble_bridge_enabled": true,
       "ble_scan_enabled": true,
@@ -1305,13 +877,13 @@
     "status": "active",
     "health": {
       "uptime": {
-        "value": 300.55613112449646,
+        "value": 60.03915810585022,
         "unit": "s"
       },
       "battery": {
         "value": null,
         "unit": "V",
-        "voltage": 6.924
+        "voltage": 4.203
       },
       "signal": {
         "rssi": -71,
@@ -1322,21 +894,21 @@
     "web_alive": true
   },
   {
-    "timestamp": 1784408129.5978181,
+    "timestamp": 1784433124.7223082,
     "device_id": "C898B4F2-B452-7502-1A67-0536E77D49EA",
     "name": "sps",
     "adv": {
       "alive": true,
       "status": "active",
       "packet_counter": null,
-      "raw": "2C0ACC0F0073D10008",
+      "raw": "AB098E10006FAF0008",
       "internal": {
         "temperature": {
-          "value": 26.04,
+          "value": 24.75,
           "unit": "°C"
         },
         "humidity": {
-          "value": 40.44,
+          "value": 42.38,
           "unit": "%"
         }
       },
@@ -1363,7 +935,7 @@
         }
       },
       "vpd_internal": {
-        "value": 2.007,
+        "value": 1.798,
         "unit": "kPa"
       },
       "vpd_external": {
@@ -1372,7 +944,7 @@
       },
       "battery_voltage": null,
       "dew_point_internal": {
-        "value": 11.55,
+        "value": 11.1,
         "unit": "°C"
       },
       "dew_point_external": {
@@ -1381,15 +953,15 @@
       },
       "coord": {
         "internal": {
-          "x": 40.44,
-          "y": 26.04
+          "x": 42.38,
+          "y": 24.75
         },
         "external": {
           "x": null,
           "y": null
         }
       },
-      "rssi": -40
+      "rssi": -46
     },
     "gatt": {
       "alive": false,
@@ -1519,7 +1091,7 @@
     "status": "active",
     "health": {
       "uptime": {
-        "value": 300.55613112449646,
+        "value": 60.03915810585022,
         "unit": "s"
       },
       "battery": {
@@ -1528,7 +1100,7 @@
         "voltage": null
       },
       "signal": {
-        "rssi": -40,
+        "rssi": -46,
         "unit": "dBm"
       }
     },
@@ -1536,21 +1108,21 @@
     "web_alive": false
   },
   {
-    "timestamp": 1784408129.5978181,
+    "timestamp": 1784433124.7223082,
     "device_id": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "name": "ThermoBeacon2",
     "adv": {
       "alive": true,
       "status": "active",
       "packet_counter": null,
-      "raw": "190019060000F1F06D0E8001A502FFFFFFFFB5326700",
+      "raw": "190019060000F1F0700E7401E202FFFFFFFF58946700",
       "internal": {
         "temperature": {
-          "value": 24.0,
+          "value": 23.25,
           "unit": "°C"
         },
         "humidity": {
-          "value": 42.3125,
+          "value": 46.125,
           "unit": "%"
         }
       },
@@ -1577,7 +1149,7 @@
         }
       },
       "vpd_internal": {
-        "value": 1.721,
+        "value": 1.536,
         "unit": "kPa"
       },
       "vpd_external": {
@@ -1586,7 +1158,7 @@
       },
       "battery_voltage": null,
       "dew_point_internal": {
-        "value": 10.4,
+        "value": 11.02,
         "unit": "°C"
       },
       "dew_point_external": {
@@ -1595,15 +1167,15 @@
       },
       "coord": {
         "internal": {
-          "x": 42.3125,
-          "y": 24.0
+          "x": 46.125,
+          "y": 23.25
         },
         "external": {
           "x": null,
           "y": null
         }
       },
-      "rssi": -61
+      "rssi": -50
     },
     "gatt": {
       "alive": false,
@@ -1733,7 +1305,7 @@
     "status": "active",
     "health": {
       "uptime": {
-        "value": 300.55613112449646,
+        "value": 60.03915810585022,
         "unit": "s"
       },
       "battery": {
@@ -1742,7 +1314,7 @@
         "voltage": null
       },
       "signal": {
-        "rssi": -61,
+        "rssi": -50,
         "unit": "dBm"
       }
     },

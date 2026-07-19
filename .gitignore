@@ -1,2 +1,4 @@
 *.pyc
 *.pyc
+__pycache__/config.cpython-312.pyc
+*.pyc

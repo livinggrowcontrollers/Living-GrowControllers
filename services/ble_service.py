@@ -1,7 +1,6 @@
 from jnius import autoclass
 from bridge_manager import get_bridge
 from time import sleep
-import os
 
 # --- Globale Referenzen (Überlebenswichtig für JNI/Garbage Collection) ---
 _wakelock = None
@@ -36,23 +35,18 @@ def run_service():
             _wakelock.acquire(10 * 365 * 24 * 60 * 60 * 1000) 
             print("[Service] WakeLock dauerhaft akquiriert")
 
-        # --- 2. FOREGROUND NOTIFICATION ---
-        # Wichtig: Der String-Klassenname muss exakt zu deiner buildozer.spec passen
-        try:
-            ServiceClass = autoclass("org.hackintosh1980.espgrowcontroller.ServiceBle_service")
-            # Wir nutzen den Service selbst als Kontext
-            ServiceClass.start(service, "BLE Bridge: Aktiv im Hintergrund")
-            print("[Service] Foreground Service Notification gestartet")
-        except Exception as e:
-            print(f"[Service] Notification konnte nicht gestartet werden: {e}")
+        # Der Service wurde bereits durch core.py als Foreground Service gestartet.
+        # Ein erneutes start() auf sich selbst ist weder fuer die Notification noch
+        # fuer das Keep-alive erforderlich und erzeugt nur einen zweiten Start-Intent.
+        print(f"[Service] Foreground Service aktiv: {service.getClass().getName()}")
 
-        # --- 3. BRIDGE INITIALISIERUNG ---
+        # --- 2. BRIDGE INITIALISIERUNG ---
         _bridge = get_bridge()
         _bridge.start()             # ADV + GATT
         _bridge.start_broadcast()   # Dein Custom Java Broadcast
         print("[Service] Alle Bridges aktiv")
 
-        # --- 4. KEEP ALIVE LOOP ---
+        # --- 3. KEEP ALIVE LOOP ---
         # Diese Loop hält den Python-Interpreter Prozess am Leben
         print("[Service] Starte Main-Loop (Heartbeat alle 30s)")
         while True:

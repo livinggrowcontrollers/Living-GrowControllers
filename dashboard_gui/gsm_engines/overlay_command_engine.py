@@ -20,7 +20,7 @@
 
 # overlay_command
 import time
-from web_client import WEB_CLIENT
+import web_client
 from dashboard_gui.circulation_fan_registry import fan_prefix, fan_revision_key, fan_gpio_keys, MAX_CIRCULATION_FANS
 try:
     from dashboard_gui.ui.grow_controller_content.pin_matrix import validate_and_build_pins
@@ -62,6 +62,7 @@ except Exception:
 class OverlayCommandEngine:
     def __init__(self, gsm):
         self.gsm = gsm
+        self._pending_plant_revs = {}
 
     def _is_valid_overlay_snapshot(self, frame, webserver):
         if not isinstance(frame, dict) or not isinstance(webserver, dict):
@@ -113,10 +114,10 @@ class OverlayCommandEngine:
         payload = {
             "ota_rev": new_ota_rev
         }
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
 
         # 🔥 Hier stand vorher 'start_ota_upload'. Jetzt greift es fehlerfrei:
-        WEB_CLIENT.start_ota_update(
+        web_client.WEB_CLIENT.start_ota_update(
             mac=mac, 
             file_path=file_path, 
             on_progress_callback=on_progress, 
@@ -137,8 +138,17 @@ class OverlayCommandEngine:
         current = self.get_latest_device_data(mac)
         pp = current.get("plant_planner", {})
     
-        last_rev = int(pp.get("rev_plant_planner", 0))
+        snapshot_rev = int(
+            current.get(
+                "rev_plant_planner",
+                pp.get("rev_plant_planner", 0),
+            )
+        )
+        # Mehrere UI-Aktionen koennen vor dem naechsten Poll eintreffen.
+        # Jede davon braucht trotzdem eine eigene, strikt steigende Revision.
+        last_rev = max(snapshot_rev, self._pending_plant_revs.get(mac, 0))
         new_rev = last_rev + 1
+        self._pending_plant_revs[mac] = new_rev
     
         payload = {"rev_plant_planner": new_rev}
         plant_payload = {}
@@ -151,7 +161,7 @@ class OverlayCommandEngine:
         if plant_payload:
             payload["plant_planner"] = plant_payload
     
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         print(f"[PlantPlanner] TARGET-REV -> {new_rev}")
         return new_rev    
 
@@ -181,12 +191,13 @@ class OverlayCommandEngine:
             "target_humidity_max": int(kwargs.get("h_max", current.get("target_humidity_max", 70))),
             "target_vpd_min": round(float(kwargs.get("vpd_min", current.get("target_vpd_min", 0.8))), 1),
             "target_vpd_max": round(float(kwargs.get("vpd_max", current.get("target_vpd_max", 1.5))), 1),
+            "exhaust_fan_night_reduction": bool(kwargs.get("night_reduction", current.get("exhaust_fan_night_reduction", True))),
             
             # Kennzeichnung für das Zielsystem auf dem ESP
             "rev_exhaust": new_rev
         }
         
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         print(f"[ClimateHub -> Exhaust-Bridge] TARGET-REV: {new_rev} (Sollwerte synchronisiert)")
         return new_rev
    
@@ -231,7 +242,7 @@ class OverlayCommandEngine:
             "rev_exhaust": new_rev
         }
         
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         print(f"[Exhaust] TARGET-REV: {new_rev} | Mode: {payload['exhaust_fan_mode']}")
         return new_rev
 
@@ -255,7 +266,7 @@ class OverlayCommandEngine:
             revision_key: new_rev
         }
         
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         return new_rev 
 
 # =========================================================================
@@ -378,7 +389,7 @@ class OverlayCommandEngine:
             pass
 
         # Abfahrt an den Web-Client
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         return new_rev
 
 
@@ -400,7 +411,7 @@ class OverlayCommandEngine:
             "rev_light": new_rev
         }
         
-        WEB_CLIENT.send_control(mac, payload)
+        web_client.WEB_CLIENT.send_control(mac, payload)
         return new_rev
 
     # =========================================================================

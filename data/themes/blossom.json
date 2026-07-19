@@ -1,0 +1,38 @@
+{
+  "label": "Blossom",
+  "extends": "standard",
+  "default_style": {
+    "color_sub": "#f2c6db"
+  },
+  "presentation": {
+    "tile": {
+      "background": [0.14, 0.06, 0.12, 0.5],
+      "title_color": [1, 0.88, 0.95, 1],
+      "stats_color": [1, 0.78, 0.9, 0.85],
+      "axis_color": [1, 0.7, 0.86, 0.55],
+      "formatter": {"color_sub": "#f2c6db", "sz_name": 17}
+    },
+    "fullscreen": {
+      "title_color": [1, 0.84, 0.94, 1],
+      "value_color": "#fff0f8",
+      "stats_color": [1, 0.74, 0.89, 0.9],
+      "axis_color": [1, 0.72, 0.88, 0.65],
+      "graph_label_color": [1, 0.75, 0.9, 0.55],
+      "formatter": {"color_sub": "#f2c6db", "color_value": "#fff0f8", "sz_val": 72}
+    }
+  },
+  "colors": {
+    "temp_internal": [1.0, 0.38, 0.62, 1],
+    "temp_external": [0.82, 0.2, 0.46, 1],
+    "temp_ble": [1.0, 0.62, 0.78, 1],
+    "hum_internal": [0.42, 0.73, 1.0, 1],
+    "hum_external": [0.27, 0.52, 0.9, 1],
+    "hum_ble": [0.62, 0.84, 1.0, 1],
+    "vpd_internal": [0.78, 0.42, 0.95, 1],
+    "vpd_external": [0.58, 0.28, 0.78, 1],
+    "vpd_ble": [0.9, 0.64, 1.0, 1],
+    "green": [0.35, 0.82, 0.62, 1],
+    "bat": [1.0, 0.72, 0.3, 1],
+    "white": [1.0, 0.82, 0.93, 1]
+  }
+}
