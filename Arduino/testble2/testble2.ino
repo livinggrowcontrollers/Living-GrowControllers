@@ -13,6 +13,7 @@
 // PATCHER END: CIRCULATION_INCLUDE
 
 #include "exhaust_fan.h" 
+#include "humidifier.h"
 #include "climate_hub.h"
 #include "sys_config.h"
 #include "web_server.h" 
@@ -123,6 +124,7 @@ void setup() {
 // PATCHER END: CIRCULATION_INIT
 
     exhaust_fan_init(sysConfig.pin_exh_fan, sysConfig.pin_exh_tacho);
+    humidifier_init(sysConfig.pin_humidifier);
     plant_planner_init();
 
     // ============================================================
@@ -163,6 +165,7 @@ void loop() {
         
     
     exhaust_fan_update(); 
+    humidifier_update();
 
     light_update();                // Berechnet stur den Lichtzustand anhand der Systemzeit
     power_manager_update();

@@ -25,6 +25,8 @@ SystemConfig sysConfig = {
 
     /* pin_light */ 21,
 
+    /* pin_humidifier */ -1,
+
     /* i2c_sda */ 4,
     /* i2c_scl */ 5,
 

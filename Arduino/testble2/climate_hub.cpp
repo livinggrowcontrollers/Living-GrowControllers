@@ -12,6 +12,7 @@
 // PATCHER END: CIRCULATION_INCLUDE
 
 #include "exhaust_fan.h"
+#include "humidifier.h"
 #include "light_control.h"
 #include "sensor.h"
 
@@ -65,6 +66,11 @@ struct ExhaustDecision {
     const char* primary_reason;
     const char* secondary_reason;
     uint32_t next_failsafe_phase;
+};
+
+struct HumidifierDecision {
+    float factor;
+    const char* reason;
 };
 
 bool has_json_key(JsonObject doc, const char* key) {
@@ -208,6 +214,36 @@ float light_climate_factor(const ClimateSnapshot& snapshot) {
         factor = min(factor, 0.95f);
     }
     return constrain(factor, 0.75f, 1.0f);
+}
+
+HumidifierDecision compute_humidifier_decision(const ClimateSnapshot& snapshot) {
+    if (!snapshot.indoor_valid) {
+        return {0.0f, "sensor_fail"};
+    }
+
+    const float humidityFactor = constrain(
+        (static_cast<float>(targets.humidity_min) - snapshot.indoor_humidity) / 10.0f,
+        0.0f,
+        1.0f
+    );
+    const float vpdFactor = constrain(
+        (snapshot.indoor_vpd - targets.vpd_max) / 0.5f,
+        0.0f,
+        1.0f
+    );
+
+    float factor = max(humidityFactor, vpdFactor);
+    const bool humidityDominates = humidityFactor >= vpdFactor;
+    const char* reason = factor <= 0.01f
+        ? "balanced"
+        : (humidityDominates ? "humidity_low" : "vpd_high");
+
+    if (factor > 0.0f && nightPolicyEnabled && currentPhase == NIGHT_RECOVERY) {
+        factor *= 0.5f;
+        reason = humidityDominates ? "humidity_low_night" : "vpd_high_night";
+    }
+
+    return {constrain(factor, 0.0f, 1.0f), reason};
 }
 
 ExhaustDecision compute_exhaust_decision(
@@ -402,6 +438,9 @@ void climate_hub_update() {
 
     const ClimateSnapshot snapshot = read_snapshot();
     light_apply_climate_factor(light_climate_factor(snapshot));
+
+    const HumidifierDecision humidifier = compute_humidifier_decision(snapshot);
+    humidifier_apply_climate_factor(humidifier.factor, humidifier.reason);
 
     // Climate Hub owns the runtime path for every generated fan instance.
     // A factor of 1.0 intentionally preserves today's circulation behavior;

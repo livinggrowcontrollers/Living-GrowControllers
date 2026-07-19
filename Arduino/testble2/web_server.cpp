@@ -7,6 +7,7 @@
 #include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
+#include "humidifier.h"
 #include "climate_hub.h"
 #include "light_control.h"
 #include "power_manager.h"
@@ -110,6 +111,7 @@ void handleData() {
     obj["mac"] = WiFi.macAddress();
     
     exhaust_fan_get_status(obj);
+    humidifier_get_status(obj);
     climate_hub_get_status(obj);
 
     // PATCHER BEGIN: CIRCULATION_GET_STATUS
@@ -148,6 +150,7 @@ void handleControlJSON() {
         }
 
         climate_hub_process_json(obj);
+        humidifier_process_json(obj);
         // PATCHER BEGIN: CIRCULATION_JSON_UPDATE
         circulation_fan_process_json(obj);
         circulation_fan2_process_json(obj);

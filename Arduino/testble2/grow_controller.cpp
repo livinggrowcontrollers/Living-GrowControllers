@@ -24,6 +24,7 @@
 #include "circulation_fan3.h"
 // PATCHER END: CIRCULATION_INCLUDE
 #include "exhaust_fan.h"
+#include "humidifier.h"
 #include "light_control.h"
 // 1. GLOBALE DEFINITION (Ohne static!)
 extern int current_rev;
@@ -124,6 +125,7 @@ void grow_controller_init() {
     sysConfig.pin_exh_tacho    = growPrefs.getInt("p_e_tac", sysConfig.pin_exh_tacho);
     sysConfig.pin_exh_tacho_pull = growPrefs.getInt("p_e_tac_pull", 1);
     sysConfig.pin_light        = growPrefs.getInt("p_light", sysConfig.pin_light);
+    sysConfig.pin_humidifier   = growPrefs.getInt("p_humidifier", sysConfig.pin_humidifier);
     sysConfig.i2c_sda          = growPrefs.getInt("p_i2c_sda", sysConfig.i2c_sda);
     sysConfig.i2c_scl          = growPrefs.getInt("p_i2c_scl", sysConfig.i2c_scl);
     sysConfig.rtc_sda          = growPrefs.getInt("p_rtc_sda", sysConfig.rtc_sda);
@@ -379,6 +381,13 @@ void grow_controller_process_json(JsonObject doc) {
         gpio_changed = true;
     }
 
+    if (doc.containsKey("p_humidifier")) {
+        int v = doc["p_humidifier"];
+        growPrefs.putInt("p_humidifier", v);
+        sysConfig.pin_humidifier = v;
+        gpio_changed = true;
+    }
+
     if (doc.containsKey("p_i2c_sda")) {
         int v = doc["p_i2c_sda"];
         growPrefs.putInt("p_i2c_sda", v);
@@ -439,6 +448,7 @@ void grow_controller_process_json(JsonObject doc) {
         circulation_fan3_reconfigure();
 // PATCHER END: CIRCULATION_RECONFIGURE
         exhaust_fan_reconfigure();
+        humidifier_reconfigure();
         light_reconfigure();
     }
 }
@@ -506,6 +516,7 @@ void grow_controller_get_status(JsonObject doc) {
     gpios["p_e_fan"] = sysConfig.pin_exh_fan;
     gpios["p_e_tac"] = sysConfig.pin_exh_tacho;
     gpios["p_light"] = sysConfig.pin_light;
+    gpios["p_humidifier"] = sysConfig.pin_humidifier;
     gpios["p_i2c_sda"] = sysConfig.i2c_sda;
     gpios["p_i2c_scl"] = sysConfig.i2c_scl;
     gpios["p_rtc_sda"] = sysConfig.rtc_sda;

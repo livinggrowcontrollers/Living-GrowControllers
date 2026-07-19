@@ -36,6 +36,8 @@ struct SystemConfig {
 
     int pin_light;
 
+    int pin_humidifier;
+
     int i2c_sda;
     int i2c_scl;
 

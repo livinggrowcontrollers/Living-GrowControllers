@@ -53,6 +53,10 @@ void SystemReset::perform_factory_reset() {
     prefs.clear();
     prefs.end();
 
+    prefs.begin("humidifier", false);
+    prefs.clear();
+    prefs.end();
+
     prefs.begin("circulation_fan", false);
     prefs.clear();
     prefs.end();
@@ -70,6 +74,7 @@ void SystemReset::perform_factory_reset() {
     Serial.println("[RESET] light gelöscht");
     Serial.println("[RESET] climate_hub gelöscht");
     Serial.println("[RESET] exhaust_fan gelöscht");
+    Serial.println("[RESET] humidifier gelöscht");
     Serial.println("[RESET] circulation fans gelöscht");
 
     delay(2000);
