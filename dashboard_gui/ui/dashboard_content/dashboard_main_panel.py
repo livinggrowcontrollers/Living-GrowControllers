@@ -20,7 +20,6 @@ class DashboardMainPanel(GridLayout):
         self.padding = dp_scaled(2)
         self.size_hint_y = None
         self.bind(minimum_height=self.setter('height'))
-        self._visible_tile_keys = ()
         
         # Kacheln dynamisch aus der zentralen MetricRegistry erzeugen
         tile_ids = [
@@ -59,11 +58,11 @@ class DashboardMainPanel(GridLayout):
         if hasattr(GLOBAL_STATE, "active_channel_engine"):
             lst = GLOBAL_STATE.active_channel_engine.get_device_list()
             if not lst:
-                self.clear_visible_tiles()
+                self.clear_widgets()
                 return
 
         if not data: 
-            self.clear_visible_tiles()
+            self.clear_widgets()
             return
         
         active_idx = GLOBAL_STATE.get_active_index()
@@ -181,12 +180,7 @@ class DashboardMainPanel(GridLayout):
             if rssi_val is not None:
                 self.tile_rssi.update(rssi_val, f"{prefix}_rssi", render=is_active)
     def _apply_tile_visibility(self, active_keys):
-        visible_keys = tuple(active_keys)
-        if visible_keys == self._visible_tile_keys:
-            return
-
         self.clear_widgets()
-        self._visible_tile_keys = visible_keys
     
         from kivy.core.window import Window
     
@@ -231,10 +225,6 @@ class DashboardMainPanel(GridLayout):
             tile.height = row_height
     
             self.add_widget(tile)
-
-    def clear_visible_tiles(self):
-        self.clear_widgets()
-        self._visible_tile_keys = ()
 
     def _get_balanced_cols(self, num_tiles):
         """Maximal drei Spalten, aber vier Tiles werden sauber als 2x2 gelegt."""

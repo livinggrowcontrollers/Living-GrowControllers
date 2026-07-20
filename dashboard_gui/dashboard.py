@@ -25,7 +25,6 @@ ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 
 class DashboardScreen(Screen):
     def __init__(self, **kw):
-        profile_started_at = time.perf_counter()
         super().__init__(**kw)
         self.root_layout = BoxLayout(orientation="vertical")
 
@@ -62,10 +61,8 @@ class DashboardScreen(Screen):
         GLOBAL_STATE.ui_handler.attach_screen("dashboard", self) # Geht direkt zum Spezialisten
 
         # HEADER
-        component_started_at = time.perf_counter()
         self.header = HeaderBar()
         self.root_layout.add_widget(self.header)
-        print(f"[PERF][DASHBOARD] HeaderBar: {time.perf_counter() - component_started_at:.4f}s")
 
         # SCROLLVIEW CONTAINER
         self.scroll_container = ScrollView(
@@ -77,21 +74,17 @@ class DashboardScreen(Screen):
         )
 
         # MAIN PANEL (Das GridLayout)
-        component_started_at = time.perf_counter()
         self.content = DashboardMainPanel()
         self.scroll_container.add_widget(self.content)
-        print(f"[PERF][DASHBOARD] DashboardMainPanel: {time.perf_counter() - component_started_at:.4f}s")
         
         self.root_layout.add_widget(self.scroll_container)
 
         # CONTROLS
-        component_started_at = time.perf_counter()
         self.controls = ControlButtons(on_reset=self.reset_from_global)
         self.controls.size_hint = (1,None)
         self.controls.height = dp_scaled(40)
         self.controls.pos_hint = {'y':0}
         self.root_layout.add_widget(self.controls)
-        print(f"[PERF][DASHBOARD] ControlButtons: {time.perf_counter() - component_started_at:.4f}s")
 
         # Tile-Reihenfolge
         self.tile_temp_in = self.content.tile_temp_in
@@ -122,8 +115,6 @@ class DashboardScreen(Screen):
         for _k, _tile in self.content.tile_map.items():
             _bind_tile(_tile)
 
-        print(f"[PERF][DASHBOARD] TOTAL: {time.perf_counter() - profile_started_at:.4f}s")
-
 
 
     # -----------------------------------------------------
@@ -146,10 +137,11 @@ class DashboardScreen(Screen):
         """
         Wird von HeaderBar aufgerufen, wenn der User ⇅ klickt.
         """
-        from kivy.app import App
-
-        picker = App.get_running_app().ensure_screen("device_picker")
+        picker = self.manager.get_screen("device_picker")
         picker.open()
+        
+        from dashboard_gui.global_state_manager import GLOBAL_STATE
+        GLOBAL_STATE.ui_handler.goto("device_picker")
 
 
     # -----------------------------------------------------
@@ -168,7 +160,7 @@ class DashboardScreen(Screen):
             # Wenn keine Geräte da sind, das Main-Panel komplett leeren und abbrechen!
             # Keine Updates an Kacheln schicken, keine Sichtbarkeiten berechnen.
             if hasattr(self, "content") and self.content:
-                self.content.clear_visible_tiles()
+                self.content.clear_widgets()
             
             # Hintergrund auf Standard (background.png) zwingen
             if self.bg_rect.source != self._bg_path_1:
@@ -203,7 +195,7 @@ class DashboardScreen(Screen):
 
         # 🔥 NEU: Content-Panel hart leeren, um Geister-Kacheln zu eliminieren
         if hasattr(self, 'content') and self.content:
-            self.content.clear_visible_tiles()
+            self.content.clear_widgets()
 
         if hasattr(self, 'header'):
             self.header.set_clock("--:--")
@@ -213,11 +205,11 @@ class DashboardScreen(Screen):
     # TILE → FULLSCREEN
     # -----------------------------------------------------
     def open_fullscreen(self, tile_id):
-        from kivy.app import App
-
-        fs = App.get_running_app().ensure_screen("fullscreen")
+        fs = self.manager.get_screen("fullscreen")
         if not fs.activate_tile(tile_id):
             return
     
         from dashboard_gui.global_state_manager import GLOBAL_STATE
         GLOBAL_STATE.ui_handler.goto("fullscreen")
+
+
