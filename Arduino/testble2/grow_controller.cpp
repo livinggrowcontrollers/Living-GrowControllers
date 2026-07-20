@@ -26,6 +26,8 @@
 #include "exhaust_fan.h"
 #include "humidifier.h"
 #include "light_control.h"
+#include "cloud_logging.h"
+#include "firmware_version.h"
 // 1. GLOBALE DEFINITION (Ohne static!)
 extern int current_rev;
 Preferences growPrefs;
@@ -177,6 +179,7 @@ void grow_controller_process_json(JsonObject doc) {
     serializeJson(doc, Serial);
     Serial.println();
     bool gpio_changed = false;
+    cloud_logging_process_config(doc);
     
     if (doc.containsKey("rev_grow")) {
 
@@ -468,7 +471,7 @@ void grow_controller_get_status(JsonObject doc) {
     doc["log_level"] = _log_level;
     
     doc["uptime_esp_s"] = millis() / 1000;
-    doc["fw_ver"] = "v2.8.6-newfeature";
+    doc["fw_ver"] = FIRMWARE_VERSION;
     
     // IP + WLAN
     
