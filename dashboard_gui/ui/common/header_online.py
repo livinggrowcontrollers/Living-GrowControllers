@@ -23,6 +23,7 @@ from dashboard_gui.ui.common.icons.broadcast_button import BroadcastButton
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.common.icons.circulation_fan_control import CirculationFanControl
 from dashboard_gui.ui.common.icons.exhaust_fan_control import ExhaustFanControl  # <--- NEU
+from dashboard_gui.ui.common.icons.humidifier_control import HumidifierControl
 from dashboard_gui.ui.common.icons.light_control import LightControl
 from dashboard_gui.ui.common.icons.signal_bars import SignalBars
 from dashboard_gui.ui.common.icons.led_circle import LEDCircle
@@ -42,6 +43,7 @@ from dashboard_gui.ui.common.header_capabilities import build_header_state
 # -------------------------------------------------------
 class HeaderBar(BoxLayout):
     def __init__(self, **kw):
+        profile_started_at = time.perf_counter()
         super().__init__(**kw)
         from dashboard_gui.global_state_manager import GLOBAL_STATE
         self.gsm = GLOBAL_STATE
@@ -72,10 +74,13 @@ class HeaderBar(BoxLayout):
             "circulation_fan_rpm": None,
             "circulation_fans": {},
             "exhaust_fan_rpm": None,
+            "humidifier_speed_now": None,
             "climate_hub": False,
             "climate_hub_color": (0.35, 0.35, 0.35),
             "broadcast": False
-        }        
+        }
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Basis: {profile_checkpoint - profile_started_at:.4f}s")
         
         # BACK BUTTON (stabil, bleibt rechts)
         self.btn_back = Button(
@@ -106,6 +111,9 @@ class HeaderBar(BoxLayout):
         self.btn_forward.bind(
             on_release=lambda *_: self._go_forward()
 )
+        profile_previous = profile_checkpoint
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Navigation: {profile_checkpoint - profile_previous:.4f}s")
         
         # LOGO - Fixed Width, nicht proportional
         logo_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "logo.png")
@@ -140,6 +148,9 @@ class HeaderBar(BoxLayout):
         )
         self.lbl_dev.bind(size=lambda instance, _: setattr(instance, 'text_size', (instance.width, instance.height)))
         self.lbl_dev.bind(on_release=lambda *_: self._open_device_menu())
+        profile_previous = profile_checkpoint
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Logo+Gerätename: {profile_checkpoint - profile_previous:.4f}s")
         
         # --- ICONS SECTION (Rechts, alle Fixed Width) ---
         # Signalstärke
@@ -167,6 +178,12 @@ class HeaderBar(BoxLayout):
             parent_header=self,
             size_hint=(None, 1),
             width=dp_scaled(40)  # Gleichmäßige Breite
+        )
+
+        self.humidifier = HumidifierControl(
+            parent_header=self,
+            size_hint=(None, 1),
+            width=dp_scaled(40),
         )
         
         # Light Control
@@ -211,8 +228,12 @@ class HeaderBar(BoxLayout):
             color=(0.7, 0.7, 0.7, 1),
             font_size=sp_scaled(18)
         )
+        profile_previous = profile_checkpoint
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Status+Controls: {profile_checkpoint - profile_previous:.4f}s")
         self.capability_widgets = {
-            "light": self.light, "exhaust_fan": self.exhaust_fan, "broadcast": self.btn_broadcast,
+            "light": self.light, "exhaust_fan": self.exhaust_fan, "humidifier": self.humidifier,
+            "broadcast": self.btn_broadcast,
             "battery": self.battery, "external": self.external, "external2": self.external2,
             "climate_hub": self.climate_hub, "push_message": self.push_message,
             **{f"circulation_fan_{fan_id}": widget for fan_id, widget in self.circulation_fans.items()},
@@ -238,6 +259,9 @@ class HeaderBar(BoxLayout):
             font_size=sp_scaled(22)
         )
         self.btn_menu.bind(on_release=lambda *_: self._open_menu())
+        profile_previous = profile_checkpoint
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Uhr+Menü: {profile_checkpoint - profile_previous:.4f}s")
 
         # ASSEMBLY - EDGE-LOCK + FLEX-CENTER SYSTEM
         # --- ASSEMBLY (DYNAMISCH NACH PLATTFORM) ---
@@ -266,6 +290,7 @@ class HeaderBar(BoxLayout):
         for fan in self.circulation_fans.values():
             self.add_widget(fan)
         self.add_widget(self.exhaust_fan)
+        self.add_widget(self.humidifier)
         self.add_widget(self.btn_broadcast)
         self.add_widget(self.led)
         self.add_widget(self.external)
@@ -291,6 +316,7 @@ class HeaderBar(BoxLayout):
             (self.battery, 3),
             (self.light, 3),
             (self.exhaust_fan, 3),
+            (self.humidifier, 3),
             (self.circulation_fan, 3),
             (self.external, 2),
             (self.external2, 2),
@@ -307,6 +333,11 @@ class HeaderBar(BoxLayout):
 
         self.bind(width=self._on_width)
         self._on_width()
+
+        profile_previous = profile_checkpoint
+        profile_checkpoint = time.perf_counter()
+        print(f"[PERF][HEADER] Assembly: {profile_checkpoint - profile_previous:.4f}s")
+        print(f"[PERF][HEADER] TOTAL: {profile_checkpoint - profile_started_at:.4f}s")
 
         self._menu_overlay = None
         self.device_menu = None
@@ -328,6 +359,7 @@ class HeaderBar(BoxLayout):
         for fan_id, widget in self.circulation_fans.items():
             widget.set_rpm(s["circulation_fans"].get(fan_id, {}).get("rpm"))
         self.exhaust_fan.set_rpm(s["exhaust_fan_rpm"])
+        self.humidifier.set_output(s["humidifier_speed_now"])
     
     
     # ---------------------------------------------------
@@ -489,6 +521,7 @@ class HeaderBar(BoxLayout):
         self._state["circulation_fan_rpm"] = circ_data.get("circulation_fan_rpm")
         self._state["circulation_fans"] = fan_states
         self._state["exhaust_fan_rpm"] = exh_data.get("exhaust_fan_rpm")
+        self._state["humidifier_speed_now"] = web_ch.get("humidifier_speed_now")
 
         
         health = frame.get("health", {})

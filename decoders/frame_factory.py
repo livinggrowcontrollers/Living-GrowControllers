@@ -105,6 +105,10 @@ def build_web_telemetry(web_dec, current_web, unit):
         "circulation_fan": {"circulation_fan_rpm": current_web.get("circulation_fan_rpm", 0), "unit": "RPM"},
         "exhaust_fan": {"exhaust_fan_rpm": current_web.get("exhaust_fan_rpm", 0), "unit": "RPM"},
         "exhaust_fan_pct": current_web.get("exhaust_fan_pct", 0), "circulation_fan_pct": current_web.get("circulation_fan_pct", 0),
+        "humidifier_pct": current_web.get("humidifier_pct"),
+        "humidifier_speed_now": current_web.get("humidifier_speed_now"),
+        "humidifier_status": current_web.get("humidifier_status"),
+        "rev_humidifier": current_web.get("rev_humidifier", 0),
         "light_pct": current_web.get("light_pct", 0), "light_mode": current_web.get("light_mode", "off"),
         "uptime_esp_s": current_web.get("uptime_esp_s", 0), "free_heap": current_web.get("free_heap", 0),
         
@@ -146,7 +150,11 @@ def build_web_telemetry(web_dec, current_web, unit):
     web_dec["ble_sensors"] = ble_out
 
     # Dynamische Durchreichung restlicher Felder via Blacklist
-    BLACKLIST = {"temp_in", "humid_in", "temp_ext", "humid_ext", "leaf_temp", "vbat", "rssi", "uptime_esp_s", "free_heap", "ble_sensors", "circulation_fan_rpm", "exhaust_fan_rpm"}
+    BLACKLIST = {
+        "temp_in", "humid_in", "temp_ext", "humid_ext", "leaf_temp", "vbat", "rssi",
+        "uptime_esp_s", "free_heap", "ble_sensors", "circulation_fan_rpm", "exhaust_fan_rpm",
+        "humidifier_pct", "humidifier_speed_now", "humidifier_status", "rev_humidifier",
+    }
     for key, value in current_web.items():
         if key not in BLACKLIST and key not in web_dec:
             web_dec[key] = value

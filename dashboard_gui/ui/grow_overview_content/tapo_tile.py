@@ -246,30 +246,28 @@ class TapoTile(BoxLayout):
             return
 
         # 2. Den Screen finden und die Daten übergeben
-        app = app.get_running_app()
-        if app.root.has_screen("cam_viewer"):
-            cam_screen = app.root.get_screen("cam_viewer")
+        cam_screen = app.ensure_screen("cam_viewer")
             
-            # Wir suchen das Panel im Screen (normalerweise das 2. Kind von root in CamViewerScreen)
-            # Oder besser: Zugriff über den screen.children[0].children[0]
-            # Hier ist ein robusterer Weg:
-            panel = None
-            for child in cam_screen.walk():
-                if child.__class__.__name__ == "CamViewerPanel":
-                    panel = child
-                    break
-            
-            if panel:
-                # Setze die Werte ins Panel
-                panel.inp_ip.text = ip
-                panel.inp_user.text = user
-                panel.inp_pwd.text = pwd
-                
-                # Starte den Stream
-                panel.start()
-                
-                # Wechsle den Screen
-                app.root.current = "cam_viewer"
+        # Wir suchen das Panel im Screen (normalerweise das 2. Kind von root in CamViewerScreen)
+        # Oder besser: Zugriff über den screen.children[0].children[0]
+        # Hier ist ein robusterer Weg:
+        panel = None
+        for child in cam_screen.walk():
+            if child.__class__.__name__ == "CamViewerPanel":
+                panel = child
+                break
+
+        if panel:
+            # Setze die Werte ins Panel
+            panel.inp_ip.text = ip
+            panel.inp_user.text = user
+            panel.inp_pwd.text = pwd
+
+            # Starte den Stream
+            panel.start()
+
+            # Wechsle den Screen
+            app.root.current = "cam_viewer"
     def _update_value_box_canvas(self, obj, *args):
 
         x, y = obj.pos

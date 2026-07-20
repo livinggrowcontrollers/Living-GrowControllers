@@ -7,10 +7,10 @@ import json
 from platform_utils import is_android
 
 if is_android():
-    from jnius import autoclass
-    PythonActivity = autoclass("org.kivy.android.PythonActivity")
-    ctx = PythonActivity.mActivity
-    DATA = os.path.join(ctx.getFilesDir().getAbsolutePath(), "app", "data")
+    app_dir = os.environ.get("ANDROID_ARGUMENT")
+    if not app_dir:
+        raise RuntimeError("ANDROID_ARGUMENT fehlt: Android-App-Datenpfad ist nicht verfügbar")
+    DATA = os.path.join(app_dir, "data")
 else:
     BASE = os.path.dirname(os.path.abspath(__file__))
     DATA = os.path.join(BASE, "data")

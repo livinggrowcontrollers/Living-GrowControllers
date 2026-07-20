@@ -63,6 +63,7 @@ REQUIRED_ROLES = {
     "p_c_tac":   ROLE_DIGITAL_IN,
     "p_e_fan":   ROLE_PWM,
     "p_e_tac":   ROLE_DIGITAL_IN,
+    "p_humidifier": ROLE_PWM,
     "p_light":   ROLE_PWM,
     "p_i2c_sda": ROLE_I2C,
     "p_i2c_scl": ROLE_I2C,

@@ -1,5 +1,6 @@
 # dashboard_gui/gesture_engines/dashboard_swipe.py
 from kivy.metrics import dp
+from kivy.app import App
 import dashboard_gui.global_state_manager as gsm
 
 class DashboardSwipeEngine:
@@ -13,9 +14,7 @@ class DashboardSwipeEngine:
     def open_fullscreen(self, full_key):
         """Wird von ChartTile aufgerufen (Klick auf Kachel)"""
         sm = getattr(self.gsm, "screen_manager", None)
-        fs = sm.get_screen("fullscreen") if sm else None
-        if not fs and hasattr(self.gsm, "ui_handler"):
-            fs = self.gsm.ui_handler.get_screen("fullscreen")
+        fs = App.get_running_app().ensure_screen("fullscreen")
 
         if fs:
             if not fs.activate_tile(full_key):

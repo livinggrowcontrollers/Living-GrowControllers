@@ -47,6 +47,11 @@ from dashboard_gui.data_buffer import BUFFER
 from dashboard_gui.ui.i18n import I18N
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 import core
+from permission_fix import (
+    ensure_permissions,
+    offer_battery_optimization_exemption_once,
+    startup_requirements_ready,
+)
 
 # Die 14 Screens importieren (Hier liegt oft der Flaschenhals!)
 print("[PERF] Starte Import der 14 Screens...")
@@ -68,6 +73,31 @@ from dashboard_gui.ui.debug_content.debug_screen import DebugScreen
 print(f"[PERF] Alle Module & Screens importiert in: {time.perf_counter() - t_imports_start:.4f}s")
 
 
+SCREEN_CLASSES = {
+    "dashboard": DashboardScreen,
+    "fullscreen": FullScreenView,
+    "device_picker": DevicePickerScreen,
+    "setup": SetupScreen,
+    "grow_controller": GrowControllerScreen,
+    "grow_overview": GrowOverviewScreen,
+    "settings": SettingsScreen,
+    "vpd_scatter": VPDScatterScreen,
+    "sensor_mixed_mode": SensorMixedModeScreen,
+    "plant_planner": PlantPlannerScreen,
+    "cam_viewer": CamViewerScreen,
+    "csv_viewer": CSVViewerScreen,
+    "about": AboutScreen,
+    "debug": DebugScreen,
+}
+
+STARTUP_PRELOAD_ORDER = (
+    "fullscreen",
+    "device_picker",
+    "setup",
+    "grow_controller",
+)
+
+
 def init_buffer():
     t_buf = time.perf_counter()
     BUFFER.load()
@@ -79,10 +109,20 @@ def init_buffer():
     print(f"[PERF] Buffer initialisiert/geladen in: {time.perf_counter() - t_buf:.4f}s")
 
 
+def create_profiled_screen(screen_class, name):
+    print(f"[PERF][SCREEN] START {name}")
+    started_at = time.perf_counter()
+    screen = screen_class(name=name)
+    duration = time.perf_counter() - started_at
+    print(f"[PERF][SCREEN] END {name}: {duration:.4f}s")
+    return screen
+
+
 class DashboardApp(App):
 
     def build(self):
         print("[PERF] App.build() aufgerufen.")
+        self._core_started = False
         
         # 1. I18N und Buffer
         t_i18n = time.perf_counter()
@@ -95,42 +135,60 @@ class DashboardApp(App):
         self.sm = ScreenManager(transition=FadeTransition())
         GLOBAL_STATE.bind_screen_manager(self.sm)
 
-        # 3. Screens instanziieren (Massiver Performance-Fresser beim Start!)
-        t_screens = time.perf_counter()
-        
-        screens = [
-            GrowOverviewScreen(name="grow_overview"),
-            CamViewerScreen(name="cam_viewer"),
-            DashboardScreen(name="dashboard"),
-            SetupScreen(name="setup"),
-            AboutScreen(name="about"),
-            SettingsScreen(name="settings"),
-            FullScreenView(name="fullscreen"),
-            DevicePickerScreen(name="device_picker"),
-            CSVViewerScreen(name="csv_viewer"),
-            VPDScatterScreen(name="vpd_scatter"),
-            SensorMixedModeScreen(name="sensor_mixed_mode"),
-            GrowControllerScreen(name="grow_controller"),
-            PlantPlannerScreen(name="plant_planner"),
-            DebugScreen(name="debug")
-        ]
-
-        for screen in screens:
-            self.sm.add_widget(screen)
-        
-        print(f"[PERF] Alle 14 Screens instanziiert und hinzugefügt in: {time.perf_counter() - t_screens:.4f}s")
-        
+        # Nur die erste sichtbare Oberfläche blockiert den Start.
+        dashboard_started_at = time.perf_counter()
+        self.ensure_screen("dashboard")
         self.sm.current = "dashboard"
+        self._startup_preload_queue = list(STARTUP_PRELOAD_ORDER)
+        print(f"[PERF] Initiales Dashboard bereit in: {time.perf_counter() - dashboard_started_at:.4f}s")
         return self.sm
 
+    def ensure_screen(self, name):
+        if self.sm.has_screen(name):
+            return self.sm.get_screen(name)
+
+        screen_class = SCREEN_CLASSES.get(name)
+        if screen_class is None:
+            raise KeyError(f"Unbekannter Screen: {name}")
+
+        screen = create_profiled_screen(screen_class, name)
+        self.sm.add_widget(screen)
+        return screen
+
+    def _preload_next_screen(self, _dt):
+        while self._startup_preload_queue:
+            name = self._startup_preload_queue.pop(0)
+            if self.sm.has_screen(name):
+                continue
+            print(f"[PERF][PRELOAD] START {name}")
+            self.ensure_screen(name)
+            print(f"[PERF][PRELOAD] END {name}")
+            break
+
+        if self._startup_preload_queue:
+            Clock.schedule_once(self._preload_next_screen, 0.15)
+
     def on_start(self):
+        # Erst die sichtbare UI liefern, dann den Android-Permission-Flow starten.
+        Clock.schedule_once(self._ensure_startup_permissions, 0.20)
+
+        # Gesamte Bootzeit bis zur sichtbaren UI
+        total_time = time.perf_counter() - START_TIME
+        print(f"[PERF] 🚀 GESAMTZEIT BIS ZUM UI-START: {total_time:.4f}s 🚀")
+        Clock.schedule_once(self._preload_next_screen, 0.35)
+
+    def _ensure_startup_permissions(self, _dt):
+        ensure_permissions(self._start_core_once)
+
+    def _start_core_once(self):
+        if self._core_started:
+            return
+
         t_core = time.perf_counter()
         core.start()
-        print(f"[PERF] core.start() ausgeführt in: {time.perf_counter() - t_core:.4f}s")
-        
-        # Gesamte Bootzeit bis zum ersten Frame
-        total_time = time.perf_counter() - START_TIME
-        print(f"[PERF] 🚀 GESAMTZEIT BIS ZUM START: {total_time:.4f}s 🚀")
+        self._core_started = True
+        print(f"[PERF] core.start() nach Freigabe in: {time.perf_counter() - t_core:.4f}s")
+        offer_battery_optimization_exemption_once()
 
     def on_pause(self):
         return True
@@ -138,11 +196,24 @@ class DashboardApp(App):
     def on_resume(self):
         print("[APP] RESUME")
         Clock.schedule_once(self._rebuild_dashboard_graphs, 0.85)
-        core.stop()
-        core.start()
-        core.stop_gatt_bridge()
-        core.restart_gatt_bridge()
+        Clock.schedule_once(self._resume_after_permission_check, 0.12)
         return True
+
+    def _resume_after_permission_check(self, _dt):
+        if self._core_started and not startup_requirements_ready():
+            core.stop()
+            self._core_started = False
+
+        ensure_permissions(self._continue_after_resume)
+
+    def _continue_after_resume(self):
+        if not self._core_started:
+            self._start_core_once()
+            return
+
+        # Android kann den BLE-Scan beim Activity-Wechsel pausieren. Ein kleiner
+        # ADV-Neustart genuegt; Service und kompletter Core bleiben unangetastet.
+        core.restart_adv_bridge()
     
     def _rebuild_dashboard_graphs(self, dt):
         try:

@@ -19,6 +19,7 @@ def build_header_state(frame):
         "light": web.get("light_pct"),
         "circulation_fans": {fan_id: fan_snapshot(web, fan_id) for fan_id in range(1, MAX_CIRCULATION_FANS + 1)},
         "exhaust_fan_rpm": web.get("exhaust_fan", {}).get("exhaust_fan_rpm"),
+        "humidifier_speed_now": web.get("humidifier_speed_now"),
         "battery": health.get("battery", {}).get("voltage") or web.get("battery_voltage"),
         "external": any(frame.get(channel, {}).get("external", {}).get("present", False) for channel in ("adv", "gatt", "webserver")),
         "external2": bool(health.get("external2", {}).get("present") or web.get("external2", {}).get("present", False)),
@@ -48,9 +49,13 @@ def build_header_capabilities(state, push_active=False):
             "show_in_picker": True,
         })
     exhaust_rpm = state.get("exhaust_fan_rpm")
+    humidifier_speed_now = state.get("humidifier_speed_now")
     capabilities.extend((
         {"id": "exhaust_fan", "label": "Exhaust Fan", "icon": "\uf863", "enabled": exhaust_rpm is not None,
          "color": (*StatusColors.get_rpm_color(exhaust_rpm if exhaust_rpm is not None else -256), 1), "value": exhaust_rpm,
+         "show_in_picker": True},
+        {"id": "humidifier", "label": "Humidifier", "icon": "\uf043", "enabled": humidifier_speed_now is not None,
+         "color": (*StatusColors.get_output_color(humidifier_speed_now), 1), "value": humidifier_speed_now,
          "show_in_picker": True},
         {"id": "broadcast", "label": "Broadcast", "icon": "\uf09e", "enabled": bool(state.get("broadcast_available")),
          "color": (0.7, 0.7, 0.7, 1), "show_in_picker": False},

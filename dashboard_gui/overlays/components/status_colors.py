@@ -67,6 +67,23 @@ class StatusColors:
             return (1.0, 1.0, 0.0)
 
         return (1.0, 1.0, 0.6)
+
+    @staticmethod
+    def get_output_color(percent):
+        """Shared colour scale for actuator outputs without RPM feedback."""
+        if percent is None or percent < 0:
+            return (0.35, 0.35, 0.35)
+        if percent <= 0:
+            return (1.0, 0.4, 0.4)
+        if percent < 20:
+            return (0.6, 0.9, 1.0)
+        if percent < 40:
+            return (0.5, 1.0, 0.9)
+        if percent < 60:
+            return (0.5, 1.0, 0.7)
+        if percent < 80:
+            return (0.9, 1.0, 0.5)
+        return (1.0, 0.8, 0.5)
     
     @staticmethod
     def get_battery_color(voltage):

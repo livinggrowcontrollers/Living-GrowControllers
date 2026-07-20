@@ -3,6 +3,7 @@
 
 import os
 import math
+import time
 from kivy.uix.gridlayout import GridLayout
 from dashboard_gui.ui.dashboard_content.chart_tile import ChartTile
 from dashboard_gui.ui.scaling_utils import dp_scaled
@@ -12,12 +13,14 @@ from kivy.uix.scrollview import ScrollView
 
 class DashboardMainPanel(GridLayout):
     def __init__(self, **kw):
+        profile_started_at = time.perf_counter()
         super().__init__(**kw)
         self.cols = 3
         self.spacing = dp_scaled(2) # minimal vergrößert für mehr Cleanliness
         self.padding = dp_scaled(2)
         self.size_hint_y = None
         self.bind(minimum_height=self.setter('height'))
+        self._visible_tile_keys = ()
         
         # Kacheln dynamisch aus der zentralen MetricRegistry erzeugen
         tile_ids = [
@@ -31,9 +34,13 @@ class DashboardMainPanel(GridLayout):
 
         self.tile_map = {}
         for key in tile_ids:
+            tile_started_at = time.perf_counter()
             tile = ChartTile(key)
             self.tile_map[key] = tile
             setattr(self, f"tile_{key}", tile)
+            print(f"[PERF][DASHBOARD][TILE] {key}: {time.perf_counter() - tile_started_at:.4f}s")
+
+        print(f"[PERF][DASHBOARD][TILES] TOTAL: {time.perf_counter() - profile_started_at:.4f}s")
 
     def refresh_metric_theme(self):
         for tile in self.tile_map.values():
@@ -52,11 +59,11 @@ class DashboardMainPanel(GridLayout):
         if hasattr(GLOBAL_STATE, "active_channel_engine"):
             lst = GLOBAL_STATE.active_channel_engine.get_device_list()
             if not lst:
-                self.clear_widgets()
+                self.clear_visible_tiles()
                 return
 
         if not data: 
-            self.clear_widgets()
+            self.clear_visible_tiles()
             return
         
         active_idx = GLOBAL_STATE.get_active_index()
@@ -174,7 +181,12 @@ class DashboardMainPanel(GridLayout):
             if rssi_val is not None:
                 self.tile_rssi.update(rssi_val, f"{prefix}_rssi", render=is_active)
     def _apply_tile_visibility(self, active_keys):
+        visible_keys = tuple(active_keys)
+        if visible_keys == self._visible_tile_keys:
+            return
+
         self.clear_widgets()
+        self._visible_tile_keys = visible_keys
     
         from kivy.core.window import Window
     
@@ -219,6 +231,10 @@ class DashboardMainPanel(GridLayout):
             tile.height = row_height
     
             self.add_widget(tile)
+
+    def clear_visible_tiles(self):
+        self.clear_widgets()
+        self._visible_tile_keys = ()
 
     def _get_balanced_cols(self, num_tiles):
         """Maximal drei Spalten, aber vier Tiles werden sauber als 2x2 gelegt."""

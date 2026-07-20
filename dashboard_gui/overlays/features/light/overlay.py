@@ -11,6 +11,7 @@ from dashboard_gui.overlays.components.unified_slider import UnifiedSlider
 from dashboard_gui.overlays.infrastructure.control_overlay import ControlOverlay
 from dashboard_gui.overlays.infrastructure.contracts import OverlayKey
 from .schedule import LightSchedule
+from .channel_preview import LightChannelPreview
 from .state_adapter import LightStateAdapter
 from .timeline_widget import LightTimelineWidget
 
@@ -36,12 +37,38 @@ class LightOverlay(ControlOverlay):
             adapter=LightStateAdapter(),
             title="LIGHT CONTROL PRO",
             panel_spacing=7,
-            header_height=28,
             accent=(0.22, 0.22, 0.22),
             **kwargs,
         )
 
-        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(68), spacing=dp_scaled(2))
+        tabs = BoxLayout(size_hint_y=None, height=dp_scaled(20), spacing=dp_scaled(8))
+        self.btn_tab_main = self._create_styled_btn("MAIN")
+        self.btn_tab_uv = self._create_styled_btn("UV")
+        self.btn_tab_ir = self._create_styled_btn("IR")
+        self.btn_tab_main.bind(on_release=lambda *_: self._select_light_tab("main"))
+        self.btn_tab_uv.bind(on_release=lambda *_: self._select_light_tab("uv"))
+        self.btn_tab_ir.bind(on_release=lambda *_: self._select_light_tab("ir"))
+        for button in (self.btn_tab_main, self.btn_tab_uv, self.btn_tab_ir):
+            tabs.add_widget(button)
+        self.panel.add_widget(tabs)
+
+        self.content_host = BoxLayout(orientation="vertical")
+        self.main_content = BoxLayout(orientation="vertical", spacing=dp_scaled(7))
+        self.uv_preview = LightChannelPreview(
+            channel_name="UV",
+            description="Independent ultraviolet channel for a future dedicated low-voltage PWM output.",
+            accent=(0.65, 0.3, 1.0),
+            default_pct=20,
+        )
+        self.ir_preview = LightChannelPreview(
+            channel_name="IR",
+            description="Independent infrared channel for a future dedicated low-voltage PWM output.",
+            accent=(1.0, 0.24, 0.14),
+            default_pct=15,
+        )
+        self.panel.add_widget(self.content_host)
+
+        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(52), spacing=dp_scaled(10))
         top.add_widget(Image(source=LIGHT_PICTURE, size_hint=(None, 1), width=dp_scaled(180)))
         values = BoxLayout(orientation="horizontal", size_hint_x=0.4, spacing=dp_scaled(5))
         self.lbl_val = Label(text="0%", font_size=sp_scaled(36), bold=True, halign="center", valign="middle")
@@ -50,14 +77,37 @@ class LightOverlay(ControlOverlay):
             label.bind(size=label.setter("text_size"))
             values.add_widget(label)
         top.add_widget(values)
-        status = BoxLayout(orientation="vertical", size_hint_x=0.6, spacing=dp_scaled(1))
+        status = BoxLayout(
+            orientation="vertical",
+            size_hint_x=0.6,
+            spacing=dp_scaled(1),
+            padding=[0, 0, 0, dp_scaled(4)],
+        )
         self.lbl_status_text = Label(text="STATUS: INIT", font_size=sp_scaled(20), bold=True, color=(0, 1, 0, 0.85), halign="center")
         self.lbl_remaining = Label(text="REMAINING: --", font_size=sp_scaled(20), color=(1, 1, 0, 1), bold=True, halign="center")
         for label in (self.lbl_status_text, self.lbl_remaining):
             label.bind(size=label.setter("text_size"))
             status.add_widget(label)
         top.add_widget(status)
-        self.panel.add_widget(top)
+        self.main_content.add_widget(top)
+
+        controls = BoxLayout(
+            orientation="vertical",
+            size_hint_y=None,
+            height=dp_scaled(230),
+            spacing=dp_scaled(2),
+        )
+
+        def add_slider_field(label, slider):
+            field = BoxLayout(
+                orientation="vertical",
+                size_hint_y=None,
+                height=dp_scaled(56),
+                spacing=dp_scaled(3),
+            )
+            field.add_widget(label)
+            field.add_widget(slider)
+            controls.add_widget(field)
 
         intensity_row = BoxLayout(size_hint_y=None, height=dp_scaled(15), spacing=dp_scaled(4))
         self.lbl_intensity = Label(text="INTENSITY", font_size=sp_scaled(20), color=(1, 1, 1, 0.9), bold=True, halign="right", valign="middle")
@@ -65,32 +115,29 @@ class LightOverlay(ControlOverlay):
         for label in (self.lbl_intensity, self.lbl_light_state):
             label.bind(size=label.setter("text_size"))
             intensity_row.add_widget(label)
-        self.panel.add_widget(intensity_row)
 
         self.slider = UnifiedSlider(min=0, max=100, mode="single", size_hint_y=None, height=dp_scaled(38))
         self.slider.bind(value=self._on_intensity_change, on_touch_down=self._control_touch_down, on_touch_up=self._control_touch_up)
-        self.panel.add_widget(self.slider)
+        add_slider_field(intensity_row, self.slider)
 
         self.lbl_sunrise_sunset = Label(text="RAMPEN: --", markup=True, font_size=sp_scaled(20), color=(1, 0.8, 0.2, 0.8), size_hint_y=None, height=dp_scaled(15))
-        self.panel.add_widget(self.lbl_sunrise_sunset)
         self.slider_sunrise_sunset = UnifiedSlider(min=1, max=48, range_min=1, range_max=48, mode="range", fill_entire_track=True, size_hint_y=None, height=dp_scaled(38))
         self.slider_sunrise_sunset.bind(min_value=self._on_ramp_change, max_value=self._on_ramp_change, on_touch_down=self._control_touch_down, on_touch_up=self._control_touch_up)
-        self.panel.add_widget(self.slider_sunrise_sunset)
+        add_slider_field(self.lbl_sunrise_sunset, self.slider_sunrise_sunset)
 
         self.lbl_start = Label(text="START: --", font_size=sp_scaled(20), size_hint_y=None, height=dp_scaled(15))
-        self.panel.add_widget(self.lbl_start)
         self.slider_start = UnifiedSlider(min=0, max=0, range_min=0, range_max=95, mode="single", size_hint_y=None, height=dp_scaled(38))
         self.slider_start.bind(value=self._on_start_change, on_touch_down=self._control_touch_down, on_touch_up=self._control_touch_up)
-        self.panel.add_widget(self.slider_start)
+        add_slider_field(self.lbl_start, self.slider_start)
 
         self.lbl_dur = Label(text="DURATION: --", font_size=sp_scaled(20), size_hint_y=None, height=dp_scaled(15))
-        self.panel.add_widget(self.lbl_dur)
         self.slider_dur = UnifiedSlider(min=1, max=48, range_min=1, range_max=96, mode="single", size_hint_y=None, height=dp_scaled(38))
         self.slider_dur.bind(value=self._on_duration_change, on_touch_down=self._control_touch_down, on_touch_up=self._control_touch_up)
-        self.panel.add_widget(self.slider_dur)
+        add_slider_field(self.lbl_dur, self.slider_dur)
+        self.main_content.add_widget(controls)
 
         self.timeline = LightTimelineWidget()
-        self.panel.add_widget(self.timeline)
+        self.main_content.add_widget(self.timeline)
 
         buttons = BoxLayout(size_hint_y=None, height=dp_scaled(30), spacing=dp_scaled(8))
         self.btn_man = self._create_styled_btn("MANUELL")
@@ -101,10 +148,51 @@ class LightOverlay(ControlOverlay):
         self.btn_climate.bind(on_release=lambda *_: self._toggle_climate_override())
         for button in (self.btn_man, self.btn_tim, self.btn_climate):
             buttons.add_widget(button)
-        self.panel.add_widget(buttons)
+        self.main_content.add_widget(buttons)
+
+        self._active_light_tab = None
+        self._select_light_tab("main")
 
         self._set_controls_disabled(True)
         self._finish_setup()
+
+    def _select_light_tab(self, tab_name):
+        views = {
+            "main": self.main_content,
+            "uv": self.uv_preview,
+            "ir": self.ir_preview,
+        }
+        if tab_name not in views or tab_name == self._active_light_tab:
+            return
+
+        self.content_host.clear_widgets()
+        self.content_host.add_widget(views[tab_name])
+        self._active_light_tab = tab_name
+
+        is_operational = tab_name == "main"
+        self.sync_icon.disabled = not is_operational
+        self.sync_icon.opacity = 1 if is_operational else 0
+        if is_operational:
+            self.lbl_title.text = "LIGHT CONTROL PRO"
+            self.lbl_title.color = (0, 1, 0, 1)
+        else:
+            self.lbl_title.text = f"LIGHT CONTROL PRO  ·  {tab_name.upper()} PREVIEW"
+            self.lbl_title.color = (*self.uv_preview.accent, 1) if tab_name == "uv" else (*self.ir_preview.accent, 1)
+
+        base = (0.15, 0.15, 0.15, 1)
+        active_colors = {
+            "main": (1.0, 0.72, 0.08, 0.95),
+            "uv": (0.65, 0.3, 1.0, 0.95),
+            "ir": (1.0, 0.24, 0.14, 0.95),
+        }
+        for name, button in (
+            ("main", self.btn_tab_main),
+            ("uv", self.btn_tab_uv),
+            ("ir", self.btn_tab_ir),
+        ):
+            active = name == tab_name
+            button.background_color = active_colors[name] if active else base
+            button.color = (0, 0, 0, 1) if active else (1, 1, 1, 1)
 
     def _current_schedule(self):
         duration_steps = max(1, int(self.slider_dur.value))
@@ -238,3 +326,5 @@ class LightOverlay(ControlOverlay):
     def _set_controls_disabled(self, disabled):
         for slider in (self.slider, self.slider_start, self.slider_dur, self.slider_sunrise_sunset):
             slider.disabled = disabled
+        self.uv_preview.set_disabled(disabled)
+        self.ir_preview.set_disabled(disabled)

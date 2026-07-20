@@ -46,6 +46,8 @@ except Exception:
             "p_e_tac",
             "p_e_tac_pull",
 
+            "p_humidifier",
+
             "p_light",
 
             "p_i2c_sda",
@@ -119,6 +121,8 @@ class OverlayCommandEngine:
         # --- EXHAUST FAN LOGIK ---
         elif cmd_type == "exhaust_fan":
             return self.send_exhaust_command(mac, **kwargs)
+        elif cmd_type == "humidifier":
+            return self.send_humidifier_command(mac, **kwargs)
             
         elif cmd_type == "light":
             return self.send_light_command(mac, **kwargs)
@@ -298,6 +302,34 @@ class OverlayCommandEngine:
         self._send_revisioned_payload(mac, "circulation_fan", new_rev, payload, instance_id=fan_id)
         return new_rev 
 
+    # =========================================================================
+    # HUMIDIFIER COMMANDS
+    # =========================================================================
+
+    def send_humidifier_command(self, mac, **kwargs):
+        current = self.get_latest_device_data(mac) or {}
+        snapshot_revision = int(current.get("rev_humidifier", 0) or 0)
+        current_target = current.get("humidifier_pct")
+        if current_target is None:
+            current_target = 60
+        target_pct = max(0, min(100, int(kwargs.get("pct", current_target))))
+        new_revision = self._next_overlay_revision(
+            mac,
+            "humidifier",
+            snapshot_revision,
+        )
+        payload = {
+            "humidifier_pct": target_pct,
+            "rev_humidifier": new_revision,
+        }
+        self._send_revisioned_payload(
+            mac,
+            "humidifier",
+            new_revision,
+            payload,
+        )
+        return new_revision
+
 # =========================================================================
     # GROW CONTROLLER & LIGHTS
     # =========================================================================
@@ -353,6 +385,8 @@ class OverlayCommandEngine:
             "p_reset",
             "p_e_fan",
             "p_e_tac",
+
+            "p_humidifier",
 
             "p_light",
 

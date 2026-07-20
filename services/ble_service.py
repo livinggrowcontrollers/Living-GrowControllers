@@ -41,7 +41,7 @@ def run_service():
         print(f"[Service] Foreground Service aktiv: {service.getClass().getName()}")
 
         # --- 2. BRIDGE INITIALISIERUNG ---
-        _bridge = get_bridge()
+        _bridge = get_bridge(context=service)
         _bridge.start()             # ADV + GATT
         _bridge.start_broadcast()   # Dein Custom Java Broadcast
         print("[Service] Alle Bridges aktiv")

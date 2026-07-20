@@ -98,6 +98,7 @@ UPTIME_START = None
 _LAST_ADV_RAW, _LAST_ADV_TS = {}, {}
 _LAST_GATT_RAW, _LAST_GATT_TS = {}, {}
 _LAST_WEB = {}
+_LAST_CHANNEL_RSSI = {"adv": {}, "gatt": {}, "webserver": {}}
 _LAST_WRITE_TS = 0
 
 
@@ -109,6 +110,28 @@ _LIVE_WEB_DATA = {}
 LIVE_WEB_LOCK = threading.Lock()
 def _valid_rssi(val):
     return val is not None and val > -250 and val != -256
+
+
+def _normalize_channel_rssi(mac, channel_name, channel_frame):
+    """Keep the last valid RSSI while its decoded channel remains alive.
+
+    Bluetooth producers are allowed to omit RSSI from individual packets.
+    That omission is not a signal loss and must not change dashboard tile
+    visibility.  A real channel timeout still clears the cached value.
+    """
+    cache = _LAST_CHANNEL_RSSI[channel_name]
+    if not channel_frame.get("alive"):
+        cache.pop(mac, None)
+        channel_frame["rssi"] = None
+        return None
+
+    value = channel_frame.get("rssi")
+    if _valid_rssi(value):
+        cache[mac] = value
+    else:
+        value = cache.get(mac)
+    channel_frame["rssi"] = value
+    return value
 watchdog = BleDumpWatchdog(timeout=config.get_stale_timeout(), interval=1.0, callback=lambda x: x)
 
 
@@ -185,6 +208,8 @@ def step_decode():
     if not devs:
         _LIVE_WEB_DATA.clear()
         _LAST_WEB.clear()
+        for channel_cache in _LAST_CHANNEL_RSSI.values():
+            channel_cache.clear()
         _LAST_GATT_RAW.clear()
         _LAST_GATT_TS.clear()
         _LAST_ADV_RAW.clear()
@@ -204,9 +229,16 @@ def step_decode():
             _LAST_GATT_TS.pop(cached_mac, None)
             _LAST_ADV_RAW.pop(cached_mac, None)
             _LAST_ADV_TS.pop(cached_mac, None)
+            for channel_cache in _LAST_CHANNEL_RSSI.values():
+                channel_cache.pop(cached_mac, None)
             with LIVE_WEB_LOCK:
                 _LIVE_WEB_DATA.pop(cached_mac, None)
             print(f"[Decoder] Cleaned stale device cache for deleted MAC: {cached_mac}")
+
+    for channel_cache in _LAST_CHANNEL_RSSI.values():
+        for cached_mac in list(channel_cache):
+            if cached_mac not in active_macs:
+                channel_cache.pop(cached_mac, None)
     
     # --- DIAGNOSE HEARTBEAT ---
     if now - _LAST_LOG_TS >= 60.0: 
@@ -257,19 +289,14 @@ def step_decode():
             elif mac in _LAST_ADV_RAW:
                 adv_dec = decode_channel({"address": mac, "adv_raw": _LAST_ADV_RAW[mac]}, "adv_raw", dev_cfg.get("adv_decoder"), _LAST_ADV_RAW, _LAST_ADV_TS, timeout)
 
-        # RSSI für ADV-Kanal
-        raw_rssi = entry.get("rssi") if entry else None
-        adv_rssi = raw_rssi if (adv_w.get("alive") and _valid_rssi(raw_rssi)) else None
-        if "rssi" not in adv_dec:
-            adv_dec["rssi"] = adv_rssi
-
-            
         # --- KANAL 2: GATT (REPARIERT & KUGELSICHER) ---
-        gatt_w = w_status.get("gatt", {"alive": False})
         raw_from_entry = entry.get("gatt_raw") if entry else None
         gatt_dec = offline_channel_frame(raw_from_entry)
 
-        if gatt_w["alive"] and entry:
+        # GATT validity is established by its own packet/raw timeout in
+        # decode_channel.  A watchdog status is metadata only and must never
+        # discard a freshly received gatt_raw payload.
+        if entry and raw_from_entry:
             res = decode_channel(entry, "gatt_raw", dev_cfg.get("gatt_decoder"), _LAST_GATT_RAW, _LAST_GATT_TS, timeout, is_gatt=True)
             if res and res["alive"]:
                 gatt_dec = res
@@ -281,12 +308,6 @@ def step_decode():
             res_cache = decode_channel({"address": mac, "gatt_raw": gold_data}, "gatt_raw", dev_cfg.get("gatt_decoder"), _LAST_GATT_RAW, _LAST_GATT_TS, timeout, is_gatt=True)
             if res_cache and res_cache["alive"]:
                 gatt_dec = res_cache
-
-        # RSSI für GATT-Kanal (-256 wenn nicht vorhanden)
-        raw_rssi = entry.get("rssi") if entry else None
-        gatt_rssi = raw_rssi if (gatt_w.get("alive") and _valid_rssi(raw_rssi)) else None
-        if "rssi" not in gatt_dec:
-            gatt_dec["rssi"] = gatt_rssi
 
         # --- KANAL 3: WEBSERVER (REPARIERT & STRUKTURIERT) ---
         web_raw = web_data.get(mac)
@@ -383,6 +404,10 @@ def step_decode():
                 },
                 "exhaust_fan_pct": current_web.get("exhaust_fan_pct", 0),
                 "circulation_fan_pct": current_web.get("circulation_fan_pct", 0),
+                "humidifier_pct": current_web.get("humidifier_pct"),
+                "humidifier_speed_now": current_web.get("humidifier_speed_now"),
+                "humidifier_status": current_web.get("humidifier_status"),
+                "rev_humidifier": current_web.get("rev_humidifier", 0),
                 "light_pct": current_web.get("light_pct", 0),
                 "light_mode": current_web.get("light_mode", "off"),
                 "uptime_esp_s": current_web.get("uptime_esp_s", 0),
@@ -437,7 +462,8 @@ def step_decode():
             BLACKLIST = {
                 "temp_in", "humid_in", "temp_ext", "humid_ext", "leaf_temp", 
                 "vbat", "rssi", "uptime_esp_s", "free_heap", "ble_sensors",
-                "circulation_fan_rpm", "exhaust_fan_rpm", "rssi", "circulation_fan_pct", "exhaust_fan_pct", "light_pct", "light_mode",
+                "circulation_fan_rpm", "exhaust_fan_rpm", "rssi", "circulation_fan_pct", "exhaust_fan_pct",
+                "humidifier_pct", "humidifier_speed_now", "humidifier_status", "rev_humidifier", "light_pct", "light_mode",
                 "target_temp_min", "target_temp_max", "target_humidity_min", "target_humidity_max", "target_vpd_min", "target_vpd_max", "exhaust_fan_mode", "circulation_fan_mode", "plant_phase", "plant_planner"
                 
             }
@@ -456,22 +482,10 @@ def step_decode():
             })
 
         # --- FINAL MERGE (KOMPLETTE ORIGINAL-STRUKTUR) ---
-        web_rssi = current_web.get("rssi") if current_web else None
-        ble_rssi_raw = entry.get("rssi") if entry else None
-        ble_rssi = ble_rssi_raw if ((adv_w["alive"] or gatt_w["alive"]) and _valid_rssi(ble_rssi_raw)) else None
-
-        # --- FINAL MERGE (KOMPLETTE ORIGINAL-STRUKTUR) ---
-        web_rssi_raw = current_web.get("rssi") if current_web else None
-        ble_rssi_raw = entry.get("rssi") if entry else None
-        
-        # Rigorose Filterung: -256 wird für die finale Pipeline blockiert und zu None
-        ble_rssi = ble_rssi_raw if ((adv_w["alive"] or gatt_w["alive"]) and _valid_rssi(ble_rssi_raw) and ble_rssi_raw != -256) else None
-        web_rssi = web_rssi_raw if (web_alive and _valid_rssi(web_rssi_raw) and web_rssi_raw != -256) else None
-
-        final_rssi = web_rssi if web_rssi is not None else ble_rssi
-
-        # RSSI direkt in web_dec (Garantiert ohne -256 in den finalen Daten)
-        web_dec["rssi"] = web_rssi
+        adv_rssi = _normalize_channel_rssi(mac, "adv", adv_dec)
+        gatt_rssi = _normalize_channel_rssi(mac, "gatt", gatt_dec)
+        web_rssi = _normalize_channel_rssi(mac, "webserver", web_dec)
+        final_rssi = web_rssi if web_rssi is not None else gatt_rssi if gatt_rssi is not None else adv_rssi
 
         is_alive = any([adv_dec["alive"], gatt_dec["alive"], web_dec["alive"]])
 

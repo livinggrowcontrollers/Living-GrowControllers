@@ -1,0 +1,146 @@
+# Permission-Fix und Foreground-Service
+
+Stand: 20.07.2026
+
+
+## 1. Ziel und Teststatus
+
+Eine frisch installierte APK soll beim ersten Öffnen alle zur Android-Version
+passenden Freigaben abarbeiten. BLE und Core starten anschließend automatisch:
+
+- kein Schließen oder erneutes Öffnen der App
+- kein kompletter App- oder Core-Neustart
+- Dashboard wird vor den Android-Dialogen sichtbar
+- bei Activity-Resume ist höchstens `core.restart_adv_bridge()` erlaubt
+
+Der First-Install-Ablauf wurde nach vollständiger Deinstallation erfolgreich
+auf Android 10, Android 12 und Android 13 geprüft.
+
+
+## 2. Zündreihenfolge
+
+```text
+Dashboard sichtbar
+        |
+        v
+permission_fix.ensure_permissions()
+        |
+        v
+versionsabhängige Android-Dialoge
+        |
+        v
+Rechte + Bluetooth + Standortschalter erneut prüfen
+        |
+        v
+core.start()
+        |
+        v
+BLE-Service und Bridges
+        |
+        v
+optionale Akku-Ausnahme
+```
+
+Der Service fordert selbst keine Runtime-Berechtigungen an. Eigentümer des
+Dialogablaufs ist immer die sichtbare `PythonActivity`.
+
+
+## 3. Android-Matrix
+
+### Android 10–11 (API 29–30)
+
+1. `ACCESS_FINE_LOCATION`
+2. `ACCESS_BACKGROUND_LOCATION` für die dauerhafte BLE-Suche
+3. Bluetooth- und Standortschalter prüfen
+4. Core freigeben
+
+Android 10 kann den Hintergrundzugriff direkt erteilen. Android 11 verlangt
+für „Immer zulassen“ den Weg über die App-Einstellungen. Nach der Rückkehr
+wird automatisch weitergeprüft; ein App-Neustart ist nicht notwendig.
+
+
+### Android 12 (API 31–32)
+
+1. `BLUETOOTH_SCAN`
+2. `BLUETOOTH_CONNECT`
+3. `BLUETOOTH_ADVERTISE`
+4. `ACCESS_COARSE_LOCATION` und `ACCESS_FINE_LOCATION` gemeinsam anfragen
+5. präzisen Standort und Standortschalter prüfen
+6. Core freigeben
+
+Der Nearby-Dialog enthält Formulierungen wie „relative Position bestimmen“.
+Er ist trotzdem nicht der Standortdialog. Standort wird deshalb bewusst als
+zweite, getrennte Stufe angefordert.
+
+
+### Android 13 (API 33)
+
+Wie Android 12, anschließend zusätzlich:
+
+7. `POST_NOTIFICATIONS`
+8. Core freigeben
+
+
+## 4. Fehler- und Lifecycle-Verhalten
+
+- Jeder Android-Callback wird durch `check_permission()` verifiziert.
+- Ein leerer oder verspäteter OEM-Callback kann den Core nicht freigeben.
+- Nur ungefährer Standort reicht nicht; Fine Location bleibt erforderlich.
+- Bei Ablehnung erscheinen „Erneut anfragen“ und „App-Einstellungen“.
+- Bei deaktiviertem Bluetooth oder Standort wird die passende Systemseite
+  angeboten.
+- Werden Rechte später entzogen, stoppt die App den Core vor einer neuen
+  Anfrage.
+- Bei normalem Resume bleiben Service und Core bestehen; nur ADV wird neu
+  gestartet.
+- Die Akkuoptimierungs-Ausnahme wird erst nach laufendem Core einmalig und
+  nicht blockierend angeboten.
+
+
+## 5. Implementierungsorte
+
+- `permission_fix.py`: einzige Permission-Zustandsmaschine
+- `main.py`: sichtbare UI, Permission-Gate und Freigabe von `core.start()`
+- `core.py`: Start von Service, Bridges, Decoder und Watchdog
+- `services/ble_service.py`: separater BLE-Serviceprozess
+- `buildozer.spec`: Manifest-Berechtigungen und Service-Deklaration
+
+Der alte Pfad `#permission_fix.py` wurde entfernt. Es existiert keine zweite
+Permission-Implementierung und kein Import-Wrapper.
+
+Für Android 10/11 wurde im Manifest ausschließlich
+`ACCESS_BACKGROUND_LOCATION` ergänzt. API 33 und MinAPI 29 blieben erhalten.
+
+
+## 6. Foreground-Service: wichtiger Systemstatus
+
+Der Permission-Fix startet den Service erst nach vollständiger Freigabe. Die
+aktuelle Service-Deklaration im Workspace lautet jedoch weiterhin:
+
+```text
+services = ble_service:services/ble_service.py
+```
+
+Python-for-Android behandelt diese Form standardmäßig als Background-Service.
+Beim Android-12-Test meldete das System entsprechend:
+
+```text
+startForegroundCount=0
+process state=SVC
+```
+
+Die eigene Logmeldung „Foreground Service aktiv“ ersetzt diese Systemprüfung
+nicht. Für einen echten Foreground-Service muss die Build-Deklaration separat
+auf `:foreground` umgestellt und danach über Android-Systemstatus und sichtbare
+Service-Benachrichtigung verifiziert werden. Diese Änderung ist nicht Teil des
+abgeschlossenen Permission-Fix.
+
+
+## 7. Separater BLE-Befund
+
+Beim Nokia wurde außerdem Scanner-Status `6` gemessen. Android bedeutet damit
+„Scanning too frequently“. Ursache ist der sehr schnelle Scan-Watchdog sowie
+der anfängliche Parallelstart aus App- und Serviceprozess. Dieser Befund ist
+kein Permission-Fehler und muss getrennt behoben werden: ein BLE-Scanner-
+Eigentümer und ein deutlich ruhigerer Restart/Backoff.
+

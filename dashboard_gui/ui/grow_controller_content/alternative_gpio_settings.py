@@ -33,6 +33,7 @@ ROLE_NAMES = {
 
     "p_e_fan": "Abluft-Lüfter",
     "p_e_tac": "Abluft-Tacho",
+    "p_humidifier": "Luftbefeuchter",
 
     # entfernen
     # "p_e_tac_pull"

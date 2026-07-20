@@ -21,6 +21,7 @@ from dashboard_gui.ui.common.icons.icon_label import IconLabel
 
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
+MAX_CAPABILITY_ICONS = 9
 from kivy.uix.behaviors import ButtonBehavior
 
 
@@ -113,10 +114,10 @@ class DeviceRow(BoxLayout):
 
 
         self.cap_container = GridLayout(
-            cols=3,                     # 👈 3 Spalten → ergibt automatisch 3 Reihen
+            cols=4,                     # 👈 3 Spalten → ergibt automatisch 3 Reihen
             size_hint=(None, None),
             height=dp(80),       # etwas höher für 3 Reihen
-            width=dp(160),        # kompakter als vorher
+            width=dp(180),        # kompakter als vorher
             spacing=dp(2),
             padding=[0, 0]
         )
@@ -283,7 +284,7 @@ class DeviceRow(BoxLayout):
         text_col.add_widget(mac_lbl)
 
         # Channel Status Spalte
-        channel_col = BoxLayout(orientation="horizontal", size_hint=(None, 1), width=dp(580), spacing=dp(8))
+        channel_col = BoxLayout(orientation="horizontal", size_hint=(None, 1), width=dp(600), spacing=dp(8))
        
         status_col = BoxLayout(
             orientation="vertical",
@@ -419,7 +420,8 @@ class DeviceRow(BoxLayout):
             caps = []
 
         # Keep existing widgets when possible.
-        for index, cap in enumerate(caps[:8]):
+        visible_caps = caps[:MAX_CAPABILITY_ICONS]
+        for index, cap in enumerate(visible_caps):
             if index < len(self.cap_widgets):
                 icon_widget = self.cap_widgets[index]
                 icon_widget.set_capability(cap)
@@ -435,12 +437,12 @@ class DeviceRow(BoxLayout):
                 self.cap_widgets.append(icon_widget)
                 self.cap_container.add_widget(icon_widget)
 
-        if len(self.cap_widgets) > len(caps[:8]):
-            for extra in self.cap_widgets[len(caps[:8]):]:
+        if len(self.cap_widgets) > len(visible_caps):
+            for extra in self.cap_widgets[len(visible_caps):]:
                 if extra._cap_callback is not None:
                     extra.unbind(on_release=extra._cap_callback)
                 self.cap_container.remove_widget(extra)
-            self.cap_widgets = self.cap_widgets[:len(caps[:8])]
+            self.cap_widgets = self.cap_widgets[:len(visible_caps)]
 
     def _activate_device(self, *_):
         from dashboard_gui.global_state_manager import GLOBAL_STATE
@@ -497,6 +499,8 @@ class DeviceRow(BoxLayout):
                 fan.on_touch_down(self._make_header_touch(fan))
         elif cap_type == "exhaust_fan" and hasattr(header, "exhaust_fan"):
             header.exhaust_fan.on_touch_down(self._make_header_touch(header.exhaust_fan))
+        elif cap_type == "humidifier" and hasattr(header, "humidifier"):
+            header.humidifier.on_touch_down(self._make_header_touch(header.humidifier))
         elif cap_type == "climate_hub" and hasattr(header, "climate_hub"):
             header.climate_hub.on_touch_down(self._make_header_touch(header.climate_hub))
         elif cap_type == "battery" and hasattr(header, "battery"):

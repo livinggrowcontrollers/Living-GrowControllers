@@ -1,0 +1,568 @@
+--------- beginning of main
+07-20 01:12:09.893  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb,raw:am force-stop org.hackintosh1980.espgrowcontroller'
+--------- beginning of system
+07-20 01:12:10.014  1833  3155 I ActivityManager: Force stopping org.hackintosh1980.espgrowcontroller appid=10244 user=0: from pid 13935
+07-20 01:12:10.050  3099  3099 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPackageNamesForIntentAndPhone: No UICC
+07-20 01:12:10.051  3099  3099 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPackageNamesForIntentAndPhone: No UICC
+07-20 01:12:10.123  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb,raw:am start -W -S -n org.hackintosh1980.espgrowcontroller/org.kivy.android.PythonActivity'
+07-20 01:12:10.190  1833  3051 I ActivityManager: Force stopping org.hackintosh1980.espgrowcontroller appid=10244 user=0: from pid 13941
+07-20 01:12:10.197  3099  3099 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPackageNamesForIntentAndPhone: No UICC
+07-20 01:12:10.198  3099  3099 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPackageNamesForIntentAndPhone: No UICC
+07-20 01:12:10.225  1833  2194 W ActivityManager: Scheduling restart of crashed service com.qualcomm.atfwd/.AtFwdService in 1000ms for start-requested
+07-20 01:12:10.455  1833  3051 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=org.hackintosh1980.espgrowcontroller/org.kivy.android.PythonActivity} from uid 2000
+07-20 01:12:10.490  1134  3911 E ANDR-PERF-LM: ThreadHelper: thread_callback() 145: More than one pending updates!!! This should not happen. MeterMgr should avoid this case.
+07-20 01:12:10.496  1833  3051 E ANDR-PERF-JNI: com_qualcomm_qtiperformance_native_perf_io_prefetch_start
+07-20 01:12:10.521  1130  3914 E ANDR-IOP: io prefetch is disabled
+07-20 01:12:10.524  1833  3051 W ActivityTaskManager: Can't find TaskDisplayArea to determine support for multi window. Task id=1293 attached=false
+07-20 01:12:10.614  2174  2229 I BtGatt.ScanManager: msg.what = 6
+07-20 01:12:10.627  1833  2195 I ActivityManager: Start proc 13953:org.hackintosh1980.espgrowcontroller/u0a244 for pre-top-activity {org.hackintosh1980.espgrowcontroller/org.kivy.android.PythonActivity}
+07-20 01:12:10.627  1134  3911 E ANDR-PERF-LM: ThreadHelper: thread_callback() 145: More than one pending updates!!! This should not happen. MeterMgr should avoid this case.
+07-20 01:12:10.654  1833 13954 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1173 com.qualcomm.qti.Performance$SendGameLaunchBroadcast.run:216 java.lang.Thread.run:1572 <bottom of call stack> <bottom of call stack> 
+07-20 01:12:10.668 13953 13953 I pgrowcontrolle: Late-enabling -Xcheck:jni
+07-20 01:12:10.672  4142  8039 W SQLiteLog: (28) double-quoted string literal: "org.hackintosh1980.espgrowcontroller"
+07-20 01:12:10.700 23066 23066 I cbpr    : onPause
+07-20 01:12:10.729 13953 13953 I pgrowcontrolle: Using generational CollectorTypeCC GC.
+07-20 01:12:10.737  1308  1333 I adbd    : jdwp connection from 13953
+07-20 01:12:10.759 23066 23066 W drra    : measuring already stopped.
+07-20 01:12:10.786  1833  2193 E DiscreteRegistry: Deleting file 1784415587896tl
+07-20 01:12:10.811  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:10.811  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:10.811  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:10.811  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:10.811  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:10.811  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:10.811  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:10.811  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:10.811  3187  3218 W System.err: 	... 4 more
+07-20 01:12:10.812  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:10.817  2174  2229 I BtGatt.ScanManager: msg.what = 6
+07-20 01:12:10.882 13953 13953 I Perf    : Connecting to perf service.
+07-20 01:12:10.945 13953 13953 E pgrowcontrolle: Invalid ID 0x00000000.
+07-20 01:12:10.951  1833  2104 I ActivityTaskManager: Config changes=20000480 {1.0 ?mcc?mnc [de_DE] ldltr sw411dp w834dp h379dp 280dpi nrml long land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1600, 720) mAppBounds=Rect(55, 0 - 1516, 720) mMaxBounds=Rect(0, 0 - 1600, 720) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.4 s.30014 fontWeightAdjustment=0}
+07-20 01:12:10.966  1833  2104 I WindowManager: Override config changes=20000480 {1.0 ?mcc?mnc [de_DE] ldltr sw411dp w834dp h379dp 280dpi nrml long land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1600, 720) mAppBounds=Rect(55, 0 - 1516, 720) mMaxBounds=Rect(0, 0 - 1600, 720) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.4 s.30014 fontWeightAdjustment=0} for displayId=0
+07-20 01:12:10.994 13310 13310 W InitStatus: Not blocking Provider (118631361)
+07-20 01:12:10.996 13310 13310 W InitStatus: Not blocking Provider (118631361)
+07-20 01:12:10.996 13310 13310 W InitStatus: Not blocking Provider (118631361)
+07-20 01:12:10.997 13310 13310 W InitStatus: Not blocking Provider (118631361)
+07-20 01:12:10.997 16881 16881 I AppBase : AppBase.onConfigurationChanged():287 onConfigurationChanged() : NewConfig = {1.0 ?mcc?mnc [de_DE] ldltr sw411dp w834dp h379dp 280dpi nrml long land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1600, 720) mAppBounds=Rect(55, 0 - 1516, 720) mMaxBounds=Rect(0, 0 - 1600, 720) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.4 s.30068 fontWeightAdjustment=0}
+07-20 01:12:10.998 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onConfigurationChanged():1144 onConfigurationChanged() : NewConfig = {1.0 ?mcc?mnc [de_DE] ldltr sw411dp w834dp h379dp 280dpi nrml long land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1600, 720) mAppBounds=Rect(55, 0 - 1516, 720) mMaxBounds=Rect(0, 0 - 1600, 720) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.4 s.30068 fontWeightAdjustment=0}
+07-20 01:12:10.998 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onConfigurationChanged():1145 device real metrics: DisplayMetrics{density=1.75, width=1600, height=720, scaledDensity=1.75, xdpi=261.257, ydpi=269.139}
+07-20 01:12:10.999 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onConfigurationChanged():1169 Maybe update OEM display config because of configuration change
+07-20 01:12:10.999 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.notifyCurrentInputMethodEntryOnContextChanged():599 notifyCurrentInputMethodEntryOnContextChanged()
+07-20 01:12:10.999 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.notifyCurrentInputMethodEntryOnContextChanged():616 Notify current input method entry changed on context change
+07-20 01:12:11.000 16881 16881 I KeyboardContextProvider: KeyboardContextProvider$KeyboardContextCache.createKeyboardContext():173 createKeyboardContext(): de-DE, mqn@f3a1266(com.android.inputmethod.latin.LatinIME@b37f584), {1.0 ?mcc?mnc [de_DE] ldltr sw411dp w834dp h379dp 280dpi nrml long land night finger -keyb/v/h -nav/h winConfig={ mBounds=Rect(0, 0 - 1600, 720) mAppBounds=Rect(55, 0 - 1516, 720) mMaxBounds=Rect(0, 0 - 1600, 720) mWindowingMode=fullscreen mDisplayWindowingMode=fullscreen mActivityType=undefined mAlwaysOnTop=undefined mRotation=ROTATION_90} as.4 s.30068 fontWeightAdjustment=0}
+07-20 01:12:11.000 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2537 onCurrentInputMethodEntryChanged(): imeDefsChanged=false, entryLanguageVariantChanged=false, keyboardContextChanged=true
+07-20 01:12:11.002  1833  2104 I InputManager-JNI: Viewport [0] to add: local:4630946979286703745, isActive: true
+07-20 01:12:11.002 16881 16881 I KeyboardContextProvider: KeyboardContextProvider.setBaseContextAndInvalidKeyboardContextCache():88 setBaseContextAndInvalidKeyboardContextCache(): com.android.inputmethod.latin.LatinIME@b37f584
+07-20 01:12:11.004 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.resetLanguages():2897 resetLanguages(): languages=null, conditionName=orientation
+07-20 01:12:11.004 16881 16881 I ImeDefCache: ImeDefCache.clearCacheForLanguages():338 clearCacheForLanguages: languagesToClear=null, conditionName=orientation
+07-20 01:12:11.004  1833  2494 I InputReader: Reconfiguring input devices, changes=DISPLAY_INFO | 
+07-20 01:12:11.004 16881 16881 I AdditionalImeDefCache: AdditionalImeDefCache.clearAdditionalImeDefsForCondition():303 clearAdditionalImeDefsForCondition() clear additional ImeDefs: []
+07-20 01:12:11.005  2174  2229 I BtGatt.ScanManager: msg.what = 8
+07-20 01:12:11.005  1833  2494 I InputReader: Device reconfigured: id=4, name='NVTCapacitiveTouchScreen', size 720x1600, orientation 1, mode 1, display id 0
+07-20 01:12:11.005 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.resetLanguages():2909 Clear cache for languages: null, changed=false
+07-20 01:12:11.005 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.startLoadingInputMethodEntrySettings():806 Start loading input method entry settings: [LanguageTagVariantTuple{languageTag=de-DE, variant=qwertz}]
+07-20 01:12:11.005  2174  2229 I BtGatt.ScanManager: msg.what = 5
+07-20 01:12:11.007 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.updateInputMethodEntrySettingsLoadingTask():936 update loading task with resetImplicitlyEnabledEntries is false
+07-20 01:12:11.007 16881 16881 I InputMethodEntryManager: InputMethodEntryManager$4.onSuccess():958 Success load entries: [LanguageTagVariantTuple{languageTag=de-DE, variant=qwertz}], resetImplicitlyEnabledEntries=false, initialized=true
+07-20 01:12:11.019 16881 17074 I SP      : Registering emoticon_content_description.2022081613, url: https://www.gstatic.com/android/keyboard/emoticon_content_desc/202208161305/superpacks_manifest.json, constraints: W:*:*:*, flags: bg, requested: 2022081613, current: 2022081613
+07-20 01:12:11.024 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.changeCurrentInputMethodEntry():3120 Set current input method entry: source=UNSPECIFIED, entryChanged=false, enablePersist=true, nyk{languageTag=de-DE, variant=qwertz, hasLocalizedResources=true, conditionCacheKey=_android_software_xr_api_spatial=false_app_first_start_timestamp=1675859561136_device=phone_device_size=default_enable_free_cursor_by_long_press_space=true_enable_number_row=false_enable_number_row_in_password=true_enable_pk_simulator=false_enable_pk_simulator_setting=false_enable_scrub_move=true_enable_secondary_digits=true_enable_secondary_symbols=false_expressions=normal_four_or_more_letter_rows=false_free_cursor=false_keyboard_font_size_setting=_keyboard_mode=normal_language=de-DE_layout_9key_split=false_orientation=landscape_physical_keyboard=nokeys_pk_simulator_vk_ready=false_pref_enable_flick_symbols=false_rtl_layout=false_show_comma_key=true_show_period_key=true_show_secondary_digits=true_show_suggestion_strip=true_show_suggestions=true_split_with_duplicate_keys=true_true=true_variant=qwertz_writing_helper_enable_by_word_revert=false, imeDef.stringId=ime_german, imeDef.className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, imeDef.languageTag=de}
+07-20 01:12:11.028 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.loadAdditionalImeDefsForCurrentEntry():3153 loadAdditionalImeDefsForCurrentEntry(): nyk{languageTag=de-DE, variant=qwertz, hasLocalizedResources=true, conditionCacheKey=_android_software_xr_api_spatial=false_app_first_start_timestamp=1675859561136_device=phone_device_size=default_enable_free_cursor_by_long_press_space=true_enable_number_row=false_enable_number_row_in_password=true_enable_pk_simulator=false_enable_pk_simulator_setting=false_enable_scrub_move=true_enable_secondary_digits=true_enable_secondary_symbols=false_expressions=normal_four_or_more_letter_rows=false_free_cursor=false_keyboard_font_size_setting=_keyboard_mode=normal_language=de-DE_layout_9key_split=false_orientation=landscape_physical_keyboard=nokeys_pk_simulator_vk_ready=false_pref_enable_flick_symbols=false_rtl_layout=false_show_comma_key=true_show_period_key=true_show_secondary_digits=true_show_suggestion_strip=true_show_suggestions=true_split_with_duplicate_keys=true_true=true_variant=qwertz_writing_helper_enable_by_word_revert=false, imeDef.stringId=ime_german, imeDef.className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, imeDef.languageTag=de}
+07-20 01:12:11.030 16881 16881 I InputMethodEntryManager: InputMethodEntryManager$6.onSuccess():3179 Success load additional ImeDefs, entryChanged=false, additionalImeDefsChanged=false, [ImeDef{stringId=password, language=und-Latn-x-password, languageTag=und-Latn-x-password, processedConditions={language=de-DE, variant=qwertz, enable_number_row=true, enable_pk_simulator=false, device=phone, true=true, writing_helper_enable_by_word_revert=false, enable_number_row_in_password=true}, className=com.google.android.libraries.inputmethod.ime.password.PasswordIme, label=2132019358, keyEventInterpreter=null, inlineComposing=true, autoCapital=true, announceAutoSelectedCandidate=true, statusIcon=0, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=otq{}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@55079e0, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=qwertz, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=2132083596, order=0, supportsSplitMode=true, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardDefs=[2132215273, 2132215985, 2132215482], extraValues=otq{}), digit=KeyboardDefInfo(kbType=digit, initialStates=0, keyboardDefs=[2132215914], extraValues=otq{}), symbol=KeyboardDefInfo(kbType=symbol, initialStates=0, keyboardDefs=[2132216099], extraValues=otq{})}, overrideKeyboardXmlConditions=com.google.android.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@ba65499), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}, ImeDef{stringId=number, language=und-Latn-x-number, languageTag=und-Latn-x-number, processedConditions={}, className=com.google.android.libraries.inputmethod.ime.DummyIme, label=2132019295, keyEventInterpreter=null, inlineComposing=true, autoCapital=false, announceAutoSelectedCandidate=false, statusIcon=0, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=otq{}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@55079e0, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=0, order=0, supportsSplitMode=false, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardDefs=[2132215919], extraValues=otq{})}, overrideKeyboardXmlConditions=com.google.android.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@aeed35e), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}, ImeDef{stringId=number_password, language=und-Latn-x-number-password, languageTag=und-Latn-x-number-password, processedConditions={}, className=com.google.android.libraries.inputmethod.ime.DummyIme, label=2132019296, keyEventInterpreter=null, inlineComposing=true, autoCapital=false, announceAutoSelectedCandidate=false, statusIcon=0, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=otq{}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@55079e0, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=0, order=0, supportsSplitMode=false, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardDefs=[2132215920], extraValues=otq{})}, overrideKeyboardXmlConditions=com.google.andr
+07-20 01:12:11.030 16881 16881 I InputMethodEntryManager: oid.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@4cad33f), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}, ImeDef{stringId=phone_number, language=und-Latn-x-phone-number, languageTag=und-Latn-x-phone-number, processedConditions={}, className=com.google.android.libraries.inputmethod.ime.DummyIme, label=2132019394, keyEventInterpreter=null, inlineComposing=true, autoCapital=false, announceAutoSelectedCandidate=false, statusIcon=0, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=otq{}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@55079e0, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=0, order=0, supportsSplitMode=false, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardDefs=[2132215945], extraValues=otq{})}, overrideKeyboardXmlConditions=com.google.android.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@873540c), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}, ImeDef{stringId=date_time, language=und-Latn-x-date-time, languageTag=und-Latn-x-date-time, processedConditions={}, className=com.google.android.libraries.inputmethod.ime.DummyIme, label=2132017770, keyEventInterpreter=null, inlineComposing=true, autoCapital=false, announceAutoSelectedCandidate=false, statusIcon=0, indicatorIcon=0, indicatorLabel=null, displayAppCompletions=false, extraValues=otq{}, processors=com.google.android.libraries.inputmethod.metadata.ProcessorsDef@55079e0, unacceptableMetaKeys=4098, languageSpecificSettings=0, asciiCapable=false, alwaysShowSuggestions=false, useAsciiPasswordKeyboard=false, keyboardGroupDef=KeyboardGroupDef(variant=, variantLabel=0, pkLanguageTag=, pkLayoutType=, dynamicLayout=null, layoutSpecificSettings=[], layoutSpecificTheme=0, order=0, supportsSplitMode=false, supportsOneHandedMode=true, isVariantNameMandatory=false, keyboardDefInfos={prime=KeyboardDefInfo(kbType=prime, initialStates=0, keyboardDefs=[2132215785], extraValues=otq{})}, overrideKeyboardXmlConditions=com.google.android.libraries.inputmethod.metadata.OverrideKeyboardXmlConditionsDef@9fea155), phenotypeFlagId=0, localizationLanguageTag=null, supportsInlineSuggestion=false}]
+07-20 01:12:11.030 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.onSuccessLoadingAdditionalImeDefs():3255 Additional ImeDefs have been loaded, maybe notify entry change: false
+07-20 01:12:11.031 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2537 onCurrentInputMethodEntryChanged(): imeDefsChanged=false, entryLanguageVariantChanged=false, keyboardContextChanged=false
+07-20 01:12:11.031 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onCurrentInputMethodEntryChanged():2555 Skip the entry change as the input method entry is consider as not changed.
+07-20 01:12:11.035 16881 16881 W NotificationCenter: NotificationCenter$NotificationQueue.notifyPendingNotificationsOnExecutor():878 Heavy notify work detected on UI thread: [pvx->sdy] takes 31ms
+07-20 01:12:11.037 16881 16881 I DeviceModeModule: DeviceModeModule.calculateAndNotify():244 Device mode 'phone' from display metrics 'DisplayMetrics{density=0.0, width=720, height=1600, scaledDensity=0.0, xdpi=261.257, ydpi=269.139}' or smallestScreenWidthDp: 411
+07-20 01:12:11.037 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onConfigurationChanged():1187 changedMask : 20000480
+07-20 01:12:11.037 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.clearInputMethodServiceData():1130 clearInputMethodServiceData for configurationChange
+07-20 01:12:11.038 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.discardAllKeyboardViewAndInputView():1375 discardAllKeyboardViewAndInputView()
+07-20 01:12:11.038 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.maybeDestroyExistingKeyboardGroupManager():536 Destroy existing keyboard group manager in ijy
+07-20 01:12:11.038 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension$3.onSuccess():556 KeyboardGroupManager destroyed in ijy.
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.createKeyboardGroupManagerListenableFuture():121 Create keyboard group manager listenable future in ijy
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.maybeDestroyExistingKeyboardGroupManager():536 Destroy existing keyboard group manager in fps
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension$3.onSuccess():556 KeyboardGroupManager destroyed in fps.
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.createKeyboardGroupManagerListenableFuture():121 Create keyboard group manager listenable future in fps
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.maybeDestroyExistingKeyboardGroupManager():536 Destroy existing keyboard group manager in ing
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension$3.onSuccess():556 KeyboardGroupManager destroyed in ing.
+07-20 01:12:11.039 16881 16881 I AbstractOpenableExtension: AbstractOpenableExtension.createKeyboardGroupManagerListenableFuture():121 Create keyboard group manager listenable future in ing
+07-20 01:12:11.042 16881 17074 I SuperpacksManagerImpl: SuperpacksManagerImpl$3$1.onSuccess():552 emoticon_content_description.registerManifest() succeeded
+07-20 01:12:11.044 16881 13974 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213998 -> 0_resource_name_obfuscated : WaitTime = 0 ms : RunTime = 3 ms
+07-20 01:12:11.045 16881 16881 I WindowMetricsHelper: WindowMetricsHelper.predictAndNotify():121 Window metrics predicted by cache.
+07-20 01:12:11.048 16881 17068 W ModuleManager: ModuleManager.loadModule():634 Module qtw is not available
+07-20 01:12:11.048 16881 17074 I SP      : Syncing emoticon_content_description (2022081613) with slices: [7a635888cb828dfa2fc744b7b9b50f04, 1c661f5c7fb2b8a396a302d79ea74d30], metadata: false
+07-20 01:12:11.048 16881 16881 I DeviceModeModule: DeviceModeModule.calculateAndNotify():244 Device mode 'phone' from display metrics 'DisplayMetrics{density=0.0, width=1600, height=720, scaledDensity=0.0, xdpi=261.257, ydpi=269.139}' or smallestScreenWidthDp: 411
+07-20 01:12:11.049 16881 16881 I GoogleInputMethodService: GoogleInputMethodService$8.onWindowMetricsChanged():840 windowMetrics: bounds() = Rect(55, 0 - 1516, 720), insets() = Rect(0, 0 - 0, 0)
+07-20 01:12:11.049 16881 16881 W LatinIMEBase: LatinIMEBase.updateInputViewCoverNavigation():322 Null input view, cannot update padding!
+07-20 01:12:11.049 16881 17068 W LatinCommonMetricsProcessor: LatinCommonMetricsProcessor.processInputMethodEntryChanged():2562 The new entry is equal to the old entry
+07-20 01:12:11.050 16881 13970 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213994 -> 0_resource_name_obfuscated : WaitTime = 0 ms : RunTime = 3 ms
+07-20 01:12:11.050 16881 13971 I KeyboardGroupDefParser: KeyboardGroupDefParser.parseKeyboardGroupDef():72 parseKeyboardGroupDef() 2132213997 -> 0_resource_name_obfuscated : WaitTime = 0 ms : RunTime = 11 ms
+07-20 01:12:11.052 16881 16881 I PkModeUpdater: PkModeUpdater.refreshDevices():206 refreshing devices
+07-20 01:12:11.079 16881 16881 W NotificationCenter: NotificationCenter$NotificationQueue.notifyPendingNotificationsOnExecutor():878 Heavy notify work detected on UI thread: [sbr->ojv] takes 29ms
+07-20 01:12:11.079 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.initializeInputMethodServiceData():895 initializeInputMethodServiceData for nyk{languageTag=de-DE, variant=qwertz, hasLocalizedResources=true, conditionCacheKey=_android_software_xr_api_spatial=false_app_first_start_timestamp=1675859561136_device=phone_device_size=default_enable_free_cursor_by_long_press_space=true_enable_number_row=false_enable_number_row_in_password=true_enable_pk_simulator=false_enable_pk_simulator_setting=false_enable_scrub_move=true_enable_secondary_digits=true_enable_secondary_symbols=false_expressions=normal_four_or_more_letter_rows=false_free_cursor=false_keyboard_font_size_setting=_keyboard_mode=normal_language=de-DE_layout_9key_split=false_orientation=landscape_physical_keyboard=nokeys_pk_simulator_vk_ready=false_pref_enable_flick_symbols=false_rtl_layout=false_show_comma_key=true_show_period_key=true_show_secondary_digits=true_show_suggestion_strip=true_show_suggestions=true_split_with_duplicate_keys=true_true=true_variant=qwertz_writing_helper_enable_by_word_revert=false, imeDef.stringId=ime_german, imeDef.className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, imeDef.languageTag=de}
+07-20 01:12:11.089 16881 16881 I KeyboardThemeProvider: KeyboardThemeProvider.applyKeyboardTheme():27 Apply keyboard theme: theme,!gsf,!pgsans,!pgsf,!use_system_font,BORDER,FLAVOR_DPI=XHDPI,KEYBOARD_MODE=1,KEYBOARD_WIDTH_CATEGORY=NORMAL,KEY_BORDER_SHAPE=1,LANDSCAPE,LIGHT_THEME=false,ORIENTATION=2,PHYSICAL_DIAGONAL=5.817068,POPUP,SCREEN_SHORTEST_WIDTH=411,SCREEN_SHORTEST_WIDTH_NO_SCALE=411,SW400DP,XHDPI,enable_popup_on_keypress=true,keyboard_redesign_google_sans=true,non_linear_scale,noshadow,overlay_builtin_dynamic_color_dark_base.binarypb:gm3-dark-ff1c100f-ffffb4a8-bf48f6e7e741bf1f4c68ea94b29b980b,silkpopup
+07-20 01:12:11.090 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.getAdditionalImeDefs():2563 getAdditionalImeDefs() called, flag enabled: false, isUserUnlocked: true
+07-20 01:12:11.090 16881 16881 I InputMethodEntryManager: InputMethodEntryManager.getAdditionalImeDefs():2571 OptimizeAdditionalImeDefLoadingFlag disabled, retrieving additional ImeDefs synchronously for entry: nyk{languageTag=de-DE, variant=qwertz, hasLocalizedResources=true, conditionCacheKey=_android_software_xr_api_spatial=false_app_first_start_timestamp=1675859561136_device=phone_device_size=default_enable_free_cursor_by_long_press_space=true_enable_number_row=false_enable_number_row_in_password=true_enable_pk_simulator=false_enable_pk_simulator_setting=false_enable_scrub_move=true_enable_secondary_digits=true_enable_secondary_symbols=false_expressions=normal_four_or_more_letter_rows=false_free_cursor=false_keyboard_font_size_setting=_keyboard_mode=normal_language=de-DE_layout_9key_split=false_orientation=landscape_physical_keyboard=nokeys_pk_simulator_vk_ready=false_pref_enable_flick_symbols=false_rtl_layout=false_show_comma_key=true_show_period_key=true_show_secondary_digits=true_show_suggestion_strip=true_show_suggestions=true_split_with_duplicate_keys=true_true=true_variant=qwertz_writing_helper_enable_by_word_revert=false, imeDef.stringId=ime_german, imeDef.className=com.google.android.apps.inputmethod.libs.latin5.LatinIme, imeDef.languageTag=de}
+07-20 01:12:11.091 16881 16881 I InputBundle: InputBundle.prefetchKeyboard():670 prefetchKeyboard: prime
+07-20 01:12:11.092 16881 16881 I KeyboardDefManager: KeyboardDefManager.requestKeyboardDef():128 requestKeyboardDef(): type=prime, info=ouy{defIds=[#0x7f1705e9, #0x7f1708b1], defIdsCacheKey=[2132215273, 2132215985]}
+07-20 01:12:11.093 16881 16881 I KeyboardDefManager: KeyboardDefManager.requestKeyboardDef():195 requestKeyboardDef(): getOrCreate from cache, info=ouy{defIds=[#0x7f1705e9, #0x7f1708b1], defIdsCacheKey=[2132215273, 2132215985]}
+07-20 01:12:11.093 16881 16881 I InputBundleManager: InputBundleManager.loadActiveInputBundleId():552 loadActiveInputBundleId: und-Latn-x-password, password
+07-20 01:12:11.108 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1460 onStartInput(EditorInfo{EditorInfo{packageName=com.android.launcher3, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, true)
+07-20 01:12:11.108 16881 16881 W SessionManager: SessionManager.beginSession():72 Try to begin an already begun session [INPUT_SESSION], end it first
+07-20 01:12:11.109 16881 16881 W LatinIMEBase: LatinIMEBase.updateInputViewCoverNavigation():322 Null input view, cannot update padding!
+07-20 01:12:11.112 16881 16881 W PrimesLoggerHolder: FrameMetricServiceImpl.start():170 measurement already started: MeasurementKey{rawStringEventName=null, noPiiEventName=OnConfigurationChanged, isActivity=false}
+07-20 01:12:11.115 16881 13974 I DeviceStatusMonitor: DeviceStatusMonitor.onDisplayChanged():396 Display 0 rotation changed: 0 -> 1
+07-20 01:12:11.117 16881 16881 I KeyboardDefManager: KeyboardDefManager$Companion$addFutureCallbackForKeyboardDefReceiver$1.onSuccess():425 requestKeyboardDef onSuccess(): info=ouy{defIds=[#0x7f1705e9, #0x7f1708b1], defIdsCacheKey=[2132215273, 2132215985]}
+07-20 01:12:11.121 16881 16881 I KeyboardInterfacePrivate: IKeyboard.createKeyboard():71 Keyboard created from HiltKeyboardFactory: com.google.android.apps.inputmethod.latin.keyboard.LatinPrimeKeyboard
+07-20 01:12:11.122  1833  4470 W InputManager-JNI: Input channel object '5f5196e ScreenDecorOverlayLeft (client)' was disposed without first being removed with the input manager!
+07-20 01:12:11.126 16881 13977 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():129 repeatCheckTimes = 1, locked = false
+07-20 01:12:11.128  1833  3100 W InputDispatcher: 5f5196e ScreenDecorOverlayLeft has FLAG_SLIPPERY. Please report this in b/157929241
+07-20 01:12:11.130 16881 17074 I SP      : Registering content_cache.2024032915, url: https://www.gstatic.com/android/keyboard/modelpack/contentcache/202403291544/superpacks_manifest.json, constraints: W:*:*:*, flags: bg, requested: 2024032915, current: 2024032915
+07-20 01:12:11.131 16881 17074 I SP      : Sync for emoticon_content_description succeeded in 88 ms: no changes
+07-20 01:12:11.134 16881 17074 I SP      : GC for 'emoticon_content_description' (10) with ttl of 0 ms took 0 ms (0/0/0)
+07-20 01:12:11.134 16881 17074 I SuperpacksManagerImpl: SuperpacksManagerImpl$19.onSyncSuccess():947 emoticon_content_description.sync() succeeded
+07-20 01:12:11.134  1833  3155 W WindowManager: Failed looking up window session=Session{8acf0dc 2670:u0a10153} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:5639 com.android.server.wm.WindowManagerService.finishDrawingWindow:2661 com.android.server.wm.Session.finishDrawing:261 
+07-20 01:12:11.134 16881 17074 I SuperpacksManagerImpl: SuperpacksManagerImpl$3$1.onSuccess():552 content_cache.registerManifest() succeeded
+07-20 01:12:11.136 16881 17074 I SP      : Syncing content_cache (2024032915) with slices: [74ed8b2e38ec1bc8af70aa63d8ec49de], metadata: true
+07-20 01:12:11.142  1833  4831 W InputManager-JNI: Input channel object 'fdd5e7a ScreenDecorOverlay (client)' was disposed without first being removed with the input manager!
+07-20 01:12:11.144  1833  4470 W InputDispatcher: fdd5e7a ScreenDecorOverlay has FLAG_SLIPPERY. Please report this in b/157929241
+07-20 01:12:11.151  1833  4833 W InputManager-JNI: Input channel object '8d2e846 ScreenDecorOverlayRight (client)' was disposed without first being removed with the input manager!
+07-20 01:12:11.160  1833  4833 W InputManager-JNI: Input channel object '34542d2 ScreenDecorOverlayBottom (client)' was disposed without first being removed with the input manager!
+07-20 01:12:11.161  1833  4831 W InputDispatcher: 34542d2 ScreenDecorOverlayBottom has FLAG_SLIPPERY. Please report this in b/157929241
+07-20 01:12:11.161  1833  4831 W InputDispatcher: 8d2e846 ScreenDecorOverlayRight has FLAG_SLIPPERY. Please report this in b/157929241
+07-20 01:12:11.168 16881 17074 I SP      : Sync for content_cache succeeded in 34 ms: no changes
+07-20 01:12:11.169 16881 17074 I SP      : GC for 'content_cache' (10) with ttl of 0 ms took 1 ms (0/1/0)
+07-20 01:12:11.169 16881 17074 I SuperpacksManagerImpl: SuperpacksManagerImpl$19.onSyncSuccess():947 content_cache.sync() succeeded
+07-20 01:12:11.173  2670  2670 W OpaLayout: mOpaEnabledNeedsUpdate not cleared by AssistManagerGoogle!
+07-20 01:12:11.226  2670  3336 I liuhao  : ScreenDecorations -> setupDecorations() ---hasOverlays() 000000000
+07-20 01:12:11.227  1833  2194 W ActivityManager: Scheduling restart of crashed service com.qualcomm.atfwd/.AtFwdService in 1000ms for start-requested
+07-20 01:12:11.404  1833  4831 W ServiceManager: Permission failure: android.permission.HIGH_SAMPLING_RATE_SENSORS from uid=10244 pid=13953
+07-20 01:12:11.416 13953 13953 I PythonActivity: Surface will NOT be transparent
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: QUALCOMM build                   : 38059de551, If855f1c192
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: Build Date                       : 01/24/22
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: OpenGL ES Shader Compiler Version: EV031.32.02.17
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: Local Branch                     : mybranchec7cdab1-6e8e-f17e-9e24-ac1f6bcc2cee
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: Remote Branch                    : quic/gfx-adreno.lnx.1.0.r116-rel
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: Remote Branch                    : NONE
+07-20 01:12:11.442 13953 13967 I AdrenoGLES-0: Reconstruct Branch               : NOTHING
+07-20 01:12:11.443 13953 13967 I AdrenoGLES-0: Build Config                     : S P 10.0.7 AArch64
+07-20 01:12:11.443 13953 13967 I AdrenoGLES-0: Driver Path                      : /vendor/lib64/egl/libGLESv2_adreno.so
+07-20 01:12:11.452 13953 13967 I AdrenoGLES-0: PFP: 0x016ee190, ME: 0x00000000
+07-20 01:12:11.445 23890 23890 W ThreadPoolForeg: type=1400 audit(0.0:128339): avc: denied { write } for name="traced_producer" dev="tmpfs" ino=20847 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:traced_producer_socket:s0 tclass=sock_file permissive=0 app=com.google.android.gms
+07-20 01:12:11.468  1833  4831 W ServiceManager: Permission failure: android.permission.HIGH_SAMPLING_RATE_SENSORS from uid=10244 pid=13953
+07-20 01:12:11.469  1833  4831 W ServiceManager: Permission failure: android.permission.HIGH_SAMPLING_RATE_SENSORS from uid=10244 pid=13953
+07-20 01:12:11.469  1118  1118 I sensors-hal: batch:242, android.sensor.accelerometer/11, period=20000000, max_latency=0
+07-20 01:12:11.469  1118  1118 I sensors-hal: set_config:63, sample_period_ns is adjusted to 20000000 based on min/max delay_ns
+07-20 01:12:11.469  1118  1118 I sensors-hal: batch:251, android.sensor.accelerometer/11, period=20000000, max_latency=0 request completed
+07-20 01:12:11.470  1118  1118 I sensors-hal: flush:271, android.sensor.accelerometer/11
+07-20 01:12:11.470  1118  1118 I sensors-hal: flush:277, android.sensor.accelerometer/11 completed
+07-20 01:12:11.472 13953 13992 I python  : Initializing Python for Android
+07-20 01:12:11.472 13953 13992 I python  : Setting additional env vars from p4a_env_vars.txt
+07-20 01:12:11.472  1118  9061 I sensors-hal: ssc_conn_resp_cb:663, resp_value = 0
+07-20 01:12:11.472  1118  9061 I sensors-hal: ssc_conn_resp_cb:663, resp_value = 0
+07-20 01:12:11.474 13953 13992 I python  : Changing directory to the one provided by ANDROID_ARGUMENT
+07-20 01:12:11.474 13953 13992 I python  : /data/user/0/org.hackintosh1980.espgrowcontroller/files/app
+07-20 01:12:11.477 13953 13992 I python  : Preparing to initialize python
+07-20 01:12:11.477 13953 13992 I python  : _python_bundle dir exists
+07-20 01:12:11.478 13953 13992 I python  : calculated paths to be...
+07-20 01:12:11.478 13953 13992 I python  : /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/stdlib.zip:/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules
+07-20 01:12:11.478 13953 13992 I python  : set wchar paths...
+07-20 01:12:11.481  1101  1247 I SDM     : HWCDisplay::GetColorModeCount: Supported color mode count = 1
+07-20 01:12:11.481  1101  1247 I SDM     : HWCDisplay::GetColorModes: Color mode = 0 is supported
+07-20 01:12:11.525 13953 13953 W SDLThread: type=1400 audit(0.0:128340): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/zlib.cpython-311.so" dev="dm-12" ino=122147 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.552 13953 13993 I OpenGLRenderer: Davey! duration=9222905143224ms; Flags=1, FrameTimelineVsyncId=9227240, IntendedVsync=466893629145193, Vsync=466893895811849, InputEventId=0, HandleInputStart=466893904986268, AnimationStart=466893905001528, PerformTraversalsStart=466893905009914, DrawStart=466893976745955, FrameDeadline=466893645811859, FrameInterval=466893904901528, FrameStartTime=16666666, SyncQueued=466893981290018, SyncStart=466893981962205, IssueDrawCommandsStart=466893984492309, SwapBuffers=466894022897309, FrameCompleted=9223372036854775807, DequeueBufferDuration=13414427, QueueBufferDuration=1154375, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894026963247, DisplayPresentTime=0, 
+07-20 01:12:11.555  1134  3911 E ANDR-PERF-LM: ThreadHelper: thread_callback() 145: More than one pending updates!!! This should not happen. MeterMgr should avoid this case.
+07-20 01:12:11.559  1833  2101 I ActivityTaskManager: Displayed org.hackintosh1980.espgrowcontroller/org.kivy.android.PythonActivity: +1s97ms
+07-20 01:12:11.566  1134  3911 E ANDR-PERF-LM: ThreadHelper: thread_callback() 145: More than one pending updates!!! This should not happen. MeterMgr should avoid this case.
+07-20 01:12:11.578 13953 13992 I python  : Initialized python
+07-20 01:12:11.578 13953 13992 I python  : AND: Init threads
+07-20 01:12:11.578 13953 13992 I python  : testing python print redirection
+07-20 01:12:11.581 13953 13992 I python  : Android path ['.', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/stdlib.zip', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages']
+07-20 01:12:11.581 13953 13992 I python  : os.environ is environ({'PATH': '/product/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin:/system_ext/bin:/system/bin:/system/xbin:/odm/bin:/vendor/bin:/vendor/xbin', 'ANDROID_BOOTLOGO': '1', 'ANDROID_ROOT': '/system', 'ANDROID_ASSETS': '/system/app', 'ANDROID_DATA': '/data', 'ANDROID_STORAGE': '/storage', 'ANDROID_ART_ROOT': '/apex/com.android.art', 'ANDROID_I18N_ROOT': '/apex/com.android.i18n', 'ANDROID_TZDATA_ROOT': '/apex/com.android.tzdata', 'EXTERNAL_STORAGE': '/sdcard', 'ASEC_MOUNTPOINT': '/mnt/asec', 'DOWNLOAD_CACHE': '/data/cache', 'BOOTCLASSPATH': '/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/framework-graphics.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/apex/com.android.i18n/javalib/core-icu4j.jar:/system/framework/tcmiface.jar:/system/framework/telephony-ext.jar:/system/framework/qcom.fmradio.jar:/system/framework/QPerformance.jar:/system/framework/UxPerformance.jar:/system/framework/WfdCommon.jar:/apex/com.android.appsearch/javalib/framework-appsearch.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar:/apex/com.android.ipsec/javalib/android.net.ipsec.ike.jar:/apex/com.android.media/javalib/updatable-media.jar:/apex/com.android.mediaprovider/javalib/framework-mediaprovider.jar:/apex/com.android.mediaprovider/javalib/framework-pdf.jar:/apex/com.android.mediaprovider/javalib/framework-photopicker.jar:/apex/com.android.os.statsd/javalib/framework-statsd.jar:/apex/com.android.permission/javalib/framework-permission.jar:/apex/com.android.permission/javalib/framework-permission-s.jar:/apex/com.android.scheduling/javalib/framework-scheduling.jar:/apex/com.android.sdkext/javalib/framework-sdkextensions.jar:/apex/com.android.tethering/javalib/framework-connectivity.jar:/apex/com.android.tethering/javalib/framework-tethering.jar:/apex/com.android.wifi/javalib/framework-wifi.jar', 'DEX2OATBOOTCLASSPATH': '/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/framework-graphics.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/apex/com.android.i18n/javalib/core-icu4j.jar:/system/framework/tcmiface.jar:/system/framework/telephony-ext.jar:/system/framework/qcom.fmradio.jar:/system/framework/QPerformance.jar:/system/framework/UxPerformance.jar:/system/framework/WfdCommon.jar', 'SYSTEMSERVERCLASSPATH': '/system/framework/com.android.location.provider.jar:/system/framework/services.jar:/system/framework/ethernet-service.jar:/apex/com.android.appsearch/javalib/service-appsearch.jar:/apex/com.android.art/javalib/service-art.jar:/apex/com.android.media/javalib/service-media-s.jar:/apex/com.android.permission/javalib/service-permission.jar', 'STANDALONE_SYSTEMSERVER_JARS': '/apex/com.android.os.statsd/javalib/service-statsd.jar:/apex/com.android.scheduling/javalib/service-scheduling.jar:/apex/com.android.tethering/javalib/service-connectivity.jar', 'ANDROID_SOCKET_zygote': '17', 'ANDROID_SOCKET_usap_pool_primary': '21', 'ANDROID_ENTRYPOINT': 'main.pyc', 'ANDROID_ARGUMENT': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'ANDROID_APP_PATH': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'ANDROID_PRIVATE': '/data/user/0/org.hackintosh1980.espgrowcontroller/files', 'ANDROID_UNPACK': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'PYTHONHOME': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'PYTHONPATH': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app:/data/user/0/org.hackintosh1980.espgrowcontrolle
+07-20 01:12:11.581 13953 13992 I python  : Android kivy bootstrap done. __name__ is __main__
+07-20 01:12:11.581 13953 13992 I python  : AND: Ran string
+07-20 01:12:11.581 13953 13992 I python  : Run user program, change dir and execute entrypoint
+07-20 01:12:11.583 13953 13992 I python  : [PERF] ===== STARTUP DIAGNOSTIC INITIALIZED =====
+07-20 01:12:11.607 13953 13993 I OpenGLRenderer: Davey! duration=9222905142941ms; Flags=0, FrameTimelineVsyncId=9227290, IntendedVsync=466893913182615, Vsync=466894029849277, InputEventId=0, HandleInputStart=466894035856268, AnimationStart=466894035865330, PerformTraversalsStart=466894035871684, DrawStart=466894067840799, FrameDeadline=466893946515947, FrameInterval=466894035828247, FrameStartTime=16666666, SyncQueued=466894070620643, SyncStart=466894070719132, IssueDrawCommandsStart=466894070893195, SwapBuffers=466894076743872, FrameCompleted=9223372036854775807, DequeueBufferDuration=4421927, QueueBufferDuration=756510, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894078078507, DisplayPresentTime=0, 
+07-20 01:12:11.617  2174  2229 I BtGatt.ScanManager: msg.what = 6
+07-20 01:12:11.620 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2276 
+07-20 01:12:11.622 16881 13977 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():129 repeatCheckTimes = 0, locked = false
+07-20 01:12:11.622 16881 16881 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1460 onStartInput(EditorInfo{EditorInfo{packageName=org.hackintosh1980.espgrowcontroller, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+07-20 01:12:11.622  2670  3459 I OpenGLRenderer: Davey! duration=9222905142774ms; Flags=0, FrameTimelineVsyncId=9227319, IntendedVsync=466894080243650, Vsync=466894080243650, InputEventId=0, HandleInputStart=466894080777205, AnimationStart=466894080779445, PerformTraversalsStart=466894081291320, DrawStart=466894081360903, FrameDeadline=466894096910316, FrameInterval=466894080770799, FrameStartTime=16666666, SyncQueued=466894081558872, SyncStart=466894081765799, IssueDrawCommandsStart=466894081947934, SwapBuffers=466894093653403, FrameCompleted=9223372036854775807, DequeueBufferDuration=9719375, QueueBufferDuration=1653229, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894096245903, DisplayPresentTime=0, 
+07-20 01:12:11.623 16881 16881 W LatinIMEBase: LatinIMEBase.updateInputViewCoverNavigation():322 Null input view, cannot update padding!
+07-20 01:12:11.624 16881 13971 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatusInternal():129 repeatCheckTimes = 1, locked = false
+07-20 01:12:11.640 23066 23066 I cbpr    : onStop
+07-20 01:12:11.646  2670  3459 I OpenGLRenderer: Davey! duration=9222905142757ms; Flags=0, FrameTimelineVsyncId=9227322, IntendedVsync=466894096930438, Vsync=466894096930438, InputEventId=0, HandleInputStart=466894098213143, AnimationStart=466894098216163, PerformTraversalsStart=466894099234288, DrawStart=466894099297622, FrameDeadline=466894130263770, FrameInterval=466894098206632, FrameStartTime=16666666, SyncQueued=466894099464288, SyncStart=466894100284132, IssueDrawCommandsStart=466894100448091, SwapBuffers=466894109121372, FrameCompleted=9223372036854775807, DequeueBufferDuration=556614, QueueBufferDuration=4637448, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894114728195, DisplayPresentTime=0, 
+07-20 01:12:11.656 13953 13965 I OpenGLRenderer: Davey! duration=9222905142741ms; Flags=0, FrameTimelineVsyncId=9227325, IntendedVsync=466894113632256, Vsync=466894113632256, InputEventId=0, HandleInputStart=466894116004913, AnimationStart=466894116021997, PerformTraversalsStart=466894117652674, DrawStart=466894118409653, FrameDeadline=466894130298922, FrameInterval=466894115939341, FrameStartTime=16666666, SyncQueued=466894118536580, SyncStart=466894118653611, IssueDrawCommandsStart=466894118768716, SwapBuffers=466894121914393, FrameCompleted=9223372036854775807, DequeueBufferDuration=27032, QueueBufferDuration=1801198, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894125563976, DisplayPresentTime=0, 
+07-20 01:12:11.657  2670 19292 I OpenGLRenderer: Davey! duration=9222905142734ms; Flags=0, FrameTimelineVsyncId=9227325, IntendedVsync=466894113632256, Vsync=466894113632256, InputEventId=0, HandleInputStart=466894115918924, AnimationStart=466894115921216, PerformTraversalsStart=466894116291163, DrawStart=466894116350382, FrameDeadline=466894146965588, FrameInterval=466894115912882, FrameStartTime=16666666, SyncQueued=466894116473663, SyncStart=466894123135538, IssueDrawCommandsStart=466894123335486, SwapBuffers=466894124339653, FrameCompleted=9223372036854775807, DequeueBufferDuration=27292, QueueBufferDuration=8371198, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894135473143, DisplayPresentTime=0, 
+07-20 01:12:11.663  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:11.679  2670 19292 I OpenGLRenderer: Davey! duration=9222905142719ms; Flags=0, FrameTimelineVsyncId=9227328, IntendedVsync=466894130332790, Vsync=466894130332790, InputEventId=0, HandleInputStart=466894132210330, AnimationStart=466894132212726, PerformTraversalsStart=466894132680903, DrawStart=466894132762309, FrameDeadline=466894163666122, FrameInterval=466894132201528, FrameStartTime=16666666, SyncQueued=466894132935330, SyncStart=466894137412518, IssueDrawCommandsStart=466894137632413, SwapBuffers=466894138365434, FrameCompleted=9223372036854775807, DequeueBufferDuration=30208, QueueBufferDuration=3403021, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894142234913, DisplayPresentTime=0, 
+07-20 01:12:11.679  2670 19292 I OpenGLRenderer: Davey! duration=9222905142807ms; Flags=0, FrameTimelineVsyncId=9227313, IntendedVsync=466894046837889, Vsync=466894046837889, InputEventId=0, HandleInputStart=466894049923820, AnimationStart=466894049925747, PerformTraversalsStart=466894050449288, DrawStart=466894141945226, FrameDeadline=466894063504555, FrameInterval=466894049919705, FrameStartTime=16666666, SyncQueued=466894141954705, SyncStart=466894142372101, IssueDrawCommandsStart=466894142492882, SwapBuffers=466894143162101, FrameCompleted=9223372036854775807, DequeueBufferDuration=35990, QueueBufferDuration=1030260, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894144669966, DisplayPresentTime=0, 
+07-20 01:12:11.681 13953 13965 I OpenGLRenderer: Davey! duration=9222905142724ms; Flags=0, FrameTimelineVsyncId=9227328, IntendedVsync=466894130332790, Vsync=466894130332790, InputEventId=0, HandleInputStart=466894132554132, AnimationStart=466894132563299, PerformTraversalsStart=466894133389966, DrawStart=466894133825538, FrameDeadline=466894163666122, FrameInterval=466894132530174, FrameStartTime=16666666, SyncQueued=466894133891997, SyncStart=466894133961580, IssueDrawCommandsStart=466894134066841, SwapBuffers=466894134999184, FrameCompleted=9223372036854775807, DequeueBufferDuration=31979, QueueBufferDuration=753177, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894136266684, DisplayPresentTime=0, 
+07-20 01:12:11.710 13953 13965 I OpenGLRenderer: Davey! duration=9222905142690ms; Flags=0, FrameTimelineVsyncId=9227334, IntendedVsync=466894163727049, Vsync=466894163727049, InputEventId=0, HandleInputStart=466894164446476, AnimationStart=466894164455538, PerformTraversalsStart=466894165300174, DrawStart=466894165817153, FrameDeadline=466894197060381, FrameInterval=466894164420643, FrameStartTime=16666666, SyncQueued=466894166239601, SyncStart=466894166322309, IssueDrawCommandsStart=466894166396163, SwapBuffers=466894169304497, FrameCompleted=9223372036854775807, DequeueBufferDuration=1794740, QueueBufferDuration=1481823, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894171248924, DisplayPresentTime=0, 
+07-20 01:12:11.711  2670 19292 I OpenGLRenderer: Davey! duration=9222905142689ms; Flags=0, FrameTimelineVsyncId=9227334, IntendedVsync=466894163727049, Vsync=466894163727049, InputEventId=0, HandleInputStart=466894164273455, AnimationStart=466894164276216, PerformTraversalsStart=466894164791684, DrawStart=466894164879028, FrameDeadline=466894197060381, FrameInterval=466894164266945, FrameStartTime=16666666, SyncQueued=466894165058507, SyncStart=466894166515070, IssueDrawCommandsStart=466894166858091, SwapBuffers=466894167615122, FrameCompleted=9223372036854775807, DequeueBufferDuration=29844, QueueBufferDuration=1192916, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894169338559, DisplayPresentTime=0, 
+07-20 01:12:11.712  2670 19292 I OpenGLRenderer: Davey! duration=9222905142789ms; Flags=0, FrameTimelineVsyncId=9227316, IntendedVsync=466894063549083, Vsync=466894130215747, InputEventId=0, HandleInputStart=466894144589705, AnimationStart=466894144592934, PerformTraversalsStart=466894144803768, DrawStart=466894174260486, FrameDeadline=466894096882415, FrameInterval=466894144579757, FrameStartTime=16666666, SyncQueued=466894174274080, SyncStart=466894175520747, IssueDrawCommandsStart=466894175593038, SwapBuffers=466894176476632, FrameCompleted=9223372036854775807, DequeueBufferDuration=299896, QueueBufferDuration=860417, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894177732257, DisplayPresentTime=0, 
+07-20 01:12:11.727 13953 13965 I OpenGLRenderer: Davey! duration=9222905142674ms; Flags=0, FrameTimelineVsyncId=9227337, IntendedVsync=466894180475721, Vsync=466894180475721, InputEventId=0, HandleInputStart=466894187087413, AnimationStart=466894187107518, PerformTraversalsStart=466894188369705, DrawStart=466894189826111, FrameDeadline=466894213809053, FrameInterval=466894187032830, FrameStartTime=16666666, SyncQueued=466894189943038, SyncStart=466894190211632, IssueDrawCommandsStart=466894190391372, SwapBuffers=466894191157778, FrameCompleted=9223372036854775807, DequeueBufferDuration=32136, QueueBufferDuration=903125, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894192506580, DisplayPresentTime=0, 
+07-20 01:12:11.729  2670 19292 I OpenGLRenderer: Davey! duration=9222905142787ms; Flags=0, FrameTimelineVsyncId=9227316, IntendedVsync=466894063549083, Vsync=466894130215747, InputEventId=0, HandleInputStart=466894144589705, AnimationStart=466894144592934, PerformTraversalsStart=466894144803768, DrawStart=466894188787570, FrameDeadline=466894096882415, FrameInterval=466894144579757, FrameStartTime=16666666, SyncQueued=466894188800695, SyncStart=466894192629497, IssueDrawCommandsStart=466894192710538, SwapBuffers=466894193720955, FrameCompleted=9223372036854775807, DequeueBufferDuration=45261, QueueBufferDuration=2825782, GpuCompleted=9223372036854775807, SwapBuffersCompleted=466894197132778, DisplayPresentTime=0, 
+07-20 01:12:11.739  1833  3051 W InputManager-JNI: Input channel object '50a3291 Splash Screen org.hackintosh1980.espgrowcontroller (client)' was disposed without first being removed with the input manager!
+07-20 01:12:11.805 13953 13953 W SDLThread: type=1400 audit(0.0:128341): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_typing.cpython-311.so" dev="dm-12" ino=122023 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.875 13953 13953 W SDLThread: type=1400 audit(0.0:128342): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/math.cpython-311.so" dev="dm-12" ino=122040 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.885 13953 13953 W SDLThread: type=1400 audit(0.0:128343): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_heapq.cpython-311.so" dev="dm-12" ino=121971 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.885 13953 13953 W SDLThread: type=1400 audit(0.0:128344): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_queue.cpython-311.so" dev="dm-12" ino=122004 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.925 13953 13953 W SDLThread: type=1400 audit(0.0:128345): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_opcode.cpython-311.so" dev="dm-12" ino=121999 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:11.973 13953 13992 I python  : [INFO   ] [Logger      ] Record log in /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/.kivy/logs/kivy_26-07-20_2.txt
+07-20 01:12:11.974 13953 13992 I python  : [INFO   ] [Kivy        ] v2.3.0
+07-20 01:12:11.974 13953 13992 I python  : [INFO   ] [Kivy        ] Installed at "/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages/kivy/__init__.pyc"
+07-20 01:12:11.974 13953 13992 I python  : [INFO   ] [Python      ] v3.11.9 (main, Jul 19 2026, 09:21:02) [Clang 14.0.6 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0
+07-20 01:12:11.974 13953 13992 I python  : [INFO   ] [Python      ] Interpreter at ""
+07-20 01:12:11.975 13953 13992 I python  : [INFO   ] [Logger      ] Purge log fired. Processing...
+07-20 01:12:11.976 13953 13992 I python  : [INFO   ] [Logger      ] Purge finished!
+07-20 01:12:11.985 13953 13953 W SDLThread: type=1400 audit(0.0:128346): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages/kivy/_clock.so" dev="dm-12" ino=123209 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:12.228 23008 23022 W System  : A resource failed to call close. 
+07-20 01:12:12.228 23008 23022 W System  : A resource failed to call close. 
+07-20 01:12:12.228 23008 23022 W System  : A resource failed to call close. 
+07-20 01:12:12.236 23008 23022 W System  : A resource failed to call close. 
+07-20 01:12:12.247  1833  2195 I ActivityManager: Start proc 14004:com.qualcomm.telephony/u0a168 for service {com.qualcomm.atfwd/com.qualcomm.atfwd.AtFwdService}
+07-20 01:12:12.265 14004 14004 I lcomm.telephon: Using generational CollectorTypeCC GC.
+07-20 01:12:12.336 14004 14004 I Perf    : Connecting to perf service.
+07-20 01:12:12.351 14004 14004 I AtCmdFwd: AtCmdFwd
+07-20 01:12:12.359 14004 14004 I HidlServiceManagement: Registered vendor.qti.hardware.radio.atcmdfwd@1.0::IAtCmdFwd/AtCmdFwdService
+07-20 01:12:12.359 14004 14004 I android_os_HwBinder: HwBinder: Starting thread pool for AtCmdFwdService
+07-20 01:12:12.812  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:12.813  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:12.813  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:12.813  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:12.813  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:12.813  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:12.813  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:12.813  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:12.813  3187  3218 W System.err: 	... 4 more
+07-20 01:12:12.813  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:12.837  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:12.945 13953 13953 W SDLThread: type=1400 audit(0.0:128354): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_socket.cpython-311.so" dev="dm-12" ino=122009 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:12.955 13953 13953 W SDLThread: type=1400 audit(0.0:128355): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/array.cpython-311.so" dev="dm-12" ino=122027 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:12.965 13953 13953 W SDLThread: type=1400 audit(0.0:128356): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_ssl.cpython-311.so" dev="dm-12" ino=122012 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:12.985 13953 13953 W SDLThread: type=1400 audit(0.0:128357): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/binascii.cpython-311.so" dev="dm-12" ino=122029 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:13.005 13953 13953 W SDLThread: type=1400 audit(0.0:128358): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_contextvars.cpython-311.so" dev="dm-12" ino=121933 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:13.111 13953 13992 I python  : [INFO   ] [Factory     ] 195 symbols loaded
+07-20 01:12:13.572 13953 13992 I python  : [INFO   ] [Image       ] Providers: img_tex, img_dds, img_sdl2, img_pil (img_ffpyplayer ignored)
+07-20 01:12:13.687 13953 13992 I python  : [INFO   ] [Window      ] Provider: sdl2
+07-20 01:12:13.725 13953 13992 I SDL/APP : pixel format wanted SDL_PIXELFORMAT_RGBA8888 (1), got SDL_PIXELFORMAT_RGBA8888 (1)
+07-20 01:12:13.746 13953 13992 I python  : [INFO   ] [GL          ] Using the "OpenGL ES 2" graphics system
+07-20 01:12:13.757 13953 13992 I python  : [INFO   ] [GL          ] Backend used <sdl2>
+07-20 01:12:13.758 13953 13992 I python  : [INFO   ] [GL          ] OpenGL version <b'OpenGL ES 3.2 V@0502.0 (GIT@38059de551, If855f1c192, 1643012380) (Date:01/24/22)'>
+07-20 01:12:13.759 13953 13992 I python  : [INFO   ] [GL          ] OpenGL vendor <b'Qualcomm'>
+07-20 01:12:13.759 13953 13992 I python  : [INFO   ] [GL          ] OpenGL renderer <b'Adreno (TM) 610'>
+07-20 01:12:13.760 13953 13992 I python  : [INFO   ] [GL          ] OpenGL parsed version: 3, 2
+07-20 01:12:13.760 13953 13992 I python  : [INFO   ] [GL          ] Texture max size <16384>
+07-20 01:12:13.760 13953 13992 I python  : [INFO   ] [GL          ] Texture max units <16>
+07-20 01:12:13.807 13953 13992 I python  : [INFO   ] [Window      ] auto add sdl2 input provider
+07-20 01:12:13.810 13953 13992 I python  : [INFO   ] [Window      ] virtual keyboard not allowed, single mode, not docked
+07-20 01:12:13.824 13953 13992 I python  : [INFO   ] [Text        ] Provider: sdl2
+07-20 01:12:13.830 13953 13992 I python  : [PERF] Kivy Basis-Core geladen in: 2.2463s
+07-20 01:12:13.910 13953 13992 I python  : BLE DESKTOP MODULE IMPORTIERT
+07-20 01:12:13.976  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:13.985 13953 13953 W SDLThread: type=1400 audit(0.0:128398): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_hashlib.cpython-311.so" dev="dm-12" ino=121819 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:13.985 13953 13953 W SDLThread: type=1400 audit(0.0:128399): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_blake2.cpython-311.so" dev="dm-12" ino=121912 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:14.085 13953 13953 W SDLThread: type=1400 audit(0.0:128400): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/unicodedata.cpython-311.so" dev="dm-12" ino=122144 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:14.154 13953 13992 I python  :  /home/domivm/TEST/.buildozer/android/platform/build-arm64-v8a/build/python-installs/espgrowcontroller/arm64-v8a/requests/__init__.py:92: RequestsDependencyWarning: Unable to find acceptable character detection dependency (chardet or charset_normalizer).
+07-20 01:12:14.206 13953 13992 I python  : [Storage] RAM-Cache für Pflanzen erfolgreich geladen.
+07-20 01:12:14.228 13953 13992 I python  : [MixedEngine] mixed.json initialisiert: /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/data/mixed.json
+07-20 01:12:14.310 13953 13992 I python  : [PERF] Starte Import der 14 Screens...
+07-20 01:12:14.573 13953 13992 I python  : [PERF] Alle Module & Screens importiert in: 0.7413s
+07-20 01:12:14.574 13953 13992 I python  : [PERF] App.build() aufgerufen.
+07-20 01:12:14.574 13953 13992 I python  : [PERF] I18N initialisiert in: 0.0000s
+07-20 01:12:14.577 13953 13992 I python  : [PERF] Buffer initialisiert/geladen in: 0.0028s
+07-20 01:12:14.614 13953 13992 I python  : [INFO   ] [GL          ] NPOT texture support is available
+07-20 01:12:14.632 13953 13992 I python  : [WARNING] Deprecated property "<BooleanProperty name=keep_ratio>" of object "<kivy.uix.image.Image object at 0x6d8a089710>" has been set, it will be removed in a future version
+07-20 01:12:14.813  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:14.814  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:14.814  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:14.814  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:14.814  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:14.814  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:14.814  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:14.814  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:14.814  3187  3218 W System.err: 	... 4 more
+07-20 01:12:14.814  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:14.909 13953 13992 I python  : [WARNING] Deprecated property "<BooleanProperty name=allow_stretch>" of object "<kivy.uix.image.Image object at 0x6d8963dfd0>" has been set, it will be removed in a future version
+07-20 01:12:15.137  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:16.302  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:16.814  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:16.815  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:16.815  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:16.815  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:16.815  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:16.815  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:16.815  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:16.815  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:16.815  3187  3218 W System.err: 	... 4 more
+07-20 01:12:16.815  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:17.455  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:17.529 13953 13992 I python  : [PERF] Alle 14 Screens instanziiert und hinzugefügt in: 2.9504s
+07-20 01:12:17.536 13953 13992 I python  : [Core] Starte Core (Foreground Service Mode)…
+07-20 01:12:17.536 13953 13992 I python  : [Core] is_android(): True
+07-20 01:12:17.536 13953 13992 I python  : [Core] decoded.json entfernt
+07-20 01:12:17.537 13953 13992 I python  : [Core] ble_dump.json geleert: /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/data/ble_dump.json
+07-20 01:12:17.541 13953 13992 I python  : [Core] ble_log_dump.json geleert: /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/data/ble_log_dump.json
+07-20 01:12:17.542 13953 13992 I python  : [Core] web_dump.json geleert: /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/data/web_dump.json
+07-20 01:12:17.715 13953 13992 I python  : [Core] BLE Python Service gestartet (Foreground)
+07-20 01:12:17.733  1833  2195 I ActivityManager: Start proc 14041:org.hackintosh1980.espgrowcontroller:service_ble_service/u0a244 for service {org.hackintosh1980.espgrowcontroller/org.hackintosh1980.espgrowcontroller.ServiceBle_service}
+07-20 01:12:17.748 14041 14041 I ice_ble_servic: Late-enabling -Xcheck:jni
+07-20 01:12:17.776 14041 14041 I ice_ble_servic: Using generational CollectorTypeCC GC.
+07-20 01:12:17.782  1308  1333 I adbd    : jdwp connection from 14041
+07-20 01:12:17.844  2174  2243 I bt_stack: [INFO:gatt_api.cc(1223)] GATT_Register fddb6361-cd7f-cfb3-8fdb-fb07d4781582
+07-20 01:12:17.844  2174  2243 I bt_stack: [INFO:gatt_api.cc(1244)] allocated gatt_if=22
+07-20 01:12:17.845 14041 14041 I Perf    : Connecting to perf service.
+07-20 01:12:17.873  2174  2229 I BtGatt.ScanManager: msg.what = 0
+07-20 01:12:17.876 13953 13992 I python  : [Core] Android-Bridges gestartet (ADV + GATT + BROADCAST)
+07-20 01:12:17.880 13953 13992 I python  : [Core] WebClient-Thread gestartet
+07-20 01:12:17.883  1095  1095 I vendor.qti.bluetooth@1.0-ibs_handler: DeviceWakeUp: Writing IBS_WAKE_IND
+07-20 01:12:17.883  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_ACK: 0xFC
+07-20 01:12:17.883  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Signal wack_cond_
+07-20 01:12:17.884  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:17.884  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:17.887 13953 14062 I python  : [Decoder] Background Thread STARTED.
+07-20 01:12:17.887 13953 14062 I python  : [HEARTBEAT DECODER] Ticking! Active Config Devices: ['E697B52A-2E7F-D41E-BC4D-2D027CB38D0B', '827482CC-A977-43D7-835E-8E8B6978E66A', 'C898B4F2-B452-7502-1A67-0536E77D49EA', 'FABCEA8B-7EC8-2594-4879-2B3B63989660'] | Live Web RAM Keys: []
+07-20 01:12:17.894 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:17.898 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:17.910 13953 13992 I python  : [Core] Decoder-Thread gestartet
+07-20 01:12:17.911 13953 13992 I python  : [Core] Watchdog gestartet
+07-20 01:12:17.911 13953 13992 I python  : [Core] System läuft stabil im Hintergrund (Foreground Service Active).
+07-20 01:12:17.911 13953 13992 I python  : [PERF] core.start() ausgeführt in: 0.3751s
+07-20 01:12:17.911 13953 13992 I python  : [PERF] 🚀 GESAMTZEIT BIS ZUM START: 6.3279s 🚀
+07-20 01:12:17.912 13953 13992 I python  : [WARNING] [Base        ] Unknown <android> provider
+07-20 01:12:17.913 13953 13992 I python  : [INFO   ] [Base        ] Start application main loop
+07-20 01:12:17.925  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:17.925  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:17.925  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:17.972  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:17.979  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:17.979  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.007 14041 14055 I python  : Initializing Python for Android
+07-20 01:12:18.007 14041 14055 I python  : Setting additional env vars from p4a_env_vars.txt
+07-20 01:12:18.007 14041 14055 I python  : Changing directory to the one provided by ANDROID_ARGUMENT
+07-20 01:12:18.007 14041 14055 I python  : /data/user/0/org.hackintosh1980.espgrowcontroller/files/app
+07-20 01:12:18.007 14041 14055 I python  : Preparing to initialize python
+07-20 01:12:18.007 14041 14055 I python  : _python_bundle dir exists
+07-20 01:12:18.007 14041 14055 I python  : calculated paths to be...
+07-20 01:12:18.007 14041 14055 I python  : /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/stdlib.zip:/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules
+07-20 01:12:18.007 14041 14055 I python  : set wchar paths...
+07-20 01:12:18.020  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.045 14041 14041 W Thread-2: type=1400 audit(0.0:128401): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/zlib.cpython-311.so" dev="dm-12" ino=122147 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.084 14041 14055 I python  : Initialized python
+07-20 01:12:18.084 14041 14055 I python  : AND: Init threads
+07-20 01:12:18.085 14041 14055 I ble_service: testing python print redirection
+07-20 01:12:18.088 14041 14055 I ble_service: Android path ['.', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/stdlib.zip', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules', '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages']
+07-20 01:12:18.088 14041 14055 I ble_service: os.environ is environ({'PATH': '/product/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin:/system_ext/bin:/system/bin:/system/xbin:/odm/bin:/vendor/bin:/vendor/xbin', 'ANDROID_BOOTLOGO': '1', 'ANDROID_ROOT': '/system', 'ANDROID_ASSETS': '/system/app', 'ANDROID_DATA': '/data', 'ANDROID_STORAGE': '/storage', 'ANDROID_ART_ROOT': '/apex/com.android.art', 'ANDROID_I18N_ROOT': '/apex/com.android.i18n', 'ANDROID_TZDATA_ROOT': '/apex/com.android.tzdata', 'EXTERNAL_STORAGE': '/sdcard', 'ASEC_MOUNTPOINT': '/mnt/asec', 'DOWNLOAD_CACHE': '/data/cache', 'BOOTCLASSPATH': '/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/framework-graphics.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/apex/com.android.i18n/javalib/core-icu4j.jar:/system/framework/tcmiface.jar:/system/framework/telephony-ext.jar:/system/framework/qcom.fmradio.jar:/system/framework/QPerformance.jar:/system/framework/UxPerformance.jar:/system/framework/WfdCommon.jar:/apex/com.android.appsearch/javalib/framework-appsearch.jar:/apex/com.android.conscrypt/javalib/conscrypt.jar:/apex/com.android.ipsec/javalib/android.net.ipsec.ike.jar:/apex/com.android.media/javalib/updatable-media.jar:/apex/com.android.mediaprovider/javalib/framework-mediaprovider.jar:/apex/com.android.mediaprovider/javalib/framework-pdf.jar:/apex/com.android.mediaprovider/javalib/framework-photopicker.jar:/apex/com.android.os.statsd/javalib/framework-statsd.jar:/apex/com.android.permission/javalib/framework-permission.jar:/apex/com.android.permission/javalib/framework-permission-s.jar:/apex/com.android.scheduling/javalib/framework-scheduling.jar:/apex/com.android.sdkext/javalib/framework-sdkextensions.jar:/apex/com.android.tethering/javalib/framework-connectivity.jar:/apex/com.android.tethering/javalib/framework-tethering.jar:/apex/com.android.wifi/javalib/framework-wifi.jar', 'DEX2OATBOOTCLASSPATH': '/apex/com.android.art/javalib/core-oj.jar:/apex/com.android.art/javalib/core-libart.jar:/apex/com.android.art/javalib/okhttp.jar:/apex/com.android.art/javalib/bouncycastle.jar:/apex/com.android.art/javalib/apache-xml.jar:/system/framework/framework.jar:/system/framework/framework-graphics.jar:/system/framework/ext.jar:/system/framework/telephony-common.jar:/system/framework/voip-common.jar:/system/framework/ims-common.jar:/apex/com.android.i18n/javalib/core-icu4j.jar:/system/framework/tcmiface.jar:/system/framework/telephony-ext.jar:/system/framework/qcom.fmradio.jar:/system/framework/QPerformance.jar:/system/framework/UxPerformance.jar:/system/framework/WfdCommon.jar', 'SYSTEMSERVERCLASSPATH': '/system/framework/com.android.location.provider.jar:/system/framework/services.jar:/system/framework/ethernet-service.jar:/apex/com.android.appsearch/javalib/service-appsearch.jar:/apex/com.android.art/javalib/service-art.jar:/apex/com.android.media/javalib/service-media-s.jar:/apex/com.android.permission/javalib/service-permission.jar', 'STANDALONE_SYSTEMSERVER_JARS': '/apex/com.android.os.statsd/javalib/service-statsd.jar:/apex/com.android.scheduling/javalib/service-scheduling.jar:/apex/com.android.tethering/javalib/service-connectivity.jar', 'ANDROID_SOCKET_zygote': '17', 'ANDROID_SOCKET_usap_pool_primary': '21', 'ANDROID_PRIVATE': '/data/user/0/org.hackintosh1980.espgrowcontroller/files', 'ANDROID_ARGUMENT': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'ANDROID_APP_PATH': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'ANDROID_ENTRYPOINT': 'services/ble_service.py', 'PYTHONOPTIMIZE': '2', 'PYTHON_NAME': 'ble_service', 'PYTHONHOME': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app', 'PYTHONPATH': '/data/user/0/org.hackintosh1980.espgrowcontroller/files/app:/data/user/0/org.hackintosh1980.espgrowcontroller/files/
+07-20 01:12:18.089 14041 14055 I ble_service: Android kivy bootstrap done. __name__ is __main__
+07-20 01:12:18.089 14041 14055 I python  : AND: Ran string
+07-20 01:12:18.089 14041 14055 I python  : Run user program, change dir and execute entrypoint
+07-20 01:12:18.125  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.125  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.186  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.240  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.240  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.225 14041 14041 W Thread-2: type=1400 audit(0.0:128402): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/fcntl.cpython-311.so" dev="dm-12" ino=122031 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.235 14041 14041 W Thread-2: type=1400 audit(0.0:128403): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_posixsubprocess.cpython-311.so" dev="dm-12" ino=122001 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.235 14041 14041 W Thread-2: type=1400 audit(0.0:128404): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/select.cpython-311.so" dev="dm-12" ino=122133 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.245 14041 14041 W Thread-2: type=1400 audit(0.0:128405): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/math.cpython-311.so" dev="dm-12" ino=122040 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.282  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.325 14041 14041 W Thread-2: type=1400 audit(0.0:128406): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages/jnius/jnius.so" dev="dm-12" ino=86273 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.365 14041 14041 W Thread-2: type=1400 audit(0.0:128407): avc: granted { execute } for path="/data/data/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/modules/_typing.cpython-311.so" dev="dm-12" ino=122023 scontext=u:r:untrusted_app:s0:c244,c256,c512,c768 tcontext=u:object_r:app_data_file:s0:c244,c256,c512,c768 tclass=file app=org.hackintosh1980.espgrowcontroller
+07-20 01:12:18.390  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.390  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.431  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.519  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.519  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.531 13953 14066 I python  : [Discovery] mDNS Match für 827482CC-A977-43D7-835E-8E8B6978E66A: 192.168.2.39 (growmaster-1d3c.local)
+07-20 01:12:18.537 13953 14066 I python  : [Discovery] mDNS Match für E697B52A-2E7F-D41E-BC4D-2D027CB38D0B: 192.168.2.20 (growmaster-d064.local)
+07-20 01:12:18.551 14041 14055 I ble_service: [INFO   ] [Logger      ] Record log in /data/user/0/org.hackintosh1980.espgrowcontroller/files/app/.kivy/logs/kivy_26-07-20_3.txt
+07-20 01:12:18.552 14041 14055 I ble_service: [INFO   ] [Kivy        ] v2.3.0
+07-20 01:12:18.553 14041 14055 I ble_service: [INFO   ] [Kivy        ] Installed at "/data/user/0/org.hackintosh1980.espgrowcontroller/files/app/_python_bundle/site-packages/kivy/__init__.pyc"
+07-20 01:12:18.554 14041 14055 I ble_service: [INFO   ] [Python      ] v3.11.9 (main, Jul 19 2026, 09:21:02) [Clang 14.0.6 (https://android.googlesource.com/toolchain/llvm-project 4c603efb0
+07-20 01:12:18.555 14041 14055 I ble_service: [INFO   ] [Python      ] Interpreter at ""
+07-20 01:12:18.556 14041 14055 I ble_service: [INFO   ] [Logger      ] Purge log fired. Processing...
+07-20 01:12:18.558 14041 14055 I ble_service: [INFO   ] [Logger      ] Purge finished!
+07-20 01:12:18.567 13953 14061 I python  : [DEBUG  ] [http          ]//192.168.2.20:80 "GET /data HTTP/1.1" 200 2513
+07-20 01:12:18.576  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.626  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:18.649  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.649  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.706  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.816  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:18.816  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:18.816  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:18.816  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:18.816  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:18.816  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:18.816  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:18.816  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:18.816  3187  3218 W System.err: 	... 4 more
+07-20 01:12:18.816  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:18.826  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:18.826  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:18.870  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:18.890 13953 14063 I python  : [DEBUG  ] [http          ]//192.168.2.39:80 "GET /data HTTP/1.1" 200 2552
+07-20 01:12:18.931  1095  2247 I vendor.qti.bluetooth@1.0-ibs_handler: DeviceSleep: TX Awake, Sending SLEEP_IND
+07-20 01:12:19.055 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:19.062 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:19.198  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:19.200  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:19.241  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:19.300  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:19.300  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:19.344  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:19.468 14041 14055 I ble_service:  Traceback (most recent call last):
+07-20 01:12:19.469 14041 14055 I ble_service:    File "/home/domivm/TEST/.buildozer/android/app/services/ble_service.py", line 2, in <module>
+07-20 01:12:19.469  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:19.469  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:19.470 14041 14055 I ble_service:    File "/home/domivm/TEST/.buildozer/android/app/bridge_manager.py", line 4, in <module>
+07-20 01:12:19.471 14041 14055 I ble_service:    File "/home/domivm/TEST/.buildozer/android/app/config.py", line 13, in <module>
+07-20 01:12:19.472 14041 14055 I ble_service:  AttributeError: 'NoneType' object has no attribute 'getFilesDir'
+07-20 01:12:19.472 14041 14055 I python  : Python for android ended.
+07-20 01:12:19.510  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:19.566  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:19.566  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:19.608  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:19.807 13953 14061 I python  : [DEBUG  ] [http          ]//192.168.2.39:80 "GET /data HTTP/1.1" 200 2552
+07-20 01:12:19.840  1308  1308 I adbd    : Remote process closed the socket (on MSG_PEEK)
+07-20 01:12:19.852  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:19.854  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:19.872  1833  4470 I ActivityManager: Process org.hackintosh1980.espgrowcontroller:service_ble_service (pid 14041) has died: svc SVC 
+07-20 01:12:19.873  1833  2210 I libprocessgroup: Successfully killed process cgroup uid 10244 pid 14041 in 0ms
+07-20 01:12:19.875   974   974 I Zygote  : Process 14041 exited cleanly (255)
+07-20 01:12:19.896  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:19.900 13953 14063 I python  : [DEBUG  ] [http          ]//192.168.2.20:80 "GET /data HTTP/1.1" 200 2513
+07-20 01:12:20.029 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:20.029  1833  2193 I UsageStatsService: User[0] Flushing usage stats to disk
+07-20 01:12:20.030 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:20.075 13953 13992 E BLASTBufferQueue: [SurfaceView[org.hackintosh1980.espgrowcontroller/org.kivy.android.PythonActivity]#1](f:0,a:0) rejecting buffer:active_size=1545x720, requested_size=1545x720 buffer{size=664x1461 transform=7}
+07-20 01:12:20.080 13953 13992 I python  : [BROADCAST] Bridge gestartet
+07-20 01:12:20.444 23890 30324 I FusedLocation: (REDACTED) getLastLocation() noteOp denied for %s
+07-20 01:12:20.488  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:20.488  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:20.522 13953 14063 I python  : [DEBUG  ] [http          ]//192.168.2.39:80 "GET /data HTTP/1.1" 200 2552
+07-20 01:12:20.530  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:20.625 13953 14061 I python  : [DEBUG  ] [http          ]//192.168.2.20:80 "GET /data HTTP/1.1" 200 2563
+07-20 01:12:20.745  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:20.748  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:20.758 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:20.764 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:20.789  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:20.817  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:20.817  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:20.817  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:20.817  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:20.817  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:20.817  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:20.817  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:20.817  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:20.817  3187  3218 W System.err: 	... 4 more
+07-20 01:12:20.817  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:20.937 13953 13992 I python  : [Core] BROADCAST Bridge started
+07-20 01:12:20.974  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:20.977  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:21.018  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:21.234 13953 14061 I python  : [DEBUG  ] [http          ]//192.168.2.39:80 "GET /data HTTP/1.1" 200 2604
+07-20 01:12:21.386  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:21.390  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:21.431  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:21.452  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:21.453  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:21.494  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:21.574 13953 14063 I python  : [DEBUG  ] [http          ]//192.168.2.20:80 "GET /data HTTP/1.1" 200 2565
+07-20 01:12:21.685 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:21.686 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:21.764  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:21.767  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:21.808  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:21.882 23890 23899 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+07-20 01:12:21.883 11644 11699 I BugleRcsEngine: handleMessage processing message:[NOTIFY_UPTIME_IGNORE_STATE_CHANGED] with [non-null]:RcsEngineImpl reference [CONTEXT log_prefix="RcsEngineImpl[DUAL_REG]:[9505637b-6848]>Handler" thread_id=222 ]
+07-20 01:12:21.883 11644 11688 I BugleRcsEngine: Connected state: [1], networkType: [WIFI] [CONTEXT thread_id=214 ]
+07-20 01:12:21.885 23890 24929 I NullBinder: NullBinder for android.net.action.RECOMMEND_NETWORKS triggering remote TransactionTooLargeException due to Service without Chimera impl, calling uid: 1000, calling pid: 0
+07-20 01:12:21.888  3099  3413 E PhoneInterfaceManager: [PhoneIntfMgr] getCarrierPrivilegeStatus: Invalid subId
+07-20 01:12:21.901 23890 30324 I NearbyMediums: Wifi changed new SSID: "Cudy-Indoor"
+07-20 01:12:21.901 23890 30324 I NearbyMediums: WifiLanConnectivityInfo is not changed, skip notify.
+07-20 01:12:21.913  3099  3413 I LocationAccessPolicy: devian.tubemate.v3 is aware of fine but the app-ops permission is specifically denied.
+07-20 01:12:21.913  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:21.913  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:21.916  3099  3413 I LocationAccessPolicy: devian.tubemate.v3 is aware of fine but the app-ops permission is specifically denied.
+07-20 01:12:21.954  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.057 13953 14061 I python  : [DEBUG  ] [http          ]//192.168.2.39:80 "GET /data HTTP/1.1" 200 2604
+07-20 01:12:22.270  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.273  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.314  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.374  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.374  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.400 23890 30324 I NearbySharing: Network state changed: NetworkState(isRestricted=false, isOnline=true, isCongested=false, isMetered=false, isWifiConnected=true)
+07-20 01:12:22.416  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.421 13953 14063 I python  : [DEBUG  ] [http          ]//192.168.2.20:80 "GET /data HTTP/1.1" 200 2564
+07-20 01:12:22.475  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.475  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.517  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.546 13953 14061 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.20:80
+07-20 01:12:22.549 13953 14063 I python  : [DEBUG  ] [Starting new HTTP connection (1)] 192.168.2.39:80
+07-20 01:12:22.564  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.564  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.565 13494 13494 W ThreadPoolForeg: type=1400 audit(0.0:128412): avc: denied { write } for name="traced_producer" dev="tmpfs" ino=20847 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:traced_producer_socket:s0 tclass=sock_file permissive=0 app=com.google.android.gms
+07-20 01:12:22.605  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.641  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.641  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.682  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.818  3187  3218 W System.err: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+07-20 01:12:22.819  3187  3218 W System.err: 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+07-20 01:12:22.819  3187  3218 W System.err: 	at java.io.FileReader.<init>(FileReader.java:75)
+07-20 01:12:22.819  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.readNode(ModeService.java:539)
+07-20 01:12:22.819  3187  3218 W System.err: 	at com.hmd.sarsensor.ModeService$NodeWatcher.run(ModeService.java:514)
+07-20 01:12:22.819  3187  3218 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.Linux.open(Native Method)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:579)
+07-20 01:12:22.819  3187  3218 W System.err: 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:7766)
+07-20 01:12:22.819  3187  3218 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+07-20 01:12:22.819  3187  3218 W System.err: 	... 4 more
+07-20 01:12:22.819  3187  3218 E SarTest : read node fail: java.io.FileNotFoundException: /proc/ant_state: open failed: ENOENT (No such file or directory)
+07-20 01:12:22.830  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.830  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.850  1308  1308 I adbd    : adbd service requested 'shell,v2,TERM=dumb:export ANDROID_LOG_TAGS=''; exec logcat '-d' '-v' 'threadtime' '*:I' 'python:D''
+07-20 01:12:22.871  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_SLEEP_IND: 0xFE
+07-20 01:12:22.888  1095  1095 I vendor.qti.bluetooth@1.0-ibs_handler: DeviceWakeUp: Writing IBS_WAKE_IND
+07-20 01:12:22.888  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_ACK: 0xFC
+07-20 01:12:22.888  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Signal wack_cond_
+07-20 01:12:22.890  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Received IBS_WAKE_IND: 0xFD
+07-20 01:12:22.890  1095  2241 I vendor.qti.bluetooth@1.0-ibs_handler: ProcessIbsCmd: Writing IBS_WAKE_ACK
+07-20 01:12:22.900 13953 14058 I BroadcastBridge: Advertising refreshed

@@ -12,7 +12,7 @@ class LightTimelineWidget(FloatLayout):
     """Own the complete 24-hour light-curve rendering."""
 
     def __init__(self, **kwargs):
-        super().__init__(size_hint_y=None, height=dp_scaled(48), **kwargs)
+        super().__init__(size_hint_y=1, **kwargs)
         self._schedule = LightSchedule()
         with self.canvas.before:
             Color(1, 0.72, 0.05, 0.15)
@@ -45,7 +45,7 @@ class LightTimelineWidget(FloatLayout):
         x_base = self.x + dp_scaled(20)
         y_base = self.y + dp_scaled(17)
         width = max(1, self.width - dp_scaled(40))
-        height = dp_scaled(26)
+        height = max(dp_scaled(12), self.height - dp_scaled(24))
         points = []
         for progress, intensity in self._schedule.curve():
             points.extend((x_base + progress * width, y_base + intensity / 100.0 * height))

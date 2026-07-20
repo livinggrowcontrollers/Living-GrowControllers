@@ -2,6 +2,7 @@ import os
 import time
 import json
 import config
+from decoders.channel_decoder import channel_signal
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(BASE, "data")
@@ -10,11 +11,6 @@ RAW_PATH = os.path.join(DATA, "ble_dump.json")
 
 class BleDumpWatchdog:
     CHANNELS = ["adv", "gatt"]
-
-    SIGNAL_FIELD = {
-        "adv": "adv_raw",
-        "gatt": "packet_counter",
-    }
 
     def __init__(self, timeout, interval, callback):
         self.timeout = float(timeout)
@@ -33,6 +29,7 @@ class BleDumpWatchdog:
 
         per_dev = {}
         any_ok = False
+        last_seen_values = []
 
         for mac in devices:
             ble_entry = self._find(ble_dump, mac)
@@ -44,12 +41,15 @@ class BleDumpWatchdog:
 
                 if ch["status"] == "OK":
                     any_ok = True
+                if ch["last_seen"] is not None:
+                    last_seen_values.append(ch["last_seen"])
 
             per_dev[mac] = dev_result
 
         return {
             "alive": any_ok,
             "status": "OK" if any_ok else "OFFLINE",
+            "last_seen": min(last_seen_values) if last_seen_values else None,
             "devices": per_dev
         }
 
@@ -70,8 +70,7 @@ class BleDumpWatchdog:
         return None
 
     def _check_channel(self, mac, channel, entry, now):
-        field = self.SIGNAL_FIELD[channel]
-        signal = entry.get(field) if entry else None
+        signal = channel_signal(entry, "gatt_raw" if channel == "gatt" else "adv_raw", is_gatt=channel == "gatt")
 
         if signal is None:
             return {"alive": False, "last_seen": None, "status": "OFFLINE"}

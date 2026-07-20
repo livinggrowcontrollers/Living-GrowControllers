@@ -17,14 +17,7 @@ class UIManager:
         # -------------------------------------------------
         self.back_stack = []
         self.forward_stack = []   
-        self.screens = {
-            "dashboard": None, "fullscreen": None, "setup": None,
-            "about": None, "settings": None, "vpd_scatter": None,
-            "debug": None, "csv_viewer": None, "cam_viewer": None,
-            "device_picker": None, "sensor_mixed_mode": None,
-            "grow_controller": None, "plant_planner": None,
-            "grow_overview": None
-        }
+        self.screens = {}
 
     def open_overlay(self, kind, factory, instance_id=None, host=None):
         """Open or toggle one application-wide control overlay."""
@@ -37,8 +30,7 @@ class UIManager:
 
     def attach_screen(self, name, ref):
         """Registriert einen Screen im Manager."""
-        if name in self.screens:
-            self.screens[name] = ref
+        self.screens[name] = ref
 
     def get_screen(self, name):
         """Gibt eine registrierte Screen-Referenz zurück, ohne den Kivy ScreenManager zu bemühen."""
@@ -72,7 +64,9 @@ class UIManager:
     def goto(self, screen_name):
         from kivy.app import App
 
-        sm = App.get_running_app().root
+        app = App.get_running_app()
+        app.ensure_screen(screen_name)
+        sm = app.root
         current = sm.current
 
         # 🔥 WICHTIG: Kein Hard-Return mehr für Dashboard!

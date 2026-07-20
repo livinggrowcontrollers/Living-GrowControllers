@@ -4,6 +4,23 @@ import config
 from decoders.binary_parser import load_profile, decode_with_profile
 from decoders.frame_factory import offline_channel_frame, build_active_ble_frame
 
+
+def channel_signal(entry, raw_key, is_gatt=False):
+    """Return the one freshness signal used by decoder and BLE watchdog.
+
+    GATT normally advances ``packet_counter``.  A GATT payload is still a
+    valid packet when an upstream writer has not preserved that counter, so
+    its raw payload is the deliberate fallback.  This prevents a metadata
+    loss from invalidating actual sensor data.
+    """
+    if not isinstance(entry, dict):
+        return None
+    if is_gatt:
+        packet_counter = entry.get("packet_counter")
+        return packet_counter if packet_counter is not None else entry.get(raw_key)
+    return entry.get(raw_key)
+
+
 def decode_channel(entry, raw_key, profile_name, last_signal_dict, last_ts_dict, timeout, is_gatt=False):
     now = time.time()
     mac = entry.get("address")
@@ -11,10 +28,7 @@ def decode_channel(entry, raw_key, profile_name, last_signal_dict, last_ts_dict,
     if mac is None:
         return offline_channel_frame(entry.get(raw_key))
 
-    if is_gatt:
-        signal = entry.get("packet_counter")
-    else:
-        signal = entry.get(raw_key)
+    signal = channel_signal(entry, raw_key, is_gatt=is_gatt)
 
     # Timeout-Logik
     if signal is None:

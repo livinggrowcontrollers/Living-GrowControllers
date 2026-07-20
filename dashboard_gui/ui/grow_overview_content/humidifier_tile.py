@@ -1,12 +1,14 @@
 import os
 
-from kivy.app import App
 from kivy.graphics import Color, RoundedRectangle, Line
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
 
 from dashboard_gui.ui.scaling_utils import sp_scaled, dp_scaled
+from dashboard_gui.global_state_manager import GLOBAL_STATE
+from dashboard_gui.overlays.components.status_colors import StatusColors
+from dashboard_gui.overlays.features.humidifier.overlay import HumidifierOverlay
 from dashboard_gui.ui.grow_overview_content.segmented_progress_bar import SegmentedProgressBar
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
@@ -158,25 +160,7 @@ class HumidifierTile(BoxLayout):
         self.content_container.add_widget(self.value_box)
         self.add_widget(self.content_container)
     def _update_box_color(self, output_pct):
-
-        if output_pct <= 0:
-            rgb = (1.0, 0.4, 0.4)
-
-        elif output_pct < 20:
-            rgb = (0.6, 0.9, 1.0)
-
-        elif output_pct < 40:
-            rgb = (0.5, 1.0, 0.9)
-
-        elif output_pct < 60:
-            rgb = (0.5, 1.0, 0.7)
-
-        elif output_pct < 80:
-            rgb = (0.9, 1.0, 0.5)
-
-        else:
-            rgb = (1.0, 0.8, 0.5)
-
+        rgb = StatusColors.get_output_color(output_pct)
         self.glow_color.rgba = (*rgb, 0.35)
         self.border_color.rgba = (*rgb, 0.85)
 
@@ -197,27 +181,32 @@ class HumidifierTile(BoxLayout):
 
     # ---------------- DATA UPDATE ----------------
     def update_values(self, data):
-        # 1. Werte sicher holen
-        output_val = data.get('humidifier_output', 0)  # Ggf. Key anpassen
-        live_val = data.get('humidifier_live', 0)      # Ggf. Key anpassen
-        status_str = data.get('humidifier_status', 'OFFLINE') # Ggf. Key anpassen
+        data = data or {}
+        target = data.get("humidifier_pct")
+        live = data.get("humidifier_speed_now")
+        status = str(data.get("humidifier_status") or "offline")
 
-        # 2. Das neue kombinierte Label befüllen
-        self.lbl_output.text = f"OUTPUT: {output_val}% | LIVE: {live_val}%"
-        
-        # 3. Status updaten
-        self.lbl_status.text = f"STATUS: {status_str.upper()}"
+        if target is None or live is None:
+            self.lbl_output.text = "OUTPUT: -- | LIVE: --"
+            self.lbl_status.text = f"STATUS: {status.replace('_', ' ').upper()}"
+            self.prog_bar.value = 0
+            self._update_box_color(None)
+            return
 
-        # 4. Progress Bar füttern
-        self.prog_bar.value = live_val
+        target = int(target)
+        live = int(live)
+        self.lbl_output.text = f"OUTPUT: {target}% | LIVE: {live}%"
+        self.lbl_status.text = f"STATUS: {status.replace('_', ' ').upper()}"
+        self.prog_bar.value = live
         self.prog_bar.max = 100
-
-        # Falls vorhanden, hier noch deine Farblogik aufrufen, z.B.:
-        # self._update_box_color(live_val)
+        self._update_box_color(live)
 
     def on_touch_down(self, touch):
         if not self.collide_point(*touch.pos):
             return super().on_touch_down(touch)
 
-        print("[DEBUG] HumidifierTile clicked")
+        GLOBAL_STATE.ui_handler.open_overlay(
+            "humidifier",
+            lambda: HumidifierOverlay(parent_header=self),
+        )
         return True

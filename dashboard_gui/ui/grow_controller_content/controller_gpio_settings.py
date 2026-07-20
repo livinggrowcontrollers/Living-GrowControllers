@@ -33,7 +33,7 @@ except Exception:
         merged = {}
         keys = [
             "p_reset", "p_c_fan", "p_c_tac", "p_e_fan", "p_e_tac",
-            "p_light", "p_i2c_sda", "p_i2c_scl", "p_rtc_sda", "p_rtc_scl", "p_bat"
+            "p_humidifier", "p_light", "p_i2c_sda", "p_i2c_scl", "p_rtc_sda", "p_rtc_scl", "p_bat"
         ]
         for k in keys:
             if k in new_kwargs:
@@ -54,6 +54,7 @@ except Exception:
         "p_c_tac":   "INPUT",
         "p_e_fan":   "PWM",
         "p_e_tac":   "INPUT",
+        "p_humidifier": "PWM",
         "p_light":   "PWM",
         "p_i2c_sda": "I2C",
         "p_i2c_scl": "I2C",
@@ -124,6 +125,8 @@ class GpioSettingsPanel(BoxLayout):
             ("Exhaust Fan (Abluft)", "p_e_fan"),
             ("Exhaust Tacho", "p_e_tac"),
             ("Exhaust Pull", "p_e_tac_pull"),
+
+            ("Humidifier (PWM)", "p_humidifier"),
 
             ("Main Light (PWM)", "p_light"),
 
@@ -305,6 +308,8 @@ class GpioSettingsPanel(BoxLayout):
             "p_e_fan": 47,
             "p_e_tac": 1,
             "p_e_tac_pull": 1,
+
+            "p_humidifier": -1,
 
             "p_light": 21,
 
