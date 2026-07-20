@@ -1,6 +1,5 @@
 #include "system_reset.h"
 #include <Preferences.h>
-#include "cloud_logging.h"
 
 static int _reset_pin = -1;
 static uint32_t _button_pressed_time = 0;
@@ -70,8 +69,6 @@ void SystemReset::perform_factory_reset() {
     prefs.clear();
     prefs.end();
 
-    cloud_logging_factory_reset();
-
     Serial.println("[RESET] grow gelöscht");
     Serial.println("[RESET] BLE-Sensor-Zuordnungen gelöscht");
     Serial.println("[RESET] light gelöscht");
@@ -79,7 +76,6 @@ void SystemReset::perform_factory_reset() {
     Serial.println("[RESET] exhaust_fan gelöscht");
     Serial.println("[RESET] humidifier gelöscht");
     Serial.println("[RESET] circulation fans gelöscht");
-    Serial.println("[RESET] Cloud-Logging-Zugangsdaten gelöscht");
 
     delay(2000);
 

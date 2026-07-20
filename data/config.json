@@ -1,7 +1,7 @@
 {
   "devices": {
     "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
-      "name": "growmaster-d064",
+      "name": "HAPPY BLÜTE",
       "adv_decoder": "LGS_SENSOR",
       "gatt_decoder": "",
       "bridge_profile": "",
@@ -13,7 +13,11 @@
       },
       "ip_address": "192.168.2.20",
       "mixed_enabled": true,
-      "mixed_external": false
+      "mixed_external": false,
+      "device_id": "growmaster-d064",
+      "mac": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
+      "protected": false,
+      "_manual_update_ts": 1784515831.9161751
     },
     "827482CC-A977-43D7-835E-8E8B6978E66A": {
       "name": "growmaster-1d3c",
@@ -28,7 +32,8 @@
       },
       "ip_address": "192.168.2.39",
       "mixed_enabled": true,
-      "mixed_external": false
+      "mixed_external": false,
+      "device_id": "growmaster-1d3c"
     },
     "C898B4F2-B452-7502-1A67-0536E77D49EA": {
       "name": "sps",
@@ -39,7 +44,8 @@
       "auth": {
         "user": "admin",
         "pass": "1234"
-      }
+      },
+      "device_id": "sps"
     },
     "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
       "name": "ThermoBeacon2",
@@ -50,7 +56,8 @@
       "auth": {
         "user": "admin",
         "pass": "1234"
-      }
+      },
+      "device_id": "ThermoBeacon2"
     }
   },
   "user": "admin",

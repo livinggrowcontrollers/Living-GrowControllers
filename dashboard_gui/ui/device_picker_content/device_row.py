@@ -114,14 +114,14 @@ class DeviceRow(BoxLayout):
 
 
         self.cap_container = GridLayout(
-            cols=4,                     # 👈 3 Spalten → ergibt automatisch 3 Reihen
+            cols=5,                     # 👈 3 Spalten → ergibt automatisch 3 Reihen
             size_hint=(None, None),
             height=dp(80),       # etwas höher für 3 Reihen
-            width=dp(180),        # kompakter als vorher
-            spacing=dp(2),
+            width=dp(260),        # kompakter als vorher
+            spacing=dp(8),
             padding=[0, 0]
         )
-        self.cap_container.width = dp(160)  # erstmal fix
+        self.cap_container.width = dp(200)  # erstmal fix
         self.cap_widgets = []
         self.cap_widgets = []
         
@@ -284,7 +284,7 @@ class DeviceRow(BoxLayout):
         text_col.add_widget(mac_lbl)
 
         # Channel Status Spalte
-        channel_col = BoxLayout(orientation="horizontal", size_hint=(None, 1), width=dp(600), spacing=dp(8))
+        channel_col = BoxLayout(orientation="horizontal", size_hint=(None, 1), width=dp(660), spacing=dp(8))
        
         status_col = BoxLayout(
             orientation="vertical",

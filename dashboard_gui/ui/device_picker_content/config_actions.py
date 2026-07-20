@@ -131,6 +131,9 @@ def copy_device(mac, rebuild_callback):
     # 🔥 HARD RESET IDENTITY
     new_id = str(uuid.uuid4())
     new_dev["mac"] = None
+    new_dev["device_id"] = ""
+    new_dev["hostname"] = ""
+    new_dev["ip_address"] = ""
     new_dev["name"] = f"{new_dev.get('name','')} (Copy)"
 
     devices[new_id] = new_dev

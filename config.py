@@ -41,8 +41,86 @@ DEFAULTS = {
     "language": "en",  # "en", "es", "de"
 }
 
+# A config UUID remains the key in ``devices``.  This field identifies the
+# physical Growmaster behind that entry and is intentionally never derived
+# again after a user has renamed the display name.
+DEVICE_DEFAULTS = {
+    "device_id": "",
+}
+
 
 _config = None
+
+
+def get_device_id(device):
+    """Return the persistent physical-device identity with legacy fallback."""
+    if not isinstance(device, dict):
+        return ""
+    return str(
+        device.get("device_id")
+        or device.get("hostname")
+        or device.get("name")
+        or ""
+    ).strip()
+
+
+def validate_device_id(device_id):
+    return (
+        isinstance(device_id, str)
+        and device_id.startswith("growmaster-")
+        and len(device_id) > len("growmaster-")
+    )
+
+
+def is_growmaster_device(device):
+    return validate_device_id(get_device_id(device))
+
+
+def _migrate_device_ids(cfg):
+    """Add the persistent ID once to legacy device entries.
+
+    Returns whether the in-memory config changed, so callers can persist one
+    atomic migration instead of writing during ordinary reads.
+    """
+    devices = cfg.get("devices", {})
+    if not isinstance(devices, dict):
+        return False
+
+    changed = False
+    for config_uuid, device in devices.items():
+        if not isinstance(device, dict):
+            continue
+
+        has_device_id = "device_id" in device
+        raw_device_id = device.get("device_id", "")
+        device_id = str(raw_device_id).strip()
+        if raw_device_id != device_id:
+            device["device_id"] = device_id
+            changed = True
+        if not device_id:
+            hostname = str(device.get("hostname", "")).strip()
+            candidate = hostname or str(device.get("name", "")).strip()
+            # An explicit empty value belongs to a copied, not-yet-connected
+            # entry.  Old configs have no key at all and are migrated once.
+            if not has_device_id or validate_device_id(hostname):
+                device_id = candidate
+                device["device_id"] = device_id
+                changed = True
+
+        if not validate_device_id(device_id) and cfg.get("developer_mode", False):
+            print(f"[DEVICE_ID] Invalid or missing device_id for device: {device.get('name') or config_uuid}")
+
+    return changed
+
+
+def _ensure_device_entry(cfg, mac):
+    devices = cfg.setdefault("devices", {})
+    entry = devices.setdefault(mac, {})
+    if not isinstance(entry, dict):
+        entry = devices[mac] = {}
+    for key, value in DEVICE_DEFAULTS.items():
+        entry.setdefault(key, value)
+    return entry
 
 
 def _init():
@@ -69,7 +147,10 @@ def _init():
     for k, v in DEFAULTS.items():
         data.setdefault(k, v)
 
+    migrated = _migrate_device_ids(data)
     _config = data
+    if migrated:
+        save(_config)
     return _config
 
 
@@ -102,7 +183,7 @@ def get_device_image(mac):
         return dev_entry["image_file"]
     
     # 2. Fallback / Automatisches Erraten anhand des Namens (wie im Setup)
-    name = dev_entry.get("name", "").lower()
+    name = get_device_id(dev_entry).lower() or dev_entry.get("name", "").lower()
     if "sps" in name:
         return "inkbird.png"
     elif "thermobeacon" in name:
@@ -117,10 +198,7 @@ def get_device_image(mac):
 def set_device_image(mac, image_file):
     """Speichert den Dateinamen des Bildes für ein bestimmtes Gerät"""
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["image_file"] = image_file.strip()
+    _ensure_device_entry(cfg, mac)["image_file"] = image_file.strip()
     save(cfg)
     
 def get_device_auth(mac):
@@ -132,8 +210,7 @@ def get_device_auth(mac):
 def set_device_auth(mac, user, pw):
     """Speichert user/pass für ein Gerät"""
     cfg = _init()
-    devs = cfg.setdefault("devices", {})
-    dev_entry = devs.setdefault(mac, {})
+    dev_entry = _ensure_device_entry(cfg, mac)
     dev_entry["auth"] = {"user": user, "pass": pw}
     save(cfg)
 
@@ -143,10 +220,7 @@ def get_device_ip(mac):
 
 def set_device_ip(mac, ip):
     cfg = _init()
-    devs = cfg.setdefault("devices", {}) # <-- Garantiert, dass es fest im cfg-Verzeichnis verankert ist
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["ip_address"] = ip.strip()
+    _ensure_device_entry(cfg, mac)["ip_address"] = ip.strip()
     save(cfg)
 
 def get_devices():
@@ -164,16 +238,14 @@ def get_device_profile(mac):
 
 def set_device_profile(mac, profile):
     cfg = _init()
-    devs = cfg["devices"]
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["profile"] = profile
+    _ensure_device_entry(cfg, mac)["profile"] = profile
     save(cfg)
 
 
 def set_devices_full(dev_dict):
     cfg = _init()
     cfg["devices"] = dev_dict
+    _migrate_device_ids(cfg)
     save(cfg)
 
 def get_theme():
@@ -229,9 +301,14 @@ def reload():
     for k, v in DEFAULTS.items():
         data.setdefault(k, v)
 
+    migrated = _migrate_device_ids(data)
+
     # ❗WICHTIG: Referenz NICHT ersetzen
     _config.clear()
     _config.update(data)
+
+    if migrated:
+        save(_config)
 
     print("[config] reload OK (in-place)")
 
@@ -263,29 +340,24 @@ def get_device_name(mac):
 
 def set_device_name(mac, name):
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["name"] = name
+    _ensure_device_entry(cfg, mac)["name"] = name
     save(cfg)
 
 def set_device_hostname(mac, hostname):
     """Speichert den mDNS-Hostname (ohne .local) für ein Gerät"""
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["hostname"] = hostname
+    entry = _ensure_device_entry(cfg, mac)
+    hostname = str(hostname or "").strip()
+    entry["hostname"] = hostname
+    if not entry.get("device_id") and validate_device_id(hostname):
+        entry["device_id"] = hostname
     save(cfg)
 
 def set_device_mac(mac, mac_addr):
     """Setzt/normalisiert die MAC-Adresse als Schlüssel/Attribut für ein Gerät"""
     cfg = _init()
-    devs = cfg.get("devices", {})
     # Wenn der Eintrag unter einer anderen MAC existiert, wird das nicht verschoben.
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["mac"] = mac_addr
+    _ensure_device_entry(cfg, mac)["mac"] = mac_addr
     save(cfg)
 def is_developer_mode():
     return bool(_init().get("developer_mode", False))
@@ -316,10 +388,7 @@ def get_mixed_enabled(mac):
 
 def set_mixed_enabled(mac, state: bool):
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["mixed_enabled"] = bool(state)
+    _ensure_device_entry(cfg, mac)["mixed_enabled"] = bool(state)
     save(cfg)
 
 
@@ -330,10 +399,7 @@ def get_mixed_external(mac):
 
 def set_mixed_external(mac, state: bool):
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["mixed_external"] = bool(state)
+    _ensure_device_entry(cfg, mac)["mixed_external"] = bool(state)
     save(cfg)
 
 
@@ -362,12 +428,9 @@ def get_mixed_modes(mac):
 def set_mixed_modes(mac, modes_set):
     """Speichert die aktiven Modi (Set) präzise als zwei getrennte Flags in die Config."""
     cfg = _init()
-    devs = cfg.setdefault("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-        
-    devs[mac]["mixed_internal"] = "internal" in modes_set
-    devs[mac]["mixed_external"] = "external" in modes_set
+    dev_entry = _ensure_device_entry(cfg, mac)
+    dev_entry["mixed_internal"] = "internal" in modes_set
+    dev_entry["mixed_external"] = "external" in modes_set
     save(cfg)
 
 def is_device_protected(mac):
@@ -376,10 +439,7 @@ def is_device_protected(mac):
 
 def set_device_protected(mac, state: bool):
     cfg = _init()
-    devs = cfg.get("devices", {})
-    if mac not in devs:
-        devs[mac] = {}
-    devs[mac]["protected"] = bool(state)
+    _ensure_device_entry(cfg, mac)["protected"] = bool(state)
     save(cfg)
 
 # Falls deine config.py Getter-Methoden nutzt, füge diese hinzu:

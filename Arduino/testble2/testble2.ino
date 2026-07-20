@@ -25,7 +25,6 @@
 #include "esp_sntp.h" 
 #include "system_reset.h" 
 #include "plant_planner.h" 
-#include "cloud_logging.h"
 ESPWatch watch;
 BLEBridge bleBridge;
 // DIE EINZIGE DEFINITION DES SERVERS
@@ -64,7 +63,6 @@ void setup() {
     BLEDevice::init("LGS_Grow_Master");
 
     grow_controller_init();
-    cloud_logging_init();
     ota_manager_init();
     // Hardware danach initialisieren (nutzt jetzt aktualisierte sysConfig)
     init_hardware();
@@ -154,7 +152,6 @@ void setup() {
 
 void loop() {
     WebModule::update();           // Web-Server am Leben erhalten
-    cloud_logging_update();        // Erstellt lokal Snapshots; HTTPS läuft im Hintergrund-Task
     SystemReset::update();         // <--- 3. PERMANENT DEN KNOPF ÜBERWACHEN
     
         

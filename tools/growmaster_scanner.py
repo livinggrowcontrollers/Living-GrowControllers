@@ -144,9 +144,12 @@ class ScannerWidget(BoxLayout):
         config_data = {"devices": {}}
         
         for mac_id, info in self.devices.items():
+            hostname = info["hostname"]
             config_data["devices"][mac_id] = {
-                "hostname": info["hostname"],
-                "ip_address": info["ip_address"]
+                "device_id": hostname,
+                "name": hostname,
+                "hostname": hostname,
+                "ip_address": info["ip_address"],
             }
         
         try:

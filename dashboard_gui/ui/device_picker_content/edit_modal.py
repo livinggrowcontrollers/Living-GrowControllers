@@ -136,12 +136,22 @@ class DeviceEditModal(ModalView):
             final_host = self.hostname_input.text.strip()
 
         device_entry = devices.setdefault(self.mac, {})
+        existing_device_id = str(device_entry.get("device_id", "")).strip()
         device_entry["name"] = self.name_input.text.strip()
         device_entry["ip_address"] = final_ip
         device_entry["hostname"] = final_host
         device_entry["mac"] = new_mac_value or self.mac
         device_entry["protected"] = bool(self.protected_cb.active)
         device_entry["auth"] = {"user": self.user_input.text.strip(), "pass": self.pass_input.text.strip()}
+        # The editable label never changes the physical identity.  A copied
+        # placeholder receives an ID only when it is linked to a real
+        # Growmaster hostname for the first time.
+        if existing_device_id:
+            device_entry["device_id"] = existing_device_id
+        elif config.validate_device_id(final_host):
+            device_entry["device_id"] = final_host
+        else:
+            device_entry["device_id"] = ""
         # Markiere diese Änderung als manuell vorgenommen, damit Hintergrund-Discovery
         # sie kurzzeitig nicht überschreibt.
         device_entry["_manual_update_ts"] = time.time()

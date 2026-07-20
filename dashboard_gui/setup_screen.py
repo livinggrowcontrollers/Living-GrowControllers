@@ -200,7 +200,12 @@ class SetupScreen(Screen):
         devices = {}
 
         for mac, sel in _selected.items():
-            name = _device_names.get(mac, mac)
+            discovered_name = _device_names.get(mac, mac)
+            existing_device = cfg.get("devices", {}).get(mac, {})
+            # Discovery supplies the physical name.  A user-selected display
+            # name must survive subsequent setup saves unchanged.
+            name = existing_device.get("name") or discovered_name
+            device_id = existing_device.get("device_id", "")
             img_file = ""
             
             # Standard-Felder vorbereiten
@@ -211,10 +216,12 @@ class SetupScreen(Screen):
             # --------------------------------------------------------
             # 💥 DIE AUTOMATISCHE GROWMASTER-REGELUNG
             # --------------------------------------------------------
-            lname = name.lower()
+            lname = discovered_name.lower()
             if "growmaster" in lname:
                 is_growmaster = True
                 img_file = "esp32_s3.png"
+                if not device_id:
+                    device_id = discovered_name.strip()
                 
                 # Prüfen, ob wir im AP-Modus (-0000) sind
                 if "-0000" in lname:
@@ -223,7 +230,9 @@ class SetupScreen(Screen):
                     print(f"[Setup] Growmaster im AP-Modus erkannt! IP: {auto_ip}")
                 else:
                     # Router-Modus: Suffix nutzen, IP muss WEG!
-                    auto_hostname = name.strip()
+                    # The hostname is a technical discovery value.  It must
+                    # never be rebuilt from the user-editable display name.
+                    auto_hostname = discovered_name.strip()
                     auto_ip = ""  # Explizit leeren String erzwingen!
                     print(f"[Setup] Growmaster im Router-Modus erkannt! IP wird zurückgesetzt.")
 
@@ -262,6 +271,7 @@ class SetupScreen(Screen):
 
             if any([adv, gatt, bridge]):
                 devices[mac] = {
+                    "device_id": device_id,
                     "name": name,
                     "adv_decoder": adv,
                     "gatt_decoder": gatt,
@@ -289,12 +299,12 @@ class SetupScreen(Screen):
 
         # Schritt 1: Erstmal alle neuen/aktualisierten Growmaster ganz oben einfügen
         for mac, dev in devices.items():
-            if "growmaster" in dev.get("name", "").lower():
+            if config.is_growmaster_device(dev):
                 sorted_devices[mac] = dev
 
         # Schritt 2: Bestehende Growmaster aus der alten Config retten, falls nicht in den neuen
         for mac, old_dev in cfg["devices"].items():
-            if "growmaster" in old_dev.get("name", "").lower() and mac not in sorted_devices:
+            if config.is_growmaster_device(old_dev) and mac not in sorted_devices:
                 sorted_devices[mac] = old_dev
 
         # Schritt 3: Alle anderen neuen Geräte (Inkbird, Thermopro, etc.) anhängen

@@ -20,7 +20,6 @@
 #include "plant_planner.h"
 #include <ESPmDNS.h>
 #include "ota_manager.h"
-#include "telemetry_snapshot.h"
 #include <Update.h>
 
 extern ESPWatch watch; 
@@ -51,7 +50,83 @@ void handleData() {
     static DynamicJsonDocument doc(6144);
     doc.clear(); // WICHTIG: Vor jeder Nutzung leeren!
     JsonObject obj = doc.to<JsonObject>();
-    telemetry_snapshot_fill(obj, mdns_hostname);
+    
+    JsonObject health = obj.createNestedObject("health");
+    JsonObject signal = health.createNestedObject("signal");
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        signal["rssi"] = WiFi.RSSI();
+    } else {
+        signal["rssi"] = -256; 
+    }
+
+    bool isRtcOk = watch.isRTCHealthy();
+    obj["rtc_found"] = isRtcOk;
+
+    if (isRtcOk) {
+        time_t now;
+        struct tm timeinfo;
+        time(&now);
+        localtime_r(&now, &timeinfo);
+        char timeBuf[20]; // Puffer vergrößert (von 10 auf 20), um Platz für Sekunden zu haben
+        
+        // Geändert auf "%02d:%02d:%02d" und timeinfo.tm_sec hinzugefügt:
+        sprintf(timeBuf, "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        
+        obj["rtc_time"] = String(timeBuf);
+    } else {
+        obj["rtc_time"] = "offline";
+    }
+
+    // =================================================================
+    // NEU: Echte Systemzeit (System-Uhrzeit) ausgeben für Boot-Abgleich
+    // =================================================================
+    time_t sysNow = time(nullptr);
+    struct tm sysTimeinfo;
+    localtime_r(&sysNow, &sysTimeinfo);
+    char sysTimeBuf[20];
+    // Option A: "HH:MM" -> "%02d:%02d"
+    // Option B: "HH:MM:SS" (besser für Boot-Analysen) -> "%02d:%02d:%02d"
+    sprintf(sysTimeBuf, "%02d:%02d:%02d", sysTimeinfo.tm_hour, sysTimeinfo.tm_min, sysTimeinfo.tm_sec);
+    obj["system_time"] = String(sysTimeBuf);
+    // =================================================================
+
+ 
+
+    obj["temp_in"] = getTempIn();
+    obj["temp_ext"] = getTempExt();
+    obj["humid_ext"] = getExternalHumidity();
+    obj["humid_in"] = getInternalHumidity();
+    obj["leaf_temp"] = -256.0f; // Leaf-Temp nicht verfügbar
+    obj["vbat"] = get_battery_voltage_now();
+    obj["rev"] = current_rev;
+    // Zusätzliche Geräte-Informationen für automatische Discovery
+    obj["hostname"] = mdns_hostname;
+    // NACHHER: Wenn im AP-Modus, liefere die korrekte Hotspot-IP, sonst die WLAN-IP
+    if (WiFi.getMode() == WIFI_AP) {
+        obj["ip_address"] = WiFi.softAPIP().toString(); // Liefert sauber "192.168.4.1"
+    } else {
+        obj["ip_address"] = WiFi.localIP().toString();  // Liefert die Heim-WLAN-IP (z.B. 192.168.2.20)
+    }
+    obj["mac"] = WiFi.macAddress();
+    
+    exhaust_fan_get_status(obj);
+    humidifier_get_status(obj);
+    climate_hub_get_status(obj);
+
+    // PATCHER BEGIN: CIRCULATION_GET_STATUS
+    circulation_fan_get_status(obj);
+    circulation_fan2_get_status(obj);
+    circulation_fan3_get_status(obj);
+// PATCHER END: CIRCULATION_GET_STATUS
+    
+    // Aufruf matcht jetzt exakt mit dem Prototyp aus plant_planner.h
+    obj["rev_plant_planner"] = get_plant_planner_rev();
+
+    light_control_get_status(obj);
+    grow_controller_get_status(obj); 
+    BLEScanner::get_status(obj);
+    ota_manager_get_status(obj);
     String response;
     serializeJson(doc, response);
     server.send(200, "application/json", response);

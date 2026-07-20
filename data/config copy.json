@@ -1,6 +1,7 @@
 {
   "devices": {
     "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+      "device_id": "LGS_Sensor",
       "name": "LGS_Sensor",
       "adv_decoder": "LGS_SENSOR",
       "gatt_decoder": "",
@@ -13,12 +14,14 @@
       }
     },
     "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21": {
+      "device_id": "TP351S (987A)",
       "name": "TP351S (987A)",
       "adv_decoder": "",
       "gatt_decoder": "ThermoPro_GATT",
       "bridge_profile": "ThermoPro_Bridge"
     },
     "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21_copy": {
+      "device_id": "",
       "name": "AP Modus (Copy)",
       "adv_decoder": "",
       "gatt_decoder": "ThermoPro_GATT",
@@ -31,6 +34,7 @@
       }
     },
     "827482CC-A977-43D7-835E-8E8B6978E66A": {
+      "device_id": "LGS_Sensor",
       "name": "LGS_Sensor",
       "adv_decoder": "LGS_SENSOR",
       "gatt_decoder": "",
@@ -43,18 +47,21 @@
       }
     },
     "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "device_id": "sps",
       "name": "sps",
       "adv_decoder": "Inkbird_ADV_Desktop",
       "gatt_decoder": "Inkbird_GATT",
       "bridge_profile": "Inkbird_Bridge"
     },
     "FF-FF-A1-00-00-01": {
+      "device_id": "LGS_NODE_17",
       "name": "LGS_NODE_17",
       "adv_decoder": "LGS_ADV",
       "gatt_decoder": "",
       "bridge_profile": ""
     },
     "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
+      "device_id": "ThermoBeacon2",
       "name": "ThermoBeacon2",
       "adv_decoder": "ThermoBeacon2_ADV",
       "gatt_decoder": "ThermoBeacon2_GATT",

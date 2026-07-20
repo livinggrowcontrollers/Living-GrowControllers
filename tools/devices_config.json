@@ -1,10 +1,14 @@
 {
   "devices": {
     "d064": {
+      "device_id": "growmaster-d064",
+      "name": "growmaster-d064",
       "hostname": "growmaster-d064",
       "ip_address": "192.168.2.20"
     },
     "1d3c": {
+      "device_id": "growmaster-1d3c",
+      "name": "growmaster-1d3c",
       "hostname": "growmaster-1d3c",
       "ip_address": "192.168.2.39"
     }
