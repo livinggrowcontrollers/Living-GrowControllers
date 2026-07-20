@@ -6,14 +6,14 @@
       }
     },
     "rtc_found": true,
-    "rtc_time": "11:17:49",
-    "system_time": "11:17:49",
+    "rtc_time": "11:23:57",
+    "system_time": "11:23:57",
     "temp_in": 23.9,
-    "temp_ext": 23.77,
-    "humid_ext": 47.88,
-    "humid_in": 47.91,
+    "temp_ext": 23.8,
+    "humid_ext": 46.9,
+    "humid_in": 46.78,
     "leaf_temp": -256,
-    "vbat": 3.975,
+    "vbat": 3.762,
     "rev": 0,
     "hostname": "growmaster-d064",
     "ip_address": "192.168.2.20",
@@ -27,7 +27,7 @@
     "exhaust_fan_state_reason_1": "idle_balanced",
     "exhaust_fan_state_reason_2": "",
     "humidifier_pct": 64,
-    "humidifier_speed_now": 20,
+    "humidifier_speed_now": 27,
     "humidifier_status": "humidity_low",
     "rev_humidifier": 15,
     "target_temp_min": 24,
@@ -41,7 +41,7 @@
     "exhaust_fan_night_reduction": false,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 78,
-    "circulation_fan_speed_now": 42,
+    "circulation_fan_speed_now": 24,
     "circulation_fan_min": 10,
     "circulation_fan_mode": "chao",
     "rev_circfan": 343,
@@ -72,14 +72,14 @@
     "light_state_reason": "MANUAL",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 11767,
+    "uptime_esp_s": 12135,
     "fw_ver": "v2.8.6-newfeature",
     "ip": "192.168.2.20",
     "ssid": "Cudy-Indoor",
-    "rssi": -50,
-    "free_heap": 145060,
-    "max_alloc": 98292,
-    "heap_usage": 179544,
+    "rssi": -52,
+    "free_heap": 148816,
+    "max_alloc": 102388,
+    "heap_usage": 175788,
     "boot_cause": "Software Reboot",
     "rev_grow": 82,
     "wifi_mode": 1,
@@ -111,19 +111,24 @@
     "ble_sensors": {
       "outside": {
         "ble_temp_outside": 25.37,
-        "ble_humid_outside": 45.05,
+        "ble_humid_outside": 44.53,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
       "inside": {
         "ble_temp_inside": 23.4375,
-        "ble_humid_inside": 47.8125,
+        "ble_humid_inside": 47.0625,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
-      "discovered_devices": []
+      "discovered_devices": [
+        {
+          "name": "ThermoBeacon2",
+          "mac": "f0:f1:00:00:06:19"
+        }
+      ]
     },
     "ota": {
       "ota_rev": 7558,
@@ -223,23 +228,23 @@
         }
       ]
     },
-    "timestamp": 1784539069.730282
+    "timestamp": 1784539437.8661902
   },
   "827482CC-A977-43D7-835E-8E8B6978E66A": {
     "health": {
       "signal": {
-        "rssi": -78
+        "rssi": -79
       }
     },
     "rtc_found": false,
     "rtc_time": "offline",
-    "system_time": "11:17:51",
+    "system_time": "11:23:59",
     "temp_in": -256,
     "temp_ext": -256,
     "humid_ext": -256,
     "humid_in": -256,
     "leaf_temp": -256,
-    "vbat": 4.2,
+    "vbat": 4.197,
     "rev": 0,
     "hostname": "growmaster-1d3c",
     "ip_address": "192.168.2.39",
@@ -267,19 +272,19 @@
     "exhaust_fan_night_reduction": true,
     "circulation_fan_rpm": 0,
     "circulation_fan_pct": 60,
-    "circulation_fan_speed_now": 40,
+    "circulation_fan_speed_now": 41,
     "circulation_fan_min": 20,
     "circulation_fan_mode": "nat",
     "rev_circfan": 354,
     "circulation_fan2_rpm": 0,
     "circulation_fan2_pct": 60,
-    "circulation_fan2_speed_now": 40,
+    "circulation_fan2_speed_now": 41,
     "circulation_fan2_min": 20,
     "circulation_fan2_mode": "nat",
     "rev_circfan2": 356,
     "circulation_fan3_rpm": 0,
     "circulation_fan3_pct": 60,
-    "circulation_fan3_speed_now": 40,
+    "circulation_fan3_speed_now": 41,
     "circulation_fan3_min": 20,
     "circulation_fan3_mode": "nat",
     "rev_circfan3": 358,
@@ -293,19 +298,19 @@
     "l_sunrise": 60,
     "l_sunset": 60,
     "light_climate_override": false,
-    "light_remaining": 522,
+    "light_remaining": 516,
     "rev_light": 2,
     "light_state_reason": "DAY",
     "dev_name": "LGS_Grow_Master",
     "log_level": 2,
-    "uptime_esp_s": 12422,
+    "uptime_esp_s": 12790,
     "fw_ver": "v2.8.6-newfeature",
     "ip": "192.168.2.39",
     "ssid": "Cudy-Indoor",
-    "rssi": -78,
-    "free_heap": 147816,
+    "rssi": -79,
+    "free_heap": 151912,
     "max_alloc": 106484,
-    "heap_usage": 176788,
+    "heap_usage": 172692,
     "boot_cause": "Software Reboot",
     "rev_grow": 32,
     "wifi_mode": 1,
@@ -337,28 +342,19 @@
     "ble_sensors": {
       "outside": {
         "ble_temp_outside": 25.37,
-        "ble_humid_outside": 45.05,
+        "ble_humid_outside": 44.53,
         "online": true,
         "mac": "49:25:08:23:07:21",
         "name": "sps"
       },
       "inside": {
         "ble_temp_inside": 23.4375,
-        "ble_humid_inside": 47.8125,
+        "ble_humid_inside": 47.0625,
         "online": true,
         "mac": "f0:f1:00:00:06:19",
         "name": "ThermoBeacon2"
       },
-      "discovered_devices": [
-        {
-          "name": "sps",
-          "mac": "49:25:08:23:07:21"
-        },
-        {
-          "name": "ThermoBeacon2",
-          "mac": "f0:f1:00:00:06:19"
-        }
-      ]
+      "discovered_devices": []
     },
     "ota": {
       "ota_rev": 26628,
@@ -400,6 +396,6 @@
         }
       ]
     },
-    "timestamp": 1784539069.730282
+    "timestamp": 1784539437.8661902
   }
 }
