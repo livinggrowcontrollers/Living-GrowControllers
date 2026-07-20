@@ -318,6 +318,7 @@ void cloud_logging_init() {
         active_config.timeout_seconds = preferences.getUShort(PREF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS);
         preferences.end();
     }
+
     if (!valid_device_id(active_config.device_id)) {
         active_config.device_id = default_device_id();
         save_config(active_config, false);
