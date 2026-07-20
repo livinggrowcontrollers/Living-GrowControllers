@@ -1,18 +1,18 @@
 {
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 32,
+      "rev_plant_planner": 34,
       "plants": [
         {
           "slot": 0,
           "used": true,
           "name": "Krautr\u00fcbe",
           "strain": "",
-          "breeder": "",
+          "breeder": "SpanishSeeds",
           "phenotype": "",
           "pot_size": "",
-          "medium": "",
-          "light": "",
+          "medium": "LightMix",
+          "light": "720 Watt ElectroGrow",
           "location": "",
           "notes": "",
           "tags": "",

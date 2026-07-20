@@ -117,11 +117,11 @@ class DeviceRow(BoxLayout):
             cols=5,                     # 👈 3 Spalten → ergibt automatisch 3 Reihen
             size_hint=(None, None),
             height=dp(80),       # etwas höher für 3 Reihen
-            width=dp(260),        # kompakter als vorher
-            spacing=dp(8),
+            width=dp(280),        # kompakter als vorher
+            spacing=dp(4),
             padding=[0, 0]
         )
-        self.cap_container.width = dp(200)  # erstmal fix
+        self.cap_container.width = dp(220)  # erstmal fix
         self.cap_widgets = []
         self.cap_widgets = []
         

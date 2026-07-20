@@ -209,7 +209,7 @@ class PlantEditorPopup(Popup):
             halign="left",
             valign="top",
             color=(0.55, 0.62, 0.68, 1),
-            font_size=sp_scaled(12),
+            font_size=sp_scaled(18),
         )
         for label in (title_label, subtitle_label):
             label.bind(size=lambda inst, value: setattr(inst, "text_size", value))
@@ -239,7 +239,7 @@ class PlantEditorPopup(Popup):
             halign="left",
             valign="middle",
             color=(0.62, 0.7, 0.76, 1),
-            font_size=sp_scaled(11),
+            font_size=sp_scaled(18),
         )
         field_label.bind(
             size=lambda instance, value: setattr(instance, "text_size", value)
@@ -249,7 +249,7 @@ class PlantEditorPopup(Popup):
             text=str(self.current_plant.get(key, "")),
             hint_text=hint,
             multiline=False,
-            font_size=sp_scaled(14),
+            font_size=sp_scaled(21),
         )
         self._style_input(field)
         field.bind(text=lambda _inst, value, field_key=key: self.current_plant.update({field_key: value}))
@@ -280,7 +280,7 @@ class PlantEditorPopup(Popup):
             halign="left",
             valign="middle",
             color=(0.62, 0.76, 0.84, 1),
-            font_size=sp_scaled(13),
+            font_size=sp_scaled(18),
             text_size=(dp_scaled(1000), None),
         ))
 
@@ -289,13 +289,13 @@ class PlantEditorPopup(Popup):
             text="[b]−[/b]",
             size_hint_x=None,
             width=dp_scaled(70),
-            font_size=sp_scaled(28),
+            font_size=sp_scaled(24),
         )
         plus = GlassButton(
             text="[b]+[/b]",
             size_hint_x=None,
             width=dp_scaled(70),
-            font_size=sp_scaled(28),
+            font_size=sp_scaled(24),
         )
         value_box = BoxLayout(spacing=dp_scaled(6))
         value_input = TextInput(
@@ -311,7 +311,7 @@ class PlantEditorPopup(Popup):
             size_hint_x=None,
             width=dp_scaled(56),
             color=(0.55, 0.72, 0.8, 1),
-            font_size=sp_scaled(15),
+            font_size=sp_scaled(18),
         )
         value_box.add_widget(value_input)
         value_box.add_widget(unit_label)
@@ -346,13 +346,13 @@ class PlantEditorPopup(Popup):
             text="[b]‹[/b]",
             size_hint_x=None,
             width=dp_scaled(76),
-            font_size=sp_scaled(34),
+            font_size=sp_scaled(24),
         )
         next_button = GlassButton(
             text="[b]›[/b]",
             size_hint_x=None,
             width=dp_scaled(76),
-            font_size=sp_scaled(34),
+            font_size=sp_scaled(24),
         )
         preview = BoxLayout(orientation="vertical", spacing=dp_scaled(3))
         self.preview_image = Image(
@@ -364,7 +364,7 @@ class PlantEditorPopup(Popup):
             size_hint_y=None,
             height=dp_scaled(24),
             color=(0.9, 0.75, 1, 1),
-            font_size=sp_scaled(15),
+            font_size=sp_scaled(18),
         )
         preview.add_widget(self.preview_image)
         preview.add_widget(self.preview_label)
@@ -403,13 +403,13 @@ class PlantEditorPopup(Popup):
                 size_hint_y=None,
                 height=dp_scaled(24),
                 color=(0.82, 0.7, 0.5, 1),
-                font_size=sp_scaled(12),
+                font_size=sp_scaled(16),
             ))
             date_key = f"{phase}_start"
             current_date = self.current_plant.get(date_key, "")
             button = GlassButton(
                 text=current_date or "SET DATE",
-                font_size=sp_scaled(16),
+                font_size=sp_scaled(18),
             )
 
             def open_picker(_button, phase_key=date_key, target_button=button):
@@ -434,7 +434,7 @@ class PlantEditorPopup(Popup):
             text=str(self.current_plant.get("notes", "")),
             hint_text="Notes, observations, reminders ...",
             multiline=True,
-            font_size=sp_scaled(16),
+            font_size=sp_scaled(18),
         )
         self._style_input(self.notes_input)
         card.add_widget(self.notes_input)
@@ -446,7 +446,7 @@ class PlantEditorPopup(Popup):
             height=dp_scaled(45),
             spacing=dp_scaled(12),
         )
-        cancel = GlassButton(text="CANCEL", font_size=sp_scaled(17))
+        cancel = GlassButton(text="CANCEL", font_size=sp_scaled(18))
         save = GlassButton(text="[b]SAVE PLANT[/b]", font_size=sp_scaled(18))
         save.background_color = (0.06, 0.42, 0.2, 0.82)
         cancel.bind(on_release=lambda *_: self.dismiss())

@@ -73,13 +73,13 @@ class HumidifierTile(BoxLayout):
 
         self.labels_column = BoxLayout(
             orientation="vertical",
-            size_hint=(0.6, 1),
+            size_hint=(0.7, 1),
             spacing=dp_scaled(2)
         )
 
         self.image_column = BoxLayout(
             orientation="vertical",
-            size_hint=(0.4, 1)
+            size_hint=(0.3, 1)
         )
 
         # ================= IMAGE =================
