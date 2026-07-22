@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/circulation/state_adapter.py
+
 from dataclasses import dataclass
 
 from dashboard_gui.circulation_fan_registry import fan_snapshot

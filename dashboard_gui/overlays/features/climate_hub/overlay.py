@@ -1,3 +1,6 @@
+# dashboard_gui/overlays/features/climate_hub/overlay.py
+
+
 import os
 import time
 
@@ -53,12 +56,12 @@ class ClimateHubOverlay(ControlOverlay):
         self.btn_phase.bind(on_release=self._open_stage_menu)
         self.header.add_action(self.btn_phase, dp_scaled(190))
 
-        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(80), spacing=dp_scaled(10))
+        top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(90), spacing=dp_scaled(10))
         top.add_widget(Image(source=CLIMATE_HUB_PICTURE, size_hint=(None, 1), width=dp_scaled(180)))
         middle = BoxLayout(orientation="vertical", size_hint_x=0.75, spacing=dp_scaled(2))
-        self.lbl_live_temp = Label(text="Live Temperature: --", font_size=sp_scaled(18), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
-        self.lbl_live_hum = Label(text="Live Humidity: --", font_size=sp_scaled(18), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
-        self.lbl_live_vpd = Label(text="Live VPD: --", font_size=sp_scaled(18), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
+        self.lbl_live_temp = Label(text="Live Temperature: --", font_size=sp_scaled(21), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
+        self.lbl_live_hum = Label(text="Live Humidity: --", font_size=sp_scaled(21), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
+        self.lbl_live_vpd = Label(text="Live VPD: --", font_size=sp_scaled(21), bold=True, color=(1, 1, 1, 0.9), halign="left", valign="middle")
         for label in (self.lbl_live_temp, self.lbl_live_hum, self.lbl_live_vpd):
             label.bind(size=label.setter("text_size"))
             middle.add_widget(label)

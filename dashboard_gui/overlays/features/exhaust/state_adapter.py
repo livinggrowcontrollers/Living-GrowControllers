@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/exhaust/state_adapter.py
+
 from dataclasses import dataclass
 
 from dashboard_gui.overlays.features.shared.coercion import as_int

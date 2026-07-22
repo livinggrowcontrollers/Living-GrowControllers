@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/light/state_adapter.py
+
 from dataclasses import dataclass
 
 from dashboard_gui.ui.common.logic.light_time import calculate_light_time

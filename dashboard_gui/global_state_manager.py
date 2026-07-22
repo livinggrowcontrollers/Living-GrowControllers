@@ -1,5 +1,5 @@
 # dashboard_gui/global_state_manager.py
-# HEARTBEAT + MULTI-DEVICE – CLEAN VERSION
+
 from kivy.clock import Clock
 import time
 import config

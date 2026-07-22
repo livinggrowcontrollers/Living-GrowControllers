@@ -1,3 +1,5 @@
+# android_service.py
+
 """Zentrale Aufloesung der von python-for-android erzeugten Service-Klasse."""
 
 SERVICE_NAME = "ble_service"

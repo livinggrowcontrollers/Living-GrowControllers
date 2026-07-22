@@ -1,3 +1,5 @@
+# permission_fix.py
+
 """Android-Startfreigabe fuer BLE und Foreground-Service.
 
 Die sichtbare Activity besitzt diesen Ablauf. Der Service selbst fordert keine

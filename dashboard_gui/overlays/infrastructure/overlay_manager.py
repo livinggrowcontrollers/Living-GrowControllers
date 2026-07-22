@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/infrastructure/overlay_manager.py
+
 from .contracts import OverlayKey
 
 

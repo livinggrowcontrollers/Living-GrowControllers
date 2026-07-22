@@ -1,4 +1,6 @@
 # dashboard_gui/ui/common/inactive_devices_overlay.py
+
+
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label

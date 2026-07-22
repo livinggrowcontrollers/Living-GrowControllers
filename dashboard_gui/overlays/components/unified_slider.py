@@ -13,6 +13,9 @@
 #   - Future-proof for light_overlay 2-point expansion
 ###############################################################################
 # Canonical slider implementation for control overlays.
+
+# dashboard_gui/overlays/components/unified_slider.py
+
 from kivy.uix.widget import Widget
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty, AliasProperty
 from kivy.graphics import Color, RoundedRectangle, Ellipse, Line

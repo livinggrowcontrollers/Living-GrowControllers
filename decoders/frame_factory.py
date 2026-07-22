@@ -1,9 +1,14 @@
-# -*- coding: utf-8 -*-
+# decoders/frame_factory.py
+
 import time
 import config
 import calculator
 from dashboard_gui.circulation_fan_registry import add_normalized_fans
 from decoders.binary_parser import load_profile, decode_with_profile
+
+
+def _valid_rssi(val):
+    return val is not None and val > -250 and val != -256
 
 def offline_channel_frame(raw_hex=None):
     unit = f"°{config.get_temperature_unit().upper()}"
@@ -112,6 +117,9 @@ def build_web_telemetry(web_dec, current_web, unit):
         "light_pct": current_web.get("light_pct", 0), "light_mode": current_web.get("light_mode", "off"),
         "uptime_esp_s": current_web.get("uptime_esp_s", 0), "free_heap": current_web.get("free_heap", 0),
         
+
+
+
         "rssi": {
             "value": raw_rssi if _valid_rssi(raw_rssi) else None,
             "unit": "dBm"

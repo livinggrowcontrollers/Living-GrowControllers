@@ -1,5 +1,5 @@
 
-
+# dashboard_gui/ui/grow_controller_content/alternative_gpio_settings.py
 import os
 
 from kivy.uix.popup import Popup
@@ -20,6 +20,7 @@ from kivy.uix.scrollview import ScrollView
 from dashboard_gui.ui.common.buttons.glass_button import GlassButton
 from dashboard_gui.ui.grow_controller_content.pin_matrix import REQUIRED_ROLES, get_pin_info
 from dashboard_gui.circulation_fan_registry import MAX_CIRCULATION_FANS, fan_gpio_keys
+from dashboard_gui.ui.grow_controller_content.zoom_hint_ovrelay import ZoomHintOverlay
 
 ASSET_ROOT = os.path.join("dashboard_gui", "assets")
 PINOUT_PIC = os.path.join(ASSET_ROOT, "hardware_pics", "esp32_pinout.png")
@@ -122,7 +123,14 @@ OFFSET_Y = (WORKSPACE_SIZE[1] - IMAGE_SIZE[1]) / 2
 class ZoomableGpioCanvas(Scatter):
     """Scatter with the ImageViewer's explicit mouse-wheel zoom behaviour."""
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.on_interaction = None
+
     def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos) and self.on_interaction:
+            self.on_interaction()
+
         if self.collide_point(*touch.pos) and touch.is_mouse_scrolling:
             if touch.button == "scrolldown":
                 self.zoom(1.1, touch.pos)
@@ -130,6 +138,8 @@ class ZoomableGpioCanvas(Scatter):
                 self.zoom(0.9, touch.pos)
             return True
         return super().on_touch_down(touch)
+
+
 
     def zoom(self, factor, anchor_pos):
         """Scale around the cursor/gesture anchor without moving its GPIO target."""
@@ -166,7 +176,6 @@ class AlternativeGpioSettings(Popup):
         root.bind(pos=lambda s, v: setattr(root.bg, "pos", v), size=lambda s, v: setattr(root.bg, "size", v))
 
         # 2. Beschnittener Sichtbereich mit einer frei verschieb- und zoombaren Ebene.
-        # Scatter transformiert Bild, Pin-Buttons und Labels gemeinsam.
         self.viewport = StencilView(
             size_hint=(None, None),
             size=(SCROLL_VIEW_WIDTH, SCROLL_VIEW_HEIGHT),
@@ -184,7 +193,21 @@ class AlternativeGpioSettings(Popup):
         )
         self.viewport.add_widget(self.gpio_canvas)
 
-        # 3. Feste Arbeitsfläche innerhalb der transformierbaren Ebene.
+        # 3. Zoom-Hinweis direkt über dem Viewport positionieren
+        hint_container = AnchorLayout(
+            anchor_x="center",
+            anchor_y="top",
+            padding=[0, 15, 0, 0],
+            size_hint=(None, None),
+            size=(SCROLL_VIEW_WIDTH, SCROLL_VIEW_HEIGHT),
+        )
+        self.zoom_hint = ZoomHintOverlay()
+        hint_container.add_widget(self.zoom_hint)
+        root.add_widget(hint_container)
+
+        self.gpio_canvas.on_interaction = self.zoom_hint.dismiss
+
+        # 4. Feste Arbeitsfläche innerhalb der transformierbaren Ebene.
         self.workspace = Widget(size_hint=(None, None), size=WORKSPACE_SIZE)
         self.gpio_canvas.add_widget(self.workspace)
 

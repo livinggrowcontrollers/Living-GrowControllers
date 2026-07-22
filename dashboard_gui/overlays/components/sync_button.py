@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/components/sync_button.py
+
 from kivy.uix.button import Button
 
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled

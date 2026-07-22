@@ -1,3 +1,5 @@
+# dashboard_gui/ui/device_picker_content/edit_modal.py
+
 from concurrent.futures import ThreadPoolExecutor
 
 import config
@@ -45,18 +47,18 @@ class DeviceEditModal(ModalView):
             size=lambda *_: setattr(self.bg_rect, "size", popup_layout.size)
         )
 
-        self.name_input = TextInput(text=dev.get("name", ""), multiline=False, font_size=sp_scaled(18), size_hint_y=None, height=dp_scaled(42))
-        self.ip_input = TextInput(text=dev.get("ip_address", ""), hint_text="Webserver IP (Auto-Fill)", multiline=False, font_size=sp_scaled(15), size_hint_y=None, height=dp_scaled(42))
-        self.hostname_input = TextInput(text=dev.get("hostname", ""), hint_text="mDNS Hostname", multiline=False, font_size=sp_scaled(15), size_hint_y=None, height=dp_scaled(42))
-        self.user_input = TextInput(text=dev.get("auth", {}).get("user", ""), hint_text="Username", multiline=False, font_size=sp_scaled(15), size_hint_y=None, height=dp_scaled(42))
-        self.pass_input = TextInput(text=dev.get("auth", {}).get("pass", ""), hint_text="Password", password=True, multiline=False, font_size=sp_scaled(15), size_hint_y=None, height=dp_scaled(42))
+        self.name_input = TextInput(text=dev.get("name", ""), multiline=False, font_size=sp_scaled(27), size_hint_y=None, height=dp_scaled(50))
+        self.ip_input = TextInput(text=dev.get("ip_address", ""), hint_text="Webserver IP (Auto-Fill)", multiline=False, font_size=sp_scaled(27),  size_hint_y=None, height=dp_scaled(50))
+        self.hostname_input = TextInput(text=dev.get("hostname", ""), hint_text="mDNS Hostname", multiline=False, font_size=sp_scaled(27), size_hint_y=None, height=dp_scaled(50))
+        self.user_input = TextInput(text=dev.get("auth", {}).get("user", ""), hint_text="Username", multiline=False, font_size=sp_scaled(27), size_hint_y=None, height=dp_scaled(50))
+        self.pass_input = TextInput(text=dev.get("auth", {}).get("pass", ""), hint_text="Password", password=True, multiline=False, font_size=sp_scaled(27), size_hint_y=None, height=dp_scaled(50))
 
         self.protected_cb = CheckBox(active=bool(dev.get("protected", False)))
         prot_row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(40))
         prot_row.add_widget(Label(text="Schreibschutz:", size_hint_x=0.8, halign="left"))
         prot_row.add_widget(self.protected_cb)
 
-        mdns_btn = Button(text="[font=FA]\uf002[/font]  Scan mDNS", markup=True, size_hint_y=None, height=dp_scaled(42), background_down="", background_color=(0.2, 0.5, 0.9, 1))
+        mdns_btn = Button(text="[font=FA]\uf002[/font]  Scan mDNS", markup=True, size_hint_y=None, height=dp_scaled(50), background_down="", background_color=(0.2, 0.5, 0.9, 1))
 
         popup_layout.add_widget(self.name_input)
         popup_layout.add_widget(mdns_btn)
@@ -91,9 +93,7 @@ class DeviceEditModal(ModalView):
         self.bind(on_dismiss=lambda *_: self._stop_refresh())
 
     def _start_refresh(self, *a):
-        if self._refresh_ev is None:
-            # refresh every 1s while modal is open
-            self._refresh_ev = Clock.schedule_interval(self._refresh_fields, 1.0)
+        return
 
     def _stop_refresh(self, *a):
         try:

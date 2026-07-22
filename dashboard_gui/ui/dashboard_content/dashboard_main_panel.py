@@ -45,7 +45,6 @@ class DashboardMainPanel(GridLayout):
         for tile in self.tile_map.values():
             tile.refresh_metric_theme()
         
-    # (update_from_data & _apply_tile_visibility bleiben logisch intakt wie vorher)
 
 
 

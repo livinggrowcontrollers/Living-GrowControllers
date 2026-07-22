@@ -43,26 +43,27 @@ class DeviceRegistry:
             self._devices.pop(mac, None)
             self._circuit_breakers.pop(mac, None)
 
+    from urllib.parse import urlparse
+
     def build_targets(self, mac, dev_cfg):
         ip_cfg = (dev_cfg.get("ip_address") or "").strip()
         hostname = (dev_cfg.get("hostname") or "").strip().lower()
 
-        valid_ip = _is_valid_ip(ip_cfg)
-        valid_host = _is_valid_hostname(hostname)
-
-        # ❗ REGEL 1: wenn config Müll → STOP
-        if not valid_ip and not valid_host:
-            return []
-
         targets = []
 
-        # ❗ REGEL 2: config hat absolute priorität
-        if valid_ip:
-            targets.append(f"http://{ip_cfg}")
-        if valid_host:
-            targets.append(f"http://{hostname}.local")
-        return targets
+        # Vollständige URL eingetragen?
+        if ip_cfg.startswith("http://") or ip_cfg.startswith("https://"):
+            return [ip_cfg.rstrip("/")]
 
+        # Normale IPv4
+        if _is_valid_ip(ip_cfg):
+            targets.append(f"http://{ip_cfg}")
+
+        # mDNS
+        if _is_valid_hostname(hostname):
+            targets.append(f"http://{hostname}.local")
+
+        return targets
     def is_cooldown(self, mac):
         """Prüft, ob ein Gerät aktuell wegen Fehlern blockiert ist."""
         with self._lock:

@@ -1,3 +1,6 @@
+# dashboard_gui/circulation_fan_registry.py
+
+
 """Single protocol adapter for the up-to-three generated circulation fans."""
 
 MAX_CIRCULATION_FANS = 3

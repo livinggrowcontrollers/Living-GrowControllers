@@ -1,4 +1,5 @@
-#bridgemanager
+# bridge_manager.py
+
 from platform_utils import is_android, is_windows, is_linux, is_macos
 import os
 import config

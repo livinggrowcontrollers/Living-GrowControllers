@@ -1,3 +1,5 @@
+# dashboard_gui/setup_screen.py
+
 import os
 import json
 from kivy.uix.screenmanager import Screen

@@ -1,4 +1,5 @@
 # dashboard_gui/overlays/components/status_colors.py
+
 """Canonical color mapping for overlay panels, tiles and header icons."""
 
 

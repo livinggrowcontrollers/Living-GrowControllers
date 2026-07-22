@@ -1,0 +1,239 @@
+# Buildozer / Kivy Android Build – Referenzdokumentation 2026
+
+## Ziel
+
+Diese Dokumentation basiert **ausschließlich auf praktisch durchgeführten Tests**. Es wurden keine Aussagen aus Foren, Blogs oder KI-Empfehlungen übernommen, sofern sie nicht durch eigene Builds verifiziert wurden.
+
+---
+
+# Ausgangssituation
+
+Über mehrere Jahre wurde eine eingefrorene Buildumgebung verwendet.
+
+Typische Merkmale:
+
+* feste python-for-android-Version
+* fest gepinnte Python-Version
+* fest gepinnte Pillow-Version
+* weitere fest gepinnte Abhängigkeiten
+* Sorge vor neueren Python-Versionen
+
+Dadurch entstand die Annahme, dass aktuelle Versionen von Buildozer bzw. python-for-android nicht mehr zuverlässig funktionieren.
+
+Diese Annahme wurde im Rahmen dieser Tests überprüft.
+
+---
+
+# Neue Buildozer-Konfiguration
+
+Die wichtigste Änderung bestand darin, sämtliche unnötigen Versionsbindungen zu entfernen.
+
+Anstelle von
+
+```ini
+requirements = python3==3.11.9,setuptools,kivy,pyjnius,pillow==9.5.0,certifi,...
+```
+
+wurde verwendet
+
+```ini
+requirements = python3,setuptools,kivy,pyjnius,pillow,certifi,six,kivy_garden.graph,zeroconf,ifaddr
+```
+
+Außerdem wurde entfernt:
+
+```ini
+p4a.source_dir = ...
+```
+
+Dadurch verwendet Buildozer automatisch die aktuelle python-for-android-Version.
+
+---
+
+# Verwendete Android-Konfiguration
+
+```ini
+android.minapi = 29
+android.ndk_api = 29
+android.archs = arm64-v8a
+
+android.sdk_path = ~/.buildozer/android/platform/android-sdk
+android.ndk_path = ~/.buildozer/android/platform/android-ndk-r25b
+```
+
+SDK und NDK wurden bewusst beibehalten.
+
+Der Test sollte ausschließlich die Buildumgebung überprüfen.
+
+---
+
+# Getestete Android API-Versionen
+
+Erfolgreich gebaut:
+
+* API 33
+* API 34
+* API 35
+* API 36
+
+---
+
+# Laufzeittests
+
+Erfolgreich getestet:
+
+* App startet
+* BLE-Service
+* Zeroconf
+* Kivy Garden Graph
+* allgemeine Funktion der Anwendung
+
+---
+
+# Python-Versionen
+
+## Host
+
+Getestet:
+
+* Python 3.11 ✅
+* Python 3.12 ✅
+
+Beide Host-Versionen konnten erfolgreich Buildozer ausführen.
+
+---
+
+## Android-App
+
+Während des Builds wurde verwendet:
+
+Python 3.14
+
+Der Build wurde erfolgreich abgeschlossen.
+
+---
+
+# Beobachtung während des Builds
+
+Während des Buildprozesses erschienen mehrfach Meldungen wie
+
+```
+No matching distribution found for pyjnius==1.7.0
+```
+
+sowie
+
+```
+No matching distribution found for android
+```
+
+Diese Meldungen führten **nicht** zum Buildabbruch.
+
+Die APK wurde dennoch vollständig erstellt.
+
+Die Meldungen stammen aus einem internen pip-Dry-Run und waren in den durchgeführten Tests nicht kritisch.
+
+---
+
+# Härtetest
+
+Durchgeführt wurde anschließend:
+
+* buildozer clean
+* Löschen des kompletten Projektordners `.buildozer`
+* Neuer Download von python-for-android
+* kompletter Neuaufbau
+
+SDK und NDK blieben erhalten.
+
+Auch dieser Test verlief erfolgreich.
+
+---
+
+# Host-Umgebung (Python 3.11)
+
+Installierte Pakete:
+
+```
+appdirs 1.4.4
+bleak 3.0.2
+build 1.4.4
+buildozer 1.5.0
+certifi 2026.4.22
+charset-normalizer 3.4.7
+colorama 0.4.6
+Cython 0.29.36
+dbus-fast 5.0.22
+distlib 0.4.0
+docutils 0.22.4
+filelock 3.29.0
+filetype 1.2.0
+idna 3.13
+ifaddr 0.2.0
+Jinja2 3.1.6
+Kivy 2.3.1
+Kivy-Garden 0.1.5
+kivy-garden.graph 0.4.0
+MarkupSafe 3.0.3
+meson 1.11.1
+ninja 1.13.0
+packaging 26.1
+pexpect 4.9.0
+Pillow 9.5.0
+pip 26.0.1
+platformdirs 4.9.6
+ptyprocess 0.7.0
+Pygments 2.20.0
+pyjnius 1.6.1
+pyproject_hooks 1.2.0
+python-discovery 1.2.2
+python-for-android 2023.9.16
+requests 2.33.1
+setuptools 82.0.1
+sh 2.3.0
+six 1.17.0
+toml 0.10.2
+typing_extensions 4.15.0
+urllib3 2.6.3
+virtualenv 21.2.4
+wheel 0.43.0
+zeroconf 0.149.16
+```
+
+---
+
+# Erkenntnisse
+
+## Bestätigt
+
+✓ Aktuelle python-for-android-Version funktioniert.
+
+✓ Buildozer lädt python-for-android automatisch, wenn `p4a.source_dir` entfernt wird.
+
+✓ Python 3.14 kann als Ziel-Python erfolgreich verwendet werden.
+
+✓ Host Python 3.11 funktioniert.
+
+✓ Host Python 3.12 funktioniert.
+
+✓ Android API 33–36 konnten erfolgreich gebaut werden.
+
+✓ BLE funktioniert.
+
+✓ Zeroconf funktioniert.
+
+✓ Graphen funktionieren.
+
+✓ Entfernte Versionsbindungen führten zu einem erfolgreichen Build.
+
+---
+
+# Schlussfolgerung
+
+Die während dieser Testreihe verwendete moderne Buildkonfiguration erwies sich als vollständig funktionsfähig.
+
+Die zuvor verwendete eingefrorene Buildumgebung bleibt als Backup erhalten.
+
+Für die weitere Entwicklung wird die moderne Buildumgebung empfohlen, da sie erfolgreich reproduzierbar aufgebaut und getestet wurde.
+
+Alle Aussagen dieser Dokumentation beruhen ausschließlich auf den in dieser Testreihe praktisch durchgeführten Builds und Funktionstests.

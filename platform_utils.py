@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+# platform_utils.py
 """
 Central platform helpers for the project.
 

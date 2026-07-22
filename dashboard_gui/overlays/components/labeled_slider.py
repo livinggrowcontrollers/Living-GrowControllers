@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/components/labeled_slider.py
+
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 

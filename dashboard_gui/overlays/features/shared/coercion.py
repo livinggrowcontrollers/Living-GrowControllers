@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/shared/coercion.py
+
 def as_int(value, default=0):
     try:
         return int(value)

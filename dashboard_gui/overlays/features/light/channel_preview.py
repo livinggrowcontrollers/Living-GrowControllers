@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/light/channel_preview.py
+
 from kivy.graphics import Color, Line, RoundedRectangle
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label

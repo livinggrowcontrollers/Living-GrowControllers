@@ -1,3 +1,4 @@
+# dashboard_gui/settings_screen.py
 # -*- coding: utf-8 -*-
 """
 SettingsScreen – zentrale Einstellungsseite

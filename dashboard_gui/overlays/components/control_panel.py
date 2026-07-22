@@ -1,3 +1,6 @@
+# dashboard_gui/overlays/components/control_panel.py
+
+
 from kivy.graphics import Color, Line, RoundedRectangle
 from kivy.uix.boxlayout import BoxLayout
 

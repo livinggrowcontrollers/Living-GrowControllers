@@ -1,3 +1,6 @@
+# dashboard_gui/overlays/features/light/overlay.py
+
+
 import os
 import time
 
@@ -41,6 +44,7 @@ class LightOverlay(ControlOverlay):
             **kwargs,
         )
 
+# 1. Tabs definieren
         tabs = BoxLayout(size_hint_y=None, height=dp_scaled(20), spacing=dp_scaled(8))
         self.btn_tab_main = self._create_styled_btn("MAIN")
         self.btn_tab_uv = self._create_styled_btn("UV")
@@ -50,8 +54,19 @@ class LightOverlay(ControlOverlay):
         self.btn_tab_ir.bind(on_release=lambda *_: self._select_light_tab("ir"))
         for button in (self.btn_tab_main, self.btn_tab_uv, self.btn_tab_ir):
             tabs.add_widget(button)
-        self.panel.add_widget(tabs)
 
+        # FIX: Alle Widgets im Panel sichern, leeren und Tabs ganz oben als erstes platzieren
+        existing_children = list(self.panel.children)
+        self.panel.clear_widgets()
+        
+        # 1. Tabs als allererstes ganz oben ins Panel einfügen
+        self.panel.add_widget(tabs)
+        
+        # 2. Bisherige Basis-Widgets (z. B. aus ControlOverlay) wieder drunter hängen
+        for child in reversed(existing_children):
+            self.panel.add_widget(child)
+
+        # 3. Nun den Content-Host für die Tabs darunter anlegen
         self.content_host = BoxLayout(orientation="vertical")
         self.main_content = BoxLayout(orientation="vertical", spacing=dp_scaled(7))
         self.uv_preview = LightChannelPreview(
@@ -66,6 +81,8 @@ class LightOverlay(ControlOverlay):
             accent=(1.0, 0.24, 0.14),
             default_pct=15,
         )
+        
+        # Content-Host unter den Tabs und Basis-Header einfügen
         self.panel.add_widget(self.content_host)
 
         top = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp_scaled(52), spacing=dp_scaled(10))
@@ -88,6 +105,7 @@ class LightOverlay(ControlOverlay):
         for label in (self.lbl_status_text, self.lbl_remaining):
             label.bind(size=label.setter("text_size"))
             status.add_widget(label)
+       
         top.add_widget(status)
         self.main_content.add_widget(top)
 

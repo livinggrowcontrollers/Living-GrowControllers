@@ -1,3 +1,5 @@
+# dashboard_gui/overlays/features/light/timeline_widget.py
+
 import time
 
 from kivy.graphics import Color, Line, Mesh

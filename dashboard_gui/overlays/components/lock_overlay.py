@@ -1,3 +1,6 @@
+# dashboard_gui/overlays/components/lock_overlay.py
+
+
 """Lock layer used by editable control overlays."""
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button

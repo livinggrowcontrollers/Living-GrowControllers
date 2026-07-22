@@ -1,3 +1,6 @@
+# dashboard_gui/overlays/features/climate_hub/state_adapter.py
+
+
 from dataclasses import dataclass
 
 from dashboard_gui.overlays.components.status_colors import StatusColors

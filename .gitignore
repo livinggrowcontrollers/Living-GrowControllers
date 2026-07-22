@@ -1,9 +1,5 @@
 *.pyc
 *.pyc
-__pycache__/config.cpython-312.pyc
-*.pyc
-*.pyc
-*.pyc
-*.pyc
-*.pyc
-*.pyc
+dashboard_gui/overlays/__pycache__/inactive_items_overlay.cpython-312.pyc
+/dashboard_gui/overlays/__pycache__
+/dashboard_gui/overlays/__pycache__

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#  decoders/channel_decoder.py
 import time
 import config
 from decoders.binary_parser import load_profile, decode_with_profile
