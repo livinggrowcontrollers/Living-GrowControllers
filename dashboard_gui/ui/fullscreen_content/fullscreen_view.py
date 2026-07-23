@@ -1,5 +1,6 @@
 # dashboard_gui/ui/fullscreen_content/fullscreen_view.py
 import os
+import time
 from kivy.uix.screenmanager import Screen
 import config 
 from dashboard_gui.global_state_manager import GLOBAL_STATE
@@ -9,21 +10,55 @@ from dashboard_gui.ui.formatters import UIFormatter
 from dashboard_gui.ui.common.graph_chart_content.chart_time_axis import compute_time_axis_labels
 from dashboard_gui.ui.fullscreen_content.fullscreen_main_panel import FullScreenMainPanel
 from dashboard_gui.ui.common.graph_chart_content.metric_registry import MetricRegistry
-from dashboard_gui.ui.common.graph_chart_content.graph_mesh import clear_graph_series, update_graph_mesh
+from dashboard_gui.ui.common.graph_chart_content.graph_mesh import (
+    clear_graph_series,
+    update_graph_mesh,
+)
+
 class FullScreenView(Screen):
     name = "fullscreen"
 
+    HISTORY_KEY_MAP = {
+        # Klima intern
+        "temp_in": "T_i",
+        "hum_in": "H_i",
+        "vpd_in": "VPD_i",
+
+        # Klima extern
+        "temp_ex": "T_e",
+        "hum_ex": "H_e",
+        "vpd_ex": "VPD_e",
+
+        # BLE intern
+        "ble_temp_inside": "BLE_T_i",
+        "ble_hum_inside": "BLE_H_i",
+        "ble_vpd_inside": "BLE_VPD_i",
+
+        # BLE extern
+        "ble_temp_outside": "BLE_T_e",
+        "ble_hum_outside": "BLE_H_e",
+        "ble_vpd_outside": "BLE_VPD_e",
+
+        # Systemwerte
+        "v_bat": "battery_voltage",
+        "rssi": "rssi",
+
+        # Aktuatoren
+        "light_pct": "light_pct",
+        "exhaust_fan_rpm": "exhaust_fan_rpm",
+        "circulation_fan_rpm": "circulation_fan_rpm",
+    }
     def __init__(self, **kw):
         super().__init__(**kw)
         self.tile_id = None
         self.current_key = None
         self._active_unit = ""
-
+        self._history_hours = None
+        self._latest_device_frame = None
         # Instanziierung des ausgelagerten Hauptpanels
         self.layout = FullScreenMainPanel()
         self.add_widget(self.layout)
         
-        self.xmax = config.get_tile_graph_window()
 
 
 
@@ -45,7 +80,7 @@ class FullScreenView(Screen):
         self.layout.btn_left.bind(on_release=lambda *_: self._switch(-1))
         self.layout.btn_right.bind(on_release=lambda *_: self._switch(1))
         self.layout.controls.on_reset = self.reset_from_global
-
+        self.layout.on_range_selected = self._select_time_range
         self.active_tile = None  
         GLOBAL_STATE.ui_handler.attach_screen("fullscreen", self)
 
@@ -140,7 +175,25 @@ class FullScreenView(Screen):
         self.graph.ymin = 0
         self.graph.ymax = 1
 
+    def _select_time_range(self, hours):
+        self._history_hours = hours
+        self.layout.set_active_range(hours)
+
+        clear_graph_series(
+            self.plot,
+            self.mesh,
+            self.plot_glow,
+        )
+
+        self._load_data()
     def _load_data(self):
+        if self._history_hours is None:
+            self._load_live_data()
+            return
+
+        self._load_history_data()
+
+    def _load_live_data(self):
         if not self.current_key:
             return
 
@@ -158,20 +211,16 @@ class FullScreenView(Screen):
             
         self._active_unit = unit or "—"
 
-        win_size = config.get_tile_graph_window()
+        win_size = GLOBAL_STATE.graph_engine.get_window_size()
         display_buf = list(buf)[-win_size:]
 
         self.graph.xmin = 0
         self.graph.xmax = max(len(display_buf) - 1, 1)   
 
 
-        refresh_rate = config.get_refresh_interval()
-        raw_res = float(config.get_graph_resolution())
-
-        labels = compute_time_axis_labels(
+        labels = GLOBAL_STATE.graph_engine.get_live_time_axis_labels(
             display_len=len(display_buf),
-            refresh_rate=refresh_rate,
-            raw_res=raw_res
+            label_count=len(self.labels_list),
         )
 
         for lbl, txt in zip(self.labels_list, labels):
@@ -221,11 +270,195 @@ class FullScreenView(Screen):
                 f"min: {UIFormatter.format_number(mn_stat, number_style)} {self._active_unit} | "
                 f"max: {UIFormatter.format_number(mx_stat, number_style)} {self._active_unit}"
             )
-    
-    
+
+    def _load_history_data(self):
+        if not self.current_key or not self.tile_id:
+            self._render_empty_graph()
+            return
+
+        frame = self._latest_device_frame
+        if not isinstance(frame, dict):
+            print("[FS HISTORY] Kein aktueller Decoder-Frame vorhanden.")
+            self._render_empty_graph()
+            return
+
+        web = frame.get("webserver", {})
+        if not isinstance(web, dict):
+            print("[FS HISTORY] Kein gültiger Webserver-Block vorhanden.")
+            self._render_empty_graph()
+            return
+
+        history = web.get("history", {})
+        if not isinstance(history, dict):
+            print("[FS HISTORY] Kein History-Block im injizierten Web-Payload.")
+            self._render_empty_graph()
+            return
+
+        history_key = self.HISTORY_KEY_MAP.get(self.tile_id)
+
+        if not history_key:
+            print(
+                f"[FS HISTORY] Kein Mapping für Tile-ID: "
+                f"{self.tile_id}"
+            )
+            self._render_empty_graph()
+            return
+
+        series = history.get(history_key, {})
+        if not isinstance(series, dict):
+            print(
+                f"[FS HISTORY] Serie '{history_key}' fehlt. "
+                f"Vorhanden: {list(history.keys())}"
+            )
+            self._render_empty_graph()
+            return
+
+        timestamps = series.get("t", [])
+        values = series.get("v", [])
+
+        if not isinstance(timestamps, list) or not isinstance(values, list):
+            print(
+                f"[FS HISTORY] Ungültige Serie für '{history_key}'."
+            )
+            self._render_empty_graph()
+            return
+
+        pair_count = min(len(timestamps), len(values))
+        if pair_count < 1:
+            print(
+                f"[FS HISTORY] Serie '{history_key}' ist leer."
+            )
+            self._render_empty_graph()
+            return
+
+
+        points = []
+
+        for index in range(pair_count):
+            try:
+                timestamp = float(timestamps[index])
+                value = values[index]
+
+                if value is None:
+                    continue
+
+                value = float(value)
+
+
+
+                points.append((timestamp, value))
+
+            except (TypeError, ValueError):
+                continue
+
+        if not points:
+            print(
+                f"[FS HISTORY] Keine Punkte innerhalb "
+                f"der letzten {self._history_hours} Stunden."
+            )
+            self._render_empty_graph()
+            return
+
+        points.sort(key=lambda item: item[0])
+
+        first_timestamp = points[0][0]
+
+        graph_points = [
+            (timestamp - first_timestamp, value)
+            for timestamp, value in points
+        ]
+
+        # Kivy Graph benötigt bei nur einem Messpunkt eine Linie
+        if len(graph_points) == 1:
+            only_value = graph_points[0][1]
+            graph_points = [
+                (0, only_value),
+                (1, only_value),
+            ]
+
+        history_values = [
+            value
+            for _, value in points
+        ]
+
+        self.graph.xmin = 0
+        self.graph.xmax = max(
+            graph_points[-1][0],
+            1,
+        )
+
+        self.plot.points = graph_points
+        self.plot_glow.points = graph_points
+
+        min_value = min(history_values)
+        max_value = max(history_values)
+
+        if min_value == max_value:
+            self.graph.ymin = min_value - 1.0
+            self.graph.ymax = max_value + 1.0
+        else:
+            difference = max_value - min_value
+            self.graph.ymin = min_value - (difference * 0.08)
+            self.graph.ymax = max_value + (difference * 0.08)
+
+        self._upd_mesh()
+
+        unit = GLOBAL_STATE.get_unit(self.current_key)
+
+        if not unit and "temp" in self.tile_id:
+            unit = GLOBAL_STATE.unit_engine.get_temp_unit()
+
+        self._active_unit = unit or "—"
+
+        metric_cfg = MetricRegistry.get(self.tile_id)
+        fullscreen_presentation = MetricRegistry.presentation("fullscreen")
+
+        number_style = {
+            **fullscreen_presentation.get("formatter", {}),
+            **metric_cfg.get("style", {}),
+        }
+
+        last_value = history_values[-1]
+        average_value = sum(history_values) / len(history_values)
+
+        self.lbl_value.text = UIFormatter.format_sensor_label(
+            name="",
+            value=last_value,
+            unit=self._active_unit,
+            trend="",
+            style=number_style,
+        )
+
+        self.lbl_sub.text = (
+            f"{self._history_hours}h | "
+            f"avg: {UIFormatter.format_number(average_value, number_style)} "
+            f"{self._active_unit} | "
+            f"min: {UIFormatter.format_number(min_value, number_style)} "
+            f"{self._active_unit} | "
+            f"max: {UIFormatter.format_number(max_value, number_style)} "
+            f"{self._active_unit}"
+        )
+
+        labels = GLOBAL_STATE.graph_engine.get_history_time_axis_labels(
+            first_timestamp=points[0][0],
+            last_timestamp=points[-1][0],
+            label_count=len(self.labels_list),
+        )
+
+        for label, text in zip(self.labels_list, labels):
+            label.text = text
+
+        print(
+            f"[FS HISTORY] {history_key}: "
+            f"{len(history_values)} Punkte für "
+            f"{self._history_hours}h gerendert."
+        )
+
+
     def update_from_global(self, data):
         self.header.update_from_global(data)
-
+        if isinstance(data, dict):
+            self._latest_device_frame = data
         active_dev = GLOBAL_STATE.get_active_device_id()
         active_ch = GLOBAL_STATE.get_active_channel()
         if not active_dev or not active_ch:

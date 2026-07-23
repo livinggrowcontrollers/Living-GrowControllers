@@ -28,6 +28,7 @@ DEFAULTS = {
     "refresh_interval": 0.1,
     "stale_timeout": 15.0,
     "graph_resolution": 100.0,
+    "graph_refresh_interval": 1.0,
     "graph_smoothing_factor": 1,  # 🔥 Neu: Standard-Smoothing (0.0 = kein Smoothing / 1.0 = hartes Smoothing)
     "tile_graph_window": 400,
     "temperature_unit": "C",
@@ -263,7 +264,26 @@ def set_theme(theme: str):
 def get_refresh_interval():
     return float(_init().get("refresh_interval"))
 
+def get_graph_refresh_interval():
+    return float(
+        _init().get(
+            "graph_refresh_interval",
+            DEFAULTS["graph_refresh_interval"]
+        )
+    )
 
+def set_graph_refresh_interval(value):
+    value = float(value)
+
+    if value < 0.1:
+        value = 0.1
+    elif value > 30.0:
+        value = 30.0
+
+    cfg = _init()
+    cfg["graph_refresh_interval"] = value
+    save(cfg)
+    
 def get_stale_timeout():
     return float(_init().get("stale_timeout"))
 

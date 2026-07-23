@@ -14,15 +14,17 @@ from kivy.uix.textinput import TextInput
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-
+from history_compressor import compress
 from cloudflare_tunnel_manager import CloudflareTunnelManager
 from email_sender import EmailSender
-
+from mdns_scanner_popup import open_mdns_scanner_popup
 # ==============================================================================
 # GLOBAL CONFIG & UTILS
 # ==============================================================================
-ESP_IP = "192.168.4.1"
+ESP_IP = "192.168.2.20"
 HUB_PROXY_PORT = 80
+USER = "admin"
+PASSWORD = "1234"
 
 
 def get_local_ip():
@@ -46,7 +48,7 @@ def fetch_esp_data(ip_address, username=None, password=None, timeout=2.0):
         return False, "Keine IP-Adresse eingegeben."
 
     base_url = f"http://{ip_clean}"
-    endpoint = f"{base_url}/data"
+    endpoint = f"{base_url}data"
 
     try:
         response = requests.get(
@@ -90,7 +92,6 @@ CORS(proxy_app)
 
 log_callback = None
 
-
 def forward_request_to_esp(path):
     target_url = f"http://{ESP_IP}/{path}"
     method = request.method
@@ -113,6 +114,49 @@ def forward_request_to_esp(path):
         if log_callback:
             log_callback(log_msg)
 
+
+# ======================================================================
+        # HISTORIE EINSCHLEUSEN (Schlanke Baumstruktur)
+        # ======================================================================
+        if path.strip("/") == "data" and resp.status_code == 200:
+            try:
+                # 1. Originales JSON vom ESP parsen
+                esp_payload = resp.json()
+                
+                # Device ID vom ESP ermitteln (Fallback 'ESP32_GROW_ROOM_01' oder 'unknown')
+                dev_id = str(esp_payload.get("device_id") or esp_payload.get("id") or "ESP32_GROW_ROOM_01")
+
+                # 2. History aus log.csv komprimieren
+                full_compressed_data = compress(
+                    csv_path=None,
+                    target_points_per_series=200,
+                    max_age_hours=48.0
+                )
+
+                # 3. BAUM SCHLANK MACHEN:
+                # Wir holen nur die reinen Sensordaten ('history') für dieses spezifische Gerät heraus
+                if dev_id in full_compressed_data:
+                    clean_history = full_compressed_data[dev_id].get("history", {})
+                else:
+                    # Fallback: Wenn ID nicht matcht, nimm den ersten Eintrag aus der CSV
+                    first_key = next(iter(full_compressed_data), None)
+                    clean_history = full_compressed_data[first_key].get("history", {}) if first_key else {}
+
+                # 4. Schlanke Historie direkt im Payload platzieren
+                esp_payload["history"] = clean_history
+
+                if log_callback:
+                    log_callback(f"[{timestamp}] -> Schlanke History ({len(clean_history)} Sensoren) in /data injiziert!")
+
+                # 5. Modifiziertes Gesamt-JSON zurückgeben
+                return jsonify(esp_payload), 200, {"Content-Type": "application/json"}
+
+            except Exception as inject_err:
+                if log_callback:
+                    log_callback(f"[{timestamp}] ERROR beim Einschleusen: {str(inject_err)}")
+                return (resp.content, resp.status_code, resp.headers.items())
+
+        # Für alle anderen Pfade oder Fehler: 1:1 durchreichen
         return (resp.content, resp.status_code, resp.headers.items())
 
     except requests.exceptions.Timeout:
@@ -129,7 +173,6 @@ def forward_request_to_esp(path):
         if log_callback:
             log_callback(f"[{timestamp}] {method} /{path} -> ERROR: {str(e)}")
         return jsonify({"error": "Proxy Internal Error", "message": str(e)}), 500
-
 
 # ==============================================================================
 # HTTP PROXY SERVER (Flask mit Preflight FIX)
@@ -323,10 +366,20 @@ class VirtualHubWidget(BoxLayout):
 
         # --- 2. Eingabebereich für Ziel-ESP (IP, User, Pass) ---
         ip_layout = BoxLayout(
-            orientation="horizontal", spacing=5, size_hint_y=None, height=35
+            orientation="horizontal",
+            spacing=5,
+            size_hint_y=None,
+            height=35,
         )
+
         ip_layout.add_widget(
             Label(text="Ziel ESP IP:", size_hint_x=None, width=90)
+        )
+
+        # Textfeld + Suchbutton nebeneinander
+        ip_box = BoxLayout(
+            orientation="horizontal",
+            spacing=5,
         )
 
         self.ip_input = TextInput(
@@ -335,8 +388,23 @@ class VirtualHubWidget(BoxLayout):
             font_size="14sp",
             write_tab=False,
         )
+
         self.ip_input.bind(text=self.on_esp_ip_change)
-        ip_layout.add_widget(self.ip_input)
+
+        ip_box.add_widget(self.ip_input)
+
+        self.scan_btn = Button(
+            text="🔍",
+            size_hint_x=None,
+            width=45,
+        )
+
+        self.scan_btn.bind(on_release=self.on_scan_devices)
+
+        ip_box.add_widget(self.scan_btn)
+
+        ip_layout.add_widget(ip_box)
+
         content.add_widget(ip_layout)
 
         # Basic Auth Felder
@@ -347,7 +415,10 @@ class VirtualHubWidget(BoxLayout):
             Label(text="User (opt):", size_hint_x=None, width=80)
         )
         self.user_input = TextInput(
-            multiline=False, write_tab=False, font_size="14sp"
+            text=USER,
+            multiline=False,
+            write_tab=False,
+            font_size="14sp",
         )
         auth_layout.add_widget(self.user_input)
 
@@ -355,7 +426,11 @@ class VirtualHubWidget(BoxLayout):
             Label(text="Pass (opt):", size_hint_x=None, width=80)
         )
         self.pass_input = TextInput(
-            multiline=False, password=True, write_tab=False, font_size="14sp"
+            text=PASSWORD,
+            multiline=False,
+            password=True,
+            write_tab=False,
+            font_size="14sp",
         )
         auth_layout.add_widget(self.pass_input)
         content.add_widget(auth_layout)
@@ -372,6 +447,15 @@ class VirtualHubWidget(BoxLayout):
         )
         self.btn_fetch.bind(on_press=self.on_fetch_click)
         btn_layout.add_widget(self.btn_fetch)
+
+        # NEU: Button für History Compressor Debugging
+        self.btn_compress = Button(
+            text="📊 History Komprimieren",
+            background_color=(0.8, 0.4, 0.1, 1.0),
+            bold=True,
+        )
+        self.btn_compress.bind(on_press=self.on_compress_click)
+        btn_layout.add_widget(self.btn_compress)
 
         self.btn_auto = Button(
             text="Auto-Refresh: AUS", background_color=(0.5, 0.5, 0.5, 1.0)
@@ -431,6 +515,50 @@ class VirtualHubWidget(BoxLayout):
         # Tunnel direkt beim Start der UI anwerfen
         Clock.schedule_once(lambda dt: self.tunnel_manager.start(), 0.5)
 
+    # --------------------------------------------------------------------------
+    # HISTORY COMPRESSOR DEBUG HANDLER
+    # --------------------------------------------------------------------------
+    def on_compress_click(self, instance):
+        self.btn_compress.disabled = True
+        self.add_proxy_log("[UI] Starte Kompression von data/log.csv ...")
+        
+        # Thread starten, damit Kivy-UI nicht einfriert
+        threading.Thread(
+            target=self._worker_compress,
+            daemon=True
+        ).start()
+
+    def _worker_compress(self):
+        # Callback leitet Debug-Meldungen direkt ins Live-Proxy-Log der UI
+        def debug_logger(msg):
+            self.add_proxy_log(msg)
+
+        # HIER ÄNDERN: csv_path=None lassen, damit der automatische Pfad greift!
+        result = compress(
+            csv_path=None,
+            target_points_per_series=500,
+            log_cb=debug_logger
+        )
+
+        # Ergebnis in der UI ausgeben
+        Clock.schedule_once(lambda dt: self._update_ui_after_compress(result))
+    def _update_ui_after_compress(self, result):
+        self.btn_compress.disabled = False
+        pretty_json = json.dumps(result, indent=2, ensure_ascii=False)
+        self.json_output.text = pretty_json
+    def prepare_history_payload(self):
+        """Liest log.csv ein und erzeugt eine stark komprimierte Zeitreihe."""
+        # HIER ÄNDERN: csv_path=None verwenden!
+        compressed_payload = compress(csv_path=None, target_points_per_series=500)
+        return compressed_payload
+
+    def on_scan_devices(self, instance):
+        open_mdns_scanner_popup(
+            target_mac=None,
+            ip_input_field=self.ip_input,
+            hostname_input_field=None,
+            save_callback=lambda: None,
+        )
     # --------------------------------------------------------------------------
     # Cloudflare Tunnel Handlers (Thread-sicher via Clock)
     # --------------------------------------------------------------------------

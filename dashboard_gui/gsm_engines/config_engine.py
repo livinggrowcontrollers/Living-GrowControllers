@@ -19,38 +19,58 @@ class ConfigEngine:
         # 3. UI komplett neu aufbauen wo nötig
         self._refresh_ui()
 
+
+
+
     def refresh_settings(self):
         """Nur die reinen Settings (kann auch separat aufgerufen werden)"""
         new_window = config.get_tile_graph_window()
         new_interval = config.get_refresh_interval()
-        
-        # 🔥 NEU: Optional den Smoothing-Faktor für das Log-Statement holen
-        # (Wenn config.get_graph_smoothing_factor existiert)
-        new_smoothing = getattr(config, 'get_graph_smoothing_factor', lambda: "N/A")()
+        new_graph_interval = config.get_graph_refresh_interval()
+
+        new_smoothing = getattr(
+            config,
+            "get_graph_smoothing_factor",
+            lambda: "N/A",
+        )()
 
         self.gsm.max_history = new_window
-        
-        # 🔥 MODIFIZIERT: Statt nur rebuild_buffers rufen wir jetzt refresh_config auf
+
         if hasattr(self.gsm, "graph_engine"):
             print("[ConfigEngine] Refreshing GraphEngine configs...")
-            self.gsm.graph_engine.refresh_config()
+            self.gsm.graph_engine.refresh_config(
+                graph_refresh_interval=new_graph_interval,
+                base_refresh_interval=new_interval,
+            )
 
         # RSSI History trimmen
-        if hasattr(self.gsm, "data_flow") and hasattr(self.gsm.data_flow, "rssi_history"):
+        if (
+            hasattr(self.gsm, "data_flow")
+            and hasattr(self.gsm.data_flow, "rssi_history")
+        ):
             df = self.gsm.data_flow
+
             for dev_id in list(df.rssi_history.keys()):
                 buf = df.rssi_history[dev_id]
+
                 if len(buf) > new_window:
                     df.rssi_history[dev_id] = buf[-new_window:]
 
-        # Clock Intervall neu setzen
+        # Globales Hauptintervall neu setzen
         if hasattr(self.gsm, "_main_tick"):
             self.gsm._main_tick.cancel()
             self.gsm._main_tick = Clock.schedule_interval(
-                self.gsm._global_update, new_interval
+                self.gsm._global_update,
+                new_interval,
             )
 
-        print(f"[CONFIG] Settings synced: window={new_window}, interval={new_interval}s, smoothing={new_smoothing}")
+        print(
+            f"[CONFIG] Settings synced: "
+            f"window={new_window}, "
+            f"interval={new_interval}s, "
+            f"graph_interval={new_graph_interval}s, "
+            f"smoothing={new_smoothing}"
+        )
 
     def _refresh_device_state(self):
         """Device-spezifischer Teil – wichtig für DevicePicker"""

@@ -1,62 +1,32 @@
 [
   {
-    "address": "827482CC-A977-43D7-835E-8E8B6978E66A",
-    "gatt_raw": null,
-    "timestamp": "2026-07-22T08:34:23.219+0000",
-    "name": "growmaster-1d3c",
-    "rssi": -78,
-    "adv_raw": "D302A2119C009C009C009C009C0001A30000BC",
-    "log_raw": "D302A2119C009C009C009C009C0001A30000BC",
-    "note": "raw"
-  },
-  {
     "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
     "gatt_raw": null,
-    "timestamp": "2026-07-22T08:34:20.515+0000",
+    "timestamp": "2026-07-23T14:06:53.636+0000",
     "name": "growmaster-d064",
-    "rssi": -47,
-    "adv_raw": "D302A21109191136092C11559C00032407AE33",
-    "log_raw": "D302A21109191136092C11559C00032407AE33",
-    "note": "raw"
-  },
-  {
-    "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
-    "gatt_raw": null,
-    "timestamp": "2026-07-22T08:34:18.129+0000",
-    "name": "sps",
-    "rssi": -37,
-    "adv_raw": "DA099A0F005B900008",
-    "log_raw": "DA099A0F005B900008",
+    "rssi": -54,
+    "adv_raw": "D302A21109C70F3F09EE0F1F9C0002AC07474D",
+    "log_raw": "D302A21109C70F3F09EE0F1F9C0002AC07474D",
     "note": "raw"
   },
   {
     "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "gatt_raw": null,
-    "timestamp": "2026-07-22T08:34:22.017+0000",
+    "timestamp": "2026-07-23T14:06:52.746+0000",
     "name": "ThermoBeacon2",
-    "rssi": -52,
-    "adv_raw": "190019060000F1F05F0E7201A402FFFFFFFF17CB6B00",
-    "log_raw": "190019060000F1F05F0E7201A402FFFFFFFF17CB6B00",
+    "rssi": -54,
+    "adv_raw": "190019060000F1F0580E87017302FFFFFFFF8D6A6D00",
+    "log_raw": "190019060000F1F0580E87017302FFFFFFFF8D6A6D00",
     "note": "raw"
   },
   {
-    "address": "E82776C8-C1D0-6A0D-2010-D5E80EFD3B21",
+    "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
     "gatt_raw": null,
-    "timestamp": "2026-07-22T08:33:59.853+0000",
-    "name": "TP351S (987A)",
-    "rssi": -70,
-    "adv_raw": "C216011F203301",
-    "log_raw": "C216011F203301",
+    "timestamp": "2026-07-23T14:06:48.282+0000",
+    "name": "sps",
+    "rssi": -37,
+    "adv_raw": "7A0A1D0E006A740008",
+    "log_raw": "7A0A1D0E006A740008",
     "note": "raw"
-  },
-  {
-    "address": "FF-FF-A1-00-00-01",
-    "gatt_raw": null,
-    "timestamp": "2026-07-22T08:34:21.708+0000",
-    "name": "LGS_NODE_17",
-    "rssi": -48,
-    "adv_raw": "7445A111092C11552D",
-    "log_raw": "7445A111092C11552D",
-    "note": "ch_17_active"
   }
 ]

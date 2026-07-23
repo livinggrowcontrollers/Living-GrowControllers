@@ -52,6 +52,10 @@ class SettingsScreen(Screen):
         cfg = config._init()
     
         cfg["refresh_interval"] = float(values.get("refresh_interval", 0.1))
+        cfg["graph_refresh_interval"] = float(
+            values.get("graph_refresh_interval", 15.0)
+        )
+
         cfg["graph_resolution"] = float(values.get("graph_resolution", 80.0))
         cfg["stale_timeout"] = float(values.get("stale_timeout", 15.0))
         cfg["tile_graph_window"] = int(values.get("tile_graph_window", 400))

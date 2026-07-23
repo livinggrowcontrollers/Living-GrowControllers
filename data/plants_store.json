@@ -1,7 +1,7 @@
 {
-  "FF-FF-A1-00-00-01": {
+  "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 40,
+      "rev_plant_planner": 43,
       "plants": [
         {
           "slot": 0,
@@ -19,15 +19,15 @@
           "harvest_weight": "",
           "dry_weight": "",
           "favorite": false,
-          "picture": 4,
+          "picture": 7,
           "last_watered": 0,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
           "estimated_flower_days": 68,
           "harvest_date": "",
           "germination_start": "2026-05-01",
-          "seedling_start": "",
-          "vegetative_start": "",
+          "seedling_start": "2026-05-08",
+          "vegetative_start": "2026-05-14",
           "flowering_start": "",
           "drying_start": "",
           "curing_start": ""

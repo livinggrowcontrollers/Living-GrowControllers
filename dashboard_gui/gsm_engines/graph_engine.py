@@ -1,26 +1,41 @@
 # dashboard_gui/gsm_engines/graph_engine.py
 import config
 from collections import defaultdict, deque
+import config
+from collections import defaultdict, deque
+from dashboard_gui.ui.common.graph_chart_content.chart_time_axis import compute_time_axis_labels
+import time
+
+
+
 class GraphEngine:
     def __init__(self, gsm):
         self.gsm = gsm
         self.running = True
-      
+
         # Buffers
         self.window = config.get_tile_graph_window()
         self.graph_buffers = defaultdict(self._new_buffer)
         self._trend_buffers = defaultdict(self._new_buffer)
         self._last_smoothed_values = {}
-        self._last_units = {}  
-        
+        self._last_units = {}
+
         # Counter für das Downsampling (Graph Resolution)
         self._update_counters = defaultdict(int)
-        
+
+        # Separater Graph-Takt
+        # Separater Graph-Takt
+        self.graph_refresh_interval = config.get_graph_refresh_interval()
+        self.base_refresh_interval = config.get_refresh_interval()
+        self._graph_refresh_tick_interval = 1
+        self.graph_resolution = 100.0
+        self._resolution_skip_interval = 1
+        self._graph_refresh_counters = defaultdict(int)
+
         # Trends
         self.global_trends = {}
-        
-        # Settings dynamisch aus Config laden
-        # Wir lesen das direkt über die Refresh-Methode ein, um Code-Duplizierung zu vermeiden
+
+        # Alle dynamischen Settings zentral laden
         self.refresh_config()
 
     def _new_buffer(self):
@@ -63,13 +78,87 @@ class GraphEngine:
     def get_all_keys(self):
         return list(self.graph_buffers.keys())
 
+    def get_graph_refresh_interval(self):
+        return self.graph_refresh_interval
+
+
+    def get_graph_refresh_tick_interval(self):
+        return self._graph_refresh_tick_interval
+
+
+
+    def get_window_size(self):
+        return self.window
+
+    def get_effective_point_interval(self):
+        return (
+            self.graph_refresh_interval
+            * self._resolution_skip_interval
+        )
+
+    def get_live_time_axis_labels(self, display_len, label_count=5):
+        return compute_time_axis_labels(
+            display_len=int(display_len),
+            refresh_rate=self.graph_refresh_interval,
+            raw_res=self.graph_resolution,
+        )
+
+    def get_history_time_axis_labels(
+        self,
+        first_timestamp,
+        last_timestamp,
+        label_count=5,
+    ):
+        first_timestamp = float(first_timestamp)
+        last_timestamp = float(last_timestamp)
+        label_count = max(2, int(label_count))
+
+        if last_timestamp <= first_timestamp:
+            timestamps = [first_timestamp] * label_count
+        else:
+            span = last_timestamp - first_timestamp
+            divisor = label_count - 1
+
+            timestamps = [
+                first_timestamp + (span * index / divisor)
+                for index in range(label_count)
+            ]
+
+        return [
+            time.strftime("%H:%M", time.localtime(timestamp))
+            for timestamp in timestamps
+        ]
+
     # ---------------------------------------------------------
     # PROCESS VALUE
     # ---------------------------------------------------------
     def process_new_value(self, key, value):
         if not self.running or value is None:
             return
-            
+
+        # ---------------------------------------------------------
+        # SEPARATER GRAPH-TAKT
+        # ---------------------------------------------------------
+        # Der erste Wert jedes Keys wird sofort verarbeitet.
+        # Danach wird nur noch im konfigurierten Graph-Intervall verarbeitet.
+        has_no_graph_data = (
+            key not in self.graph_buffers
+            or len(self.graph_buffers[key]) == 0
+        )
+
+        if has_no_graph_data:
+            self._graph_refresh_counters[key] = 0
+        else:
+            self._graph_refresh_counters[key] += 1
+
+            if (
+                self._graph_refresh_counters[key]
+                < self._graph_refresh_tick_interval
+            ):
+                return
+
+            self._graph_refresh_counters[key] = 0
+
         try:
             val_float = float(value)
             current_unit = self.gsm.get_unit(key)
@@ -82,6 +171,7 @@ class GraphEngine:
                 self._last_smoothed_values[key] = val_float
                 self._last_units[key] = current_unit
                 self._update_counters[key] = 0
+                self._graph_refresh_counters[key] = 0
                 return
             
             # --- 1. SMOOTHING LOGIK ---
@@ -113,21 +203,9 @@ class GraphEngine:
             # --- 2. GRAPH RESOLUTION LOGIK (Slider: 1-100) ---
             # ... (Rest bleibt absolut identisch wie in deinem Code) ...
             
-# --- 2. GRAPH RESOLUTION LOGIK (Slider: 1-100) ---
-            raw_res = float(config.get_graph_resolution())
-            
-            if raw_res <= 1.0:
-                res_percent = max(1.0, raw_res * 100.0)
-            else:
-                res_percent = raw_res
-                
-            if res_percent < 1: res_percent = 1.0
-            if res_percent > 100: res_percent = 100.0
-
-            skip_interval = int(100.0 / res_percent)
-            if skip_interval < 1:
-                skip_interval = 1
-            
+            # --- 2. GRAPH RESOLUTION LOGIK (Slider: 1-100) ---
+            skip_interval = self._resolution_skip_interval
+                        
             # --- DER FIX: Explizite Prüfung vor dem Counter-Inkrement ---
             # Wir prüfen, ob für diesen Key überhaupt schon Werte im Buffer existieren.
             # Da es ein defaultdict ist, müssen wir schauen, ob der Key existiert UND Werte hat.
@@ -179,6 +257,7 @@ class GraphEngine:
         self._last_smoothed_values.clear()
         self.global_trends.clear()
         self._update_counters.clear()
+        self._graph_refresh_counters.clear()
 
     def rebuild_buffers(self):
         self.window = config.get_tile_graph_window()
@@ -189,6 +268,73 @@ class GraphEngine:
             old_buf = list(self._trend_buffers[key])[-self.window:]
             self._trend_buffers[key] = deque(old_buf, maxlen=self.window)
 
-    def refresh_config(self):
+    def refresh_config(
+        self,
+        graph_refresh_interval=None,
+        base_refresh_interval=None,
+    ):
         self.rebuild_buffers()
-        self.smoothing_factor = float(config.get_graph_smoothing_factor()) # <- Das muss getriggert werden!
+
+        self.smoothing_factor = float(
+            config.get_graph_smoothing_factor()
+        )
+
+        raw_resolution = float(config.get_graph_resolution())
+
+        if raw_resolution <= 1.0:
+            self.graph_resolution = max(
+                1.0,
+                raw_resolution * 100.0,
+            )
+        else:
+            self.graph_resolution = raw_resolution
+
+        self.graph_resolution = max(
+            1.0,
+            min(100.0, self.graph_resolution),
+        )
+
+        self._resolution_skip_interval = max(
+            1,
+            int(100.0 / self.graph_resolution),
+        )
+
+        if graph_refresh_interval is None:
+            graph_refresh_interval = config.get_graph_refresh_interval()
+
+        if base_refresh_interval is None:
+            base_refresh_interval = config.get_refresh_interval()
+
+        self.graph_refresh_interval = max(
+            0.1,
+            float(graph_refresh_interval),
+        )
+
+        self.base_refresh_interval = max(
+            0.001,
+            float(base_refresh_interval),
+        )
+
+        self._graph_refresh_tick_interval = max(
+            1,
+            round(
+                self.graph_refresh_interval
+                / self.base_refresh_interval
+            ),
+        )
+
+        # Den tatsächlich erreichbaren Zeitabstand festhalten.
+        self.graph_refresh_interval = (
+            self._graph_refresh_tick_interval
+            * self.base_refresh_interval
+        )
+
+        self._graph_refresh_counters.clear()
+
+        if config.is_developer_mode():
+            print(
+                "[GraphEngine] Config refreshed: "
+                f"graph_interval={self.graph_refresh_interval:.3f}s, "
+                f"base_interval={self.base_refresh_interval:.3f}s, "
+                f"ticks={self._graph_refresh_tick_interval}"
+            )

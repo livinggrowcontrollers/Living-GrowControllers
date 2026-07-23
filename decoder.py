@@ -103,8 +103,15 @@ _LAST_WRITE_TS = 0
 
 _DECODED_RAM = []
 _DECODED_TS = 0
-_LAST_LOG_TS = 0.0
-_LOG_INTERVAL = 5
+_LAST_CSV_WRITE_TS = 0.0
+_LAST_CSV_CLEANUP_TS = 0.0
+_LAST_HEARTBEAT_TS = 0.0
+
+_LOG_INTERVAL = 55.0
+_CSV_CLEANUP_INTERVAL = 300.0
+_CSV_RETENTION_HOURS = 48
+
+
 _LIVE_WEB_DATA = {} 
 LIVE_WEB_LOCK = threading.Lock()
 def _valid_rssi(val):
@@ -161,15 +168,16 @@ def _write(frames):
     global _DECODED_RAM
     global _DECODED_TS
     global _LAST_WRITE_TS
-    global _LAST_LOG_TS
-
+    global _LAST_CSV_WRITE_TS
+    global _LAST_CSV_CLEANUP_TS
+    global _LAST_HEARTBEAT_TS
     now = time.time()
 
     # RAM immer sofort
     _DECODED_RAM = frames
     _DECODED_TS = now
 
-    # Disk nur alle 60 Sekunden
+    # decoded.json nur alle 60 Sekunden
     if (now - _LAST_WRITE_TS) >= 60.0:
         try:
             with open(DEC_FILE, "w", encoding="utf-8") as f:
@@ -185,12 +193,26 @@ def _write(frames):
         except Exception as e:
             print("[Decoder] Write Error:", e)
 
-    if _dev_enabled():
-        if (now - _LAST_LOG_TS) >= _LOG_INTERVAL:
-            _write_csv(frames)
-            globals()["_LAST_LOG_TS"] = now
-    else:
+    if not _dev_enabled():
         _cleanup_csv()
+        return
+
+    # Neue Messwerte anhängen
+    if (now - _LAST_CSV_WRITE_TS) >= _LOG_INTERVAL:
+        try:
+            _write_csv(frames)
+            _LAST_CSV_WRITE_TS = now
+        except Exception as e:
+            print("[Decoder] CSV Write Error:", e)
+
+    # Rollierendes Zeitfenster bereinigen
+    if (now - _LAST_CSV_CLEANUP_TS) >= _CSV_CLEANUP_INTERVAL:
+        try:
+            _trim_csv_history(_CSV_RETENTION_HOURS)
+            _LAST_CSV_CLEANUP_TS = now
+        except Exception as e:
+            print("[Decoder] CSV Cleanup Error:", e)
+
 
 def offline_all(cfg):
     now = time.time()
@@ -198,7 +220,12 @@ def offline_all(cfg):
     _write(frames)
 
 def step_decode():
-    global UPTIME_START, _LAST_ADV_RAW, _LAST_GATT_RAW, _LAST_WEB, _LIVE_WEB_DATA, _LAST_LOG_TS
+    global UPTIME_START
+    global _LAST_ADV_RAW
+    global _LAST_GATT_RAW
+    global _LAST_WEB
+    global _LIVE_WEB_DATA
+    global _LAST_HEARTBEAT_TS
     
     cfg = config._init()
     devs = cfg.get("devices", {})
@@ -240,8 +267,16 @@ def step_decode():
                 channel_cache.pop(cached_mac, None)
     
     # --- DIAGNOSE HEARTBEAT ---
-    if now - _LAST_LOG_TS >= 60.0: 
-        _LAST_LOG_TS = now
+    if now - _LAST_HEARTBEAT_TS >= 60.0:
+        _LAST_HEARTBEAT_TS = now
+
+        devs_in_cfg = list(devs.keys()) if devs else []
+
+        print(
+            f"[HEARTBEAT DECODER] Ticking! "
+            f"Active Config Devices: {devs_in_cfg} | "
+            f"Live Web RAM Keys: {list(_LIVE_WEB_DATA.keys())}"
+        )
         devs_in_cfg = list(devs.keys()) if devs else []
         print(f"[HEARTBEAT DECODER] Ticking! Active Config Devices: {devs_in_cfg} | Live Web RAM Keys: {list(_LIVE_WEB_DATA.keys())}")
 
@@ -539,10 +574,11 @@ def _cleanup_csv():
         except Exception:
             pass
 
+
 def _write_csv(frames):
     file_exists = os.path.exists(CSV_FILE)
-    
-    # Hier holen wir die aktuelle Config, um die Namen zu parsen
+
+    # Aktuelle Config laden, um den Gerätenamen zu ermitteln
     try:
         cfg = config._init()
         devs = cfg.get("devices", {})
@@ -553,42 +589,131 @@ def _write_csv(frames):
         writer = csv.writer(f)
 
         if not file_exists:
-            # Der Header mit den von der UI erwarteten Keys
             writer.writerow([
                 "timestamp",
                 "device_id",
-                "name",         # Die UI sucht nach 'name'
-                "T_i",          # Passend zu self.colors
+                "device_name",
+
+                "T_i",
                 "H_i",
+                "VPD_i",
+
                 "T_e",
                 "H_e",
-                "light",
-                "exhaust",
-                "circulation"
+                "VPD_e",
+
+                "BLE_T_i",
+                "BLE_H_i",
+                "BLE_VPD_i",
+
+                "BLE_T_e",
+                "BLE_H_e",
+                "BLE_VPD_e",
+
+                "light_pct",
+
+                "exhaust_fan_rpm",
+                "circulation_fan_rpm",
+                "battery_voltage",
+                "rssi"
             ])
 
         for frame in frames:
             web = frame.get("webserver", {})
             mac = frame.get("device_id")
-            
-            # PARSING des Namens aus der Config anhand der MAC/device_id
+
+            # Gerätebereiche
+            internal = web.get("internal", {})
+            external = web.get("external", {})
+            ble_sensors = web.get("ble_sensors", {})
+
+            ble_inside = ble_sensors.get("inside", {})
+            ble_outside = ble_sensors.get("outside", {})
+
+            exhaust_fan = web.get("exhaust_fan", {})
+            circulation_fan = web.get("circulation_fan", {})
+
+            # Gerätename aus der Config
             device_name = devs.get(mac, {}).get("name", mac)
 
             writer.writerow([
                 frame.get("timestamp"),
                 mac,
-                device_name,    # Name wird jetzt hier fest eingetragen
+                device_name,
 
-                web.get("internal", {}).get("temperature", {}).get("value"),
-                web.get("internal", {}).get("humidity", {}).get("value"),
+                # Interne Sensoren
+                internal.get("temperature", {}).get("value"),
+                internal.get("humidity", {}).get("value"),
+                web.get("vpd_internal", {}).get("value"),
 
-                web.get("external", {}).get("temperature", {}).get("value"),
-                web.get("external", {}).get("humidity", {}).get("value"),
+                # Externe Sensoren
+                external.get("temperature", {}).get("value"),
+                external.get("humidity", {}).get("value"),
+                web.get("vpd_external", {}).get("value"),
 
+                # BLE Inside
+                ble_inside.get("temperature", {}).get("value"),
+                ble_inside.get("humidity", {}).get("value"),
+                ble_inside.get("vpd", {}).get("value"),
+
+                # BLE Outside
+                ble_outside.get("temperature", {}).get("value"),
+                ble_outside.get("humidity", {}).get("value"),
+                ble_outside.get("vpd", {}).get("value"),
+
+                # Aktuatoren
                 web.get("light_pct"),
-                web.get("exhaust_fan_pct"),
-                web.get("circulation_fan_pct"),
+                exhaust_fan.get("exhaust_fan_rpm"),
+                circulation_fan.get("circulation_fan_rpm"),
+                web.get("battery_voltage"),
+                web.get("rssi")
             ])
+
+def _trim_csv_history(retention_hours):
+    if not os.path.exists(CSV_FILE):
+        return
+
+    cutoff = time.time() - (float(retention_hours) * 3600.0)
+    temp_file = CSV_FILE + ".tmp"
+
+    kept_rows = 0
+    removed_rows = 0
+
+    with open(CSV_FILE, "r", newline="", encoding="utf-8") as src:
+        reader = csv.reader(src)
+        header = next(reader, None)
+
+        with open(temp_file, "w", newline="", encoding="utf-8") as dst:
+            writer = csv.writer(dst)
+
+            if header:
+                writer.writerow(header)
+
+            for row in reader:
+                if not row:
+                    continue
+
+                try:
+                    row_timestamp = float(row[0])
+                except (ValueError, TypeError, IndexError):
+                    removed_rows += 1
+                    continue
+
+                if row_timestamp >= cutoff:
+                    writer.writerow(row)
+                    kept_rows += 1
+                else:
+                    removed_rows += 1
+
+    os.replace(temp_file, CSV_FILE)
+
+    if removed_rows:
+        print(
+            f"[Decoder] CSV trimmed: "
+            f"{removed_rows} alte Zeilen entfernt, "
+            f"{kept_rows} Zeilen behalten, "
+            f"Fenster={retention_hours}h"
+        )
 
 # --- THREAD CONTROL FOR ASYNC RUNTIME ---
 _DECODER_THREAD = None

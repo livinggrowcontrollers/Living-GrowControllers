@@ -9,11 +9,11 @@ from kivy.uix.floatlayout import FloatLayout
 from dashboard_gui.ui.scaling_utils import dp_scaled, sp_scaled
 from dashboard_gui.global_state_manager import GLOBAL_STATE
 from dashboard_gui.ui.formatters import UIFormatter
-from dashboard_gui.ui.common.graph_chart_content.chart_time_axis import compute_time_axis_labels
 from dashboard_gui.ui.common.graph_chart_content.metric_registry import MetricRegistry
-from dashboard_gui.ui.common.graph_chart_content.graph_mesh import clear_graph_series, update_graph_mesh
-import config
-
+from dashboard_gui.ui.common.graph_chart_content.graph_mesh import (
+    clear_graph_series,
+    update_graph_mesh,
+)
 class ChartTile(ButtonBehavior, BoxLayout):
     def __init__(self, tile_id, **kw):
         ButtonBehavior.__init__(self, **kw)
@@ -33,7 +33,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
         self._last_avg = None
         self._last_min = None
         self._last_max = None
-        self.window = config.get_tile_graph_window()
+        self.window = GLOBAL_STATE.graph_engine.get_window_size()
 
         # -------------------------------------------------
         # 1. MODERNISIERTER BACKGROUND (Jetzt noch transparenter!)
@@ -219,6 +219,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
             self._render_empty_graph()
             return
     
+        self.window = GLOBAL_STATE.graph_engine.get_window_size()
         display_buf = list(buf)[-self.window:]
         
         # --- WIEDER REVERTED: Deine originale, dynamische X-Achsen-Stauchung ---
@@ -249,13 +250,9 @@ class ChartTile(ButtonBehavior, BoxLayout):
         
         # --- DEINE ORIGINAL-LOGIK (Unverändert für Timeline, Averages & Trends) ---
 
-        refresh_rate = config.get_refresh_interval()
-        raw_res = float(config.get_graph_resolution())
-
-        labels = compute_time_axis_labels(
+        labels = GLOBAL_STATE.graph_engine.get_live_time_axis_labels(
             display_len=len(display_buf),
-            refresh_rate=refresh_rate,
-            raw_res=raw_res
+            label_count=len(self.labels_list),
         )
 
         for lbl, txt in zip(self.labels_list, labels):

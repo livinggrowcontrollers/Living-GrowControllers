@@ -1,21 +1,45 @@
 {
   "devices": {
-    "FF-FF-A1-00-00-01": {
-      "device_id": "growmaster-1d3c",
-      "name": "LGS_NODE_17",
-      "adv_decoder": "LGS_ADV",
+    "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
+      "device_id": "growmaster-d064",
+      "name": "growmaster-d064",
+      "adv_decoder": "LGS_SENSOR",
       "gatt_decoder": "",
       "bridge_profile": "",
-      "image_file": "unknown_device.png",
+      "image_file": "esp32_s3.png",
+      "hostname": "",
       "auth": {
         "user": "admin",
         "pass": "1234"
       },
-      "ip_address": "https://illustration-your-winston-heat.trycloudflare.com",
-      "hostname": "",
-      "mac": "FF-FF-A1-00-00-01",
+      "ip_address": "https://critical-surge-scanned-jefferson.trycloudflare.com",
+      "mac": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
       "protected": false,
-      "_manual_update_ts": 1784709206.4947681
+      "_manual_update_ts": 1784815279.885387
+    },
+    "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
+      "device_id": "",
+      "name": "ThermoBeacon2",
+      "adv_decoder": "ThermoBeacon2_ADV",
+      "gatt_decoder": "ThermoBeacon2_GATT",
+      "bridge_profile": "ThermoBeacon2_Bridge",
+      "image_file": "thermobeacon.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
+    },
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "device_id": "",
+      "name": "sps",
+      "adv_decoder": "Inkbird_ADV_Desktop",
+      "gatt_decoder": "Inkbird_GATT",
+      "bridge_profile": "Inkbird_Bridge",
+      "image_file": "inkbird.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      }
     }
   },
   "user": "admin",
@@ -23,16 +47,17 @@
   "active": true,
   "bridge_profiles": {},
   "refresh_interval": 0.1,
-  "stale_timeout": 6.0,
+  "stale_timeout": 15.0,
   "graph_resolution": 100.0,
+  "graph_refresh_interval": 3.0000000000000004,
   "graph_smoothing_factor": 1.0,
-  "tile_graph_window": 430,
+  "tile_graph_window": 850,
   "temperature_unit": "C",
   "temperature_offset": 0.0,
   "humidity_offset": 0.0,
   "leaf_offset": 0.0,
   "developer_mode": true,
-  "theme": "aurora",
+  "theme": "standard",
   "lgs_mesh_channel_send": 17,
   "lgs_mesh_channel_recv": 17,
   "language": "de"

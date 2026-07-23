@@ -106,7 +106,58 @@ class FullScreenMainPanel(FloatLayout):
         )
         self.add_widget(self.btn_left)
         self.add_widget(self.btn_right)
-        
+
+
+
+
+        # -------------------------------------------------
+        # HISTORY RANGE BUTTONS
+        # -------------------------------------------------
+        self.on_range_selected = None
+        self.range_buttons = {}
+
+        self.range_bar = BoxLayout(
+            orientation="horizontal",
+            spacing=dp_scaled(6),
+            padding=(dp_scaled(8), 0),
+            size_hint=(0.72, None),
+            height=dp_scaled(38),
+            pos_hint={
+                "center_x": 0.5,
+                "top": 0.93,
+            },
+        )
+
+        range_items = [
+            ("LIVE", None),
+            ("12H", 12),
+            ("24H", 24),
+            ("36H", 36),
+            ("48H", 48),
+        ]
+
+        for text, hours in range_items:
+            button = Button(
+                text=text,
+                bold=True,
+                font_size=sp_scaled(15),
+                background_normal="",
+                background_down="",
+                background_color=(0.08, 0.08, 0.10, 0.72),
+                color=(0.75, 0.75, 0.78, 1),
+            )
+
+            button.bind(
+                on_release=lambda _button, selected_hours=hours:
+                    self._emit_range_selected(selected_hours)
+            )
+
+            self.range_buttons[hours] = button
+            self.range_bar.add_widget(button)
+
+        self.add_widget(self.range_bar)
+        self.set_active_range(None)
+
         # CONTROL BUTTONS
         self.controls = ControlButtons()
         self.controls.size_hint = (1, None)
@@ -121,6 +172,21 @@ class FullScreenMainPanel(FloatLayout):
         self.graph.label_options["color"] = self.presentation.get("graph_label_color", [1, 1, 1, 0.4])
         for label in self.labels_list:
             label.color = self.presentation.get("axis_color", [1, 1, 1, 0.5])
+
+
+
+    def _emit_range_selected(self, hours):
+        if callable(self.on_range_selected):
+            self.on_range_selected(hours)
+
+    def set_active_range(self, active_hours):
+        for hours, button in self.range_buttons.items():
+            if hours == active_hours:
+                button.background_color = (0.12, 0.55, 0.30, 0.90)
+                button.color = (1, 1, 1, 1)
+            else:
+                button.background_color = (0.08, 0.08, 0.10, 0.72)
+                button.color = (0.75, 0.75, 0.78, 1)
 
     def _update_bg(self, *_):
         self.bg_rect.pos = self.pos

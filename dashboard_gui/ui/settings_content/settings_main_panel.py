@@ -120,6 +120,15 @@ class SettingsMainPanel(BoxLayout):
         
         add_slider("settings.refresh_interval", "refresh_interval", 0.1, 3.0, 0.1, container_left)
         add_slider("settings.graph_resolution", "graph_resolution", 1.1, 100.0, 1, container_left)
+        add_slider(
+            "settings.graph_refresh_interval",
+            "graph_refresh_interval",
+            0.1,
+            30.0,
+            0.1,
+            container_left
+        )
+
         add_slider("settings.tile_graph_window", "tile_graph_window", 200, 2000, 10, container_left)
         add_slider("settings.graph_smoothing_factor", "graph_smoothing_factor", 0.0, 1.0, 0.01, container_left)
         # RECHTS: Offsets & Mesh
@@ -229,6 +238,7 @@ class SettingsMainPanel(BoxLayout):
 
         defaults = {
             "refresh_interval":0.1,
+            "graph_refresh_interval":1.0,
             "graph_resolution":10.0,
             "stale_timeout":15.0,
             "tile_graph_window":850,
