@@ -4,6 +4,9 @@ from kivy.clock import Clock
 import time
 import config
 from dashboard_gui.gsm_engines.graph_engine import GraphEngine
+from dashboard_gui.gsm_engines.graph_history_engine import (
+    GraphHistoryEngine,
+)
 from dashboard_gui.gsm_engines.ui_screen_button_engine import UIManager # oben importieren
 from dashboard_gui.gsm_engines.config_engine import ConfigEngine# oben importieren
 from dashboard_gui.gsm_engines.led_engine import LedEngine
@@ -35,6 +38,7 @@ class GlobalStateManager:
 
         # Engines
         self.graph_engine = GraphEngine(self)
+        self.graph_history_engine = GraphHistoryEngine(self)
         self.ui_handler = UIManager(self)
         self.engine = ConfigEngine(self)
         self.led_engine = LedEngine(self.ui_handler)

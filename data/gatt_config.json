@@ -1,7 +1,7 @@
 {
   "devices": {
-    "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
-      "bridge_profile": "ThermoBeacon2_Bridge"
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "bridge_profile": "Inkbird_Bridge"
     }
   }
 }

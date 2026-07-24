@@ -23,3 +23,7 @@ dashboard_gui/ui/common/__pycache__/header_online.cpython-312.pyc
 dashboard_gui/ui/common/__pycache__/image_viewer.cpython-312.pyc
 dashboard_gui/ui/common/__pycache__/window_picker.cpython-312.pyc
 dashboard_gui/ui/common/buttons/__pycache__/control_buttons.cpython-312.pyc
+dashboard_gui/gsm_engines/__pycache__/data_flow_engine.cpython-312.pyc
+dashboard_gui/gsm_engines/__pycache__/graph_control_engine.cpython-312.pyc
+/dashboard_gui/gsm_engines/__pycache__
+/dashboard_gui/gsm_engines/__pycache__

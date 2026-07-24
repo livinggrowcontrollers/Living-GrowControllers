@@ -25,7 +25,9 @@ import uuid
 import config
 import web_client
 from dashboard_gui.circulation_fan_registry import fan_prefix, fan_revision_key, fan_gpio_keys, MAX_CIRCULATION_FANS
-from dashboard_gui.gsm_engines.graph_engine import HistorySelectionResult
+from dashboard_gui.gsm_engines.graph_history_engine import (
+    HistorySelectionResult,
+)
 
 
 CLIMATE_HUB_REVISION_KEY = "rev_exhaust"
@@ -191,8 +193,8 @@ class OverlayCommandEngine:
                 "Ungültiger History-Modus.",
             )
 
-        graph_engine = self.gsm.graph_engine
-        base_state = graph_engine.get_history_control_state()
+        history_engine = self.gsm.graph_history_engine
+        base_state = history_engine.get_history_control_state()
         if not isinstance(base_state, dict):
             return self._history_error_result(
                 mac,
@@ -223,7 +225,7 @@ class OverlayCommandEngine:
                 base_revision + 1,
             )
         points = (
-            graph_engine.HISTORY_TARGET_POINTS
+            history_engine.HISTORY_TARGET_POINTS
             if target_points is None
             else int(target_points)
         )
@@ -237,7 +239,7 @@ class OverlayCommandEngine:
                     selection_id,
                     base_revision + 1,
                 )
-            result = graph_engine.select_history_window(
+            result = history_engine.select_history_window(
                 device_id=mac,
                 history_window=history_window,
                 selection_id=selection_id,
@@ -254,7 +256,7 @@ class OverlayCommandEngine:
                 "range_key": history_window.range_key,
             }
         else:
-            result = graph_engine.select_live_mode(
+            result = history_engine.select_live_mode(
                 device_id=mac,
                 selection_id=selection_id,
                 base_revision=base_revision,
@@ -298,7 +300,7 @@ class OverlayCommandEngine:
                     acknowledgement,
                     envelope,
                 )
-            graph_engine.complete_history_command(
+            history_engine.complete_history_command(
                 selection_id,
                 error=error,
             )

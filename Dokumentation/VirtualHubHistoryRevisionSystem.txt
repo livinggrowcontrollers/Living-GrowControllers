@@ -22,8 +22,9 @@ Steuerweg
    Fullscreen -> GlobalStateManager -> OverlayCommandEngine
    -> WEB_CLIENT -> aktuell konfigurierte Geräteroute -> /history
 
-   Fullscreen und GraphEngine führen keine HTTP-Anfrage aus. Es wird auch
-   kein History-Endpunkt aus einem früheren Remote-/Lokalmodus gespeichert.
+   Fullscreen und GraphHistoryEngine führen keine HTTP-Anfrage aus. Es wird
+   auch kein History-Endpunkt aus einem früheren Remote-/Lokalmodus
+   gespeichert.
    WEB_CLIENT löst die Geräteroute für jeden einzelnen Befehl neu aus der
    aktuellen Gerätekonfiguration auf.
 3. Das Dashboard sendet an /history:
@@ -161,7 +162,8 @@ Verantwortlichkeiten
 - Virtual Hub: validiert, komprimiert, versioniert, bestätigt und publiziert.
 - /history: reiner Steuerkanal mit ACK, ohne Logdaten.
 - /data: einziger Transportweg für bestätigten History-Header und Logdaten.
-- GraphEngine: besitzt keinen Netzwerktransport. Sie verwirft alte Revisionen
-  und stellt den bestätigten Hub-Zustand für Dashboard, Fullscreen und Grow
-  Overview bereit.
-- Dashboard und Grow Overview: passive Leser der zentralen GraphEngine.
+- GraphHistoryEngine: besitzt keinen Netzwerktransport. Sie verwirft alte
+  Revisionen und stellt den bestätigten Hub-Zustand für Dashboard,
+  Fullscreen und Grow Overview bereit.
+- Dashboard und Grow Overview: passive Leser der zentralen
+  GraphHistoryEngine.

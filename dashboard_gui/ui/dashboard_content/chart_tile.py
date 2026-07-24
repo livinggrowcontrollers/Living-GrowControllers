@@ -99,7 +99,12 @@ class ChartTile(ButtonBehavior, BoxLayout):
             # WICHTIG: triangle_strip statt triangle_fan
             self.mesh = Mesh(mode='triangle_strip')
             
-        self.graph.bind(pos=self._upd_mesh, size=self._upd_mesh)
+        self.graph.bind(
+            pos=self._upd_mesh,
+            size=self._upd_mesh,
+            view_pos=self._upd_mesh,
+            view_size=self._upd_mesh,
+        )
 
         # -------------------------------------------------
         # 5. STATS LABELS (Subtil im Hintergrund gedimmt)

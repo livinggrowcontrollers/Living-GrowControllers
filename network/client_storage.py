@@ -1,11 +1,13 @@
 # network/client_storage.py
 import os
 import json
+import threading
 import config
 
 PATH_WEB_DUMP = os.path.join(config.DATA, "web_dump.json")
 PATH_PLANTS_STORE = os.path.join(config.DATA, "plants_store.json")
 PATH_SETTINGS_SYNC = os.path.join(config.DATA, "settings_sync.json")
+_storage_lock = threading.RLock()
 
 def _compact_plant_payload(plant_payload):
     """Entfernt Legacy-Leerslots, ohne Slot-IDs existierender Pflanzen zu ändern."""
@@ -60,38 +62,47 @@ def save_web_dump(current_data):
     """Speichert die aktuellen Live-Daten atomar auf die Festplatte."""
     tmp_path = PATH_WEB_DUMP + ".tmp"
     try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(current_data, f, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp_path, PATH_WEB_DUMP)
+        with _storage_lock:
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(current_data, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_path, PATH_WEB_DUMP)
     except Exception as e:
         print(f"[Storage] Fehler beim Schreiben des Web-Dumps: {e}")
 
 def save_heavy_plant_data(mac, plant_payload, local_plants_cache):
     """Speichert empfangene Heavy-Plant-Daten ab."""
-    local_plants_cache[mac] = _compact_plant_payload(plant_payload)
-    tmp_path = PATH_PLANTS_STORE + ".tmp"
     try:
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(local_plants_cache, f, indent=2)
-        os.replace(tmp_path, PATH_PLANTS_STORE)
+        with _storage_lock:
+            local_plants_cache[mac] = _compact_plant_payload(plant_payload)
+            tmp_path = PATH_PLANTS_STORE + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as f:
+                json.dump(local_plants_cache, f, indent=2)
+            os.replace(tmp_path, PATH_PLANTS_STORE)
     except Exception as e:
         print(f"[Storage] Fehler beim Speichern der Heavy-Plant-Daten für {mac}: {e}")
 
 def save_settings_rev(mac, rev):
     """Speichert eine neue Revisionsnummer in die settings_sync.json."""
     try:
-        data = {}
-        if os.path.exists(PATH_SETTINGS_SYNC):
-            with open(PATH_SETTINGS_SYNC, "r") as f:
-                data = json.load(f)
-        
-        data[mac] = data.get(mac, {})
-        data[mac]["rev"] = int(rev)
+        with _storage_lock:
+            data = {}
+            if os.path.exists(PATH_SETTINGS_SYNC):
+                with open(
+                    PATH_SETTINGS_SYNC,
+                    "r",
+                    encoding="utf-8",
+                ) as source:
+                    data = json.load(source)
 
-        with open(PATH_SETTINGS_SYNC, "w") as f:
-            json.dump(data, f, indent=2)
+            data[mac] = data.get(mac, {})
+            data[mac]["rev"] = int(rev)
+
+            tmp_path = PATH_SETTINGS_SYNC + ".tmp"
+            with open(tmp_path, "w", encoding="utf-8") as target:
+                json.dump(data, target, indent=2)
+            os.replace(tmp_path, PATH_SETTINGS_SYNC)
     except Exception as e:
         print(f"[Storage] Fehler beim Speichern der Settings-Rev für {mac}: {e}")
 
@@ -100,7 +111,12 @@ def get_local_settings_rev(mac):
     if not os.path.exists(PATH_SETTINGS_SYNC):
         return 0
     try:
-        with open(PATH_SETTINGS_SYNC, "r") as f:
-            return json.load(f).get(mac, {}).get("rev", 0)
-    except:
+        with _storage_lock:
+            with open(
+                PATH_SETTINGS_SYNC,
+                "r",
+                encoding="utf-8",
+            ) as source:
+                return json.load(source).get(mac, {}).get("rev", 0)
+    except Exception:
         return 0

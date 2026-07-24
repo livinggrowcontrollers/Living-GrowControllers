@@ -1,92 +1,155 @@
-# web_client/registry.py
-import re
+from ipaddress import IPv4Address
 import threading
 import time
 
-# Modulweite Validierer
+
 def _is_valid_ip(ip):
-    return bool(re.match(r"^\d{1,3}(\.\d{1,3}){3}$", ip or ""))
+    try:
+        IPv4Address(str(ip or ""))
+        return True
+    except ValueError:
+        return False
+
 
 def _is_valid_hostname(host):
     return bool(host) and len(host) > 3
 
+
+def _append_unique(targets, target):
+    normalized = str(target or "").rstrip("/")
+    if normalized and normalized not in targets:
+        targets.append(normalized)
+
+
 class DeviceRegistry:
     def __init__(self):
-        # Der Lock schützt alle darunter liegenden Dictionaries vor concurrent Zugriffen
         self._lock = threading.Lock()
-        
-        # Central device registry: { mac: {"ip": str, "hostname": str, "source": str, "last_seen": float} }
+
+        # Laufzeitinformationen bleiben von der persistenten Config getrennt.
         self._devices = {}
-        
-        # Circuit Breaker Zustand: { mac: {"fail_count": int, "cooldown_until": float} }
+
+        # Die kurzen Pausen bleiben deutlich unter dem Dashboard-Stale-Timeout.
         self._circuit_breakers = {}
 
     def update_device(self, mac, ip=None, hostname=None, source="mdns"):
-        """Aktualisiert oder erstellt einen Eintrag in der Registry (Thread-sicher)."""
+        """Aktualisiert Laufzeitdaten eines Geräts thread-sicher."""
         with self._lock:
             entry = self._devices.setdefault(mac, {})
             if ip:
-                entry["ip"] = ip
-                entry["source"] = source
+                if source == "runtime":
+                    entry["runtime_ip"] = ip
+                    if not entry.get("ip"):
+                        entry["ip"] = ip
+                        entry["source"] = source
+                else:
+                    entry["ip"] = ip
+                    entry["source"] = source
                 entry["last_seen"] = time.time()
             if hostname:
                 entry["hostname"] = hostname
 
     def get_device(self, mac):
-        """Holt die Daten eines spezifischen Geräts."""
         with self._lock:
             return self._devices.get(mac, {}).copy()
 
     def remove_device(self, mac):
-        """Entfernt ein Gerät aus der Registry (z.B. bei Bereinigung)."""
         with self._lock:
             self._devices.pop(mac, None)
             self._circuit_breakers.pop(mac, None)
 
-    from urllib.parse import urlparse
+    def remove_inactive(self, active_devices):
+        active = set(active_devices)
+        with self._lock:
+            known_devices = set(self._devices) | set(self._circuit_breakers)
+            for mac in known_devices:
+                if mac not in active:
+                    self._devices.pop(mac, None)
+                    self._circuit_breakers.pop(mac, None)
 
     def build_targets(self, mac, dev_cfg):
         ip_cfg = (dev_cfg.get("ip_address") or "").strip()
         hostname = (dev_cfg.get("hostname") or "").strip().lower()
 
-        targets = []
-
-        # Vollständige URL eingetragen?
-        if ip_cfg.startswith("http://") or ip_cfg.startswith("https://"):
+        # Explizite Hub-/Cloudflare-URLs bleiben allein autoritativ.
+        if ip_cfg.startswith(("http://", "https://")):
             return [ip_cfg.rstrip("/")]
 
-        # Normale IPv4
-        if _is_valid_ip(ip_cfg):
-            targets.append(f"http://{ip_cfg}")
+        entry = self.get_device(mac)
+        targets = []
+        configured_target = (
+            f"http://{ip_cfg}" if _is_valid_ip(ip_cfg) else None
+        )
+        discovered_ip = entry.get("ip")
+        discovered_target = (
+            f"http://{discovered_ip}"
+            if _is_valid_ip(discovered_ip)
+            else None
+        )
+        hostname_target = (
+            f"http://{hostname}.local"
+            if _is_valid_hostname(hostname)
+            else None
+        )
 
-        # mDNS
-        if _is_valid_hostname(hostname):
-            targets.append(f"http://{hostname}.local")
+        candidates = {
+            configured_target,
+            discovered_target,
+            hostname_target,
+        }
+        preferred_target = entry.get("preferred_target")
+        if preferred_target in candidates:
+            _append_unique(targets, preferred_target)
 
+        _append_unique(targets, configured_target)
+        _append_unique(targets, discovered_target)
+        _append_unique(targets, hostname_target)
         return targets
+
     def is_cooldown(self, mac):
-        """Prüft, ob ein Gerät aktuell wegen Fehlern blockiert ist."""
         with self._lock:
             breaker = self._circuit_breakers.get(mac)
             if not breaker:
                 return False
-            return time.time() < breaker["cooldown_until"]
+            now = time.monotonic()
+            if now >= breaker["cooldown_until"]:
+                breaker["cooldown_until"] = 0.0
+                return False
+            return True
 
-    def handle_success(self, mac):
-        """Setzt den Fehlerzähler bei erfolgreicher Verbindung zurück."""
+    def handle_success(self, mac, target=None):
         with self._lock:
             self._circuit_breakers.pop(mac, None)
+            if target:
+                entry = self._devices.setdefault(mac, {})
+                entry["preferred_target"] = str(target).rstrip("/")
+                entry["last_success"] = time.time()
 
-
-
-
-    def handle_failure(self, mac, max_fails=5, cooldown_duration=20.0):
-        """Registriert einen Fehler und aktiviert ggf. den Cooldown."""
+    def handle_failure(
+        self,
+        mac,
+        max_fails=5,
+        cooldown_base=1.0,
+        cooldown_max=6.0,
+    ):
+        """Aktiviert nach mehreren Fehlern eine kurze progressive Probe-Pause."""
         with self._lock:
-            now = time.time()
-            breaker = self._circuit_breakers.setdefault(mac, {"fail_count": 0, "cooldown_until": 0.0})
+            breaker = self._circuit_breakers.setdefault(
+                mac,
+                {"fail_count": 0, "cooldown_until": 0.0},
+            )
             breaker["fail_count"] += 1
-            
-            if breaker["fail_count"] >= max_fails:
-                breaker["cooldown_until"] = now + cooldown_duration
-                print(f"[CircuitBreaker] {mac} ist offline. Überspringe Anfragen für {cooldown_duration}s.")
+            fail_count = breaker["fail_count"]
+            if fail_count < max_fails:
+                return 0.0
+
+            cooldown = min(
+                float(cooldown_max),
+                float(cooldown_base) * (2 ** (fail_count - max_fails)),
+            )
+            breaker["cooldown_until"] = time.monotonic() + cooldown
+
+        print(
+            f"[CircuitBreaker] {mac}: kurze Wiederverbindungs-Pause "
+            f"von {cooldown:.1f}s nach {fail_count} Fehlern."
+        )
+        return cooldown

@@ -1,5 +1,4 @@
 import threading
-import time
 
 from kivy.clock import Clock
 from kivy.graphics import Color, RoundedRectangle
@@ -14,6 +13,8 @@ from zeroconf import ServiceBrowser, Zeroconf
 
 from device_discoverer import PopupDiscoverer
 from kivy.metrics import dp, sp
+
+
 def open_mdns_scanner_popup(
     target_mac,
     ip_input_field,
@@ -92,8 +93,20 @@ def open_mdns_scanner_popup(
 
     close_btn.bind(on_release=popup.dismiss)
 
+    scan_cancelled = threading.Event()
+    discoverer_holder = []
+
+    def cancel_scan(*_):
+        scan_cancelled.set()
+        if discoverer_holder:
+            discoverer_holder[0].cancel()
+
+    popup.bind(on_dismiss=cancel_scan)
     popup.open()
+
     def on_device_discovered(mac_id, data):
+        if scan_cancelled.is_set():
+            return
 
         btn_text = (
             f"ID: {mac_id}  |  "
@@ -110,6 +123,8 @@ def open_mdns_scanner_popup(
         )
 
         def select_this_device(*_):
+            if scan_cancelled.is_set():
+                return
 
             ip_input_field.text = data["ip_address"]
 
@@ -128,24 +143,33 @@ def open_mdns_scanner_popup(
         result_grid.add_widget(dev_btn)
 
     def run_network_scan():
+        zc = None
+        browser = None
+        try:
+            if scan_cancelled.is_set():
+                return
 
-        zc = Zeroconf()
+            zc = Zeroconf()
+            discoverer = PopupDiscoverer(on_device_discovered)
+            discoverer_holder.append(discoverer)
 
-        discoverer = PopupDiscoverer(
-            on_device_discovered
-        )
+            if scan_cancelled.is_set():
+                discoverer.cancel()
+                return
 
-        browser = ServiceBrowser(
-            zc,
-            "_http._tcp.local.",
-            discoverer
-        )
-
-        time.sleep(4.0)
-
-        zc.close()
+            browser = ServiceBrowser(
+                zc,
+                "_http._tcp.local.",
+                discoverer
+            )
+            scan_cancelled.wait(4.0)
+        finally:
+            if zc is not None:
+                zc.close()
 
         def finish_status(*_):
+            if scan_cancelled.is_set():
+                return
 
             if not result_grid.children:
 
@@ -161,9 +185,8 @@ def open_mdns_scanner_popup(
                     "Wähle das passende Gerät für das Autofill aus:"
                 )
 
-        Clock.schedule_once(
-            finish_status
-        )
+        if not scan_cancelled.is_set():
+            Clock.schedule_once(finish_status)
 
     threading.Thread(
         target=run_network_scan,

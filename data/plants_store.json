@@ -1,7 +1,7 @@
 {
   "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B": {
     "plant_planner": {
-      "rev_plant_planner": 43,
+      "rev_plant_planner": 46,
       "plants": [
         {
           "slot": 0,
@@ -20,15 +20,15 @@
           "dry_weight": "",
           "favorite": false,
           "picture": 7,
-          "last_watered": 0,
+          "last_watered": 1784892955,
           "last_fertilized": 0,
           "estimated_veg_days": 30,
-          "estimated_flower_days": 68,
+          "estimated_flower_days": 65,
           "harvest_date": "",
           "germination_start": "2026-05-01",
           "seedling_start": "2026-05-08",
           "vegetative_start": "2026-05-14",
-          "flowering_start": "",
+          "flowering_start": "2026-07-01",
           "drying_start": "",
           "curing_start": ""
         },
@@ -86,6 +86,42 @@
           "germination_start": "2026-05-01",
           "seedling_start": "",
           "vegetative_start": "2026-06-01",
+          "flowering_start": "2026-07-01",
+          "drying_start": "",
+          "curing_start": ""
+        }
+      ]
+    }
+  },
+  "827482CC-A977-43D7-835E-8E8B6978E66A": {
+    "plant_planner": {
+      "rev_plant_planner": 2,
+      "plants": [
+        {
+          "slot": 0,
+          "used": true,
+          "name": "",
+          "strain": "",
+          "breeder": "",
+          "phenotype": "",
+          "pot_size": "",
+          "medium": "",
+          "light": "",
+          "location": "",
+          "notes": "",
+          "tags": "",
+          "harvest_weight": "",
+          "dry_weight": "",
+          "favorite": false,
+          "picture": 1,
+          "last_watered": 1784415185,
+          "last_fertilized": 0,
+          "estimated_veg_days": 30,
+          "estimated_flower_days": 60,
+          "harvest_date": "",
+          "germination_start": "",
+          "seedling_start": "",
+          "vegetative_start": "",
           "flowering_start": "",
           "drying_start": "",
           "curing_start": ""

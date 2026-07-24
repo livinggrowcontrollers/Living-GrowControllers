@@ -5,6 +5,9 @@ from unittest.mock import Mock, patch
 
 from dashboard_gui.gsm_engines.data_flow_engine import DataFlowEngine
 from dashboard_gui.gsm_engines.graph_engine import GraphEngine
+from dashboard_gui.gsm_engines.graph_history_engine import (
+    GraphHistoryEngine,
+)
 
 
 class FakeGsm:
@@ -116,14 +119,15 @@ class GraphEngineHistoryTests(unittest.TestCase):
         self.config_patch.start()
         self.addCleanup(self.config_patch.stop)
         self.gsm = FakeGsm()
-        self.engine = GraphEngine(self.gsm)
+        self.live_engine = GraphEngine(self.gsm)
+        self.engine = GraphHistoryEngine(self.gsm)
 
     def test_live_snapshot_keeps_live_trend(self):
         key = "dev_webserver_temp_in"
-        self.engine.graph_buffers[key].extend([20.0, 21.0, 22.0])
-        self.engine.global_trends[key] = 1
+        self.live_engine.graph_buffers[key].extend([20.0, 21.0, 22.0])
+        self.live_engine.global_trends[key] = 1
 
-        snapshot = self.engine.get_live_snapshot(key)
+        snapshot = self.live_engine.get_live_snapshot(key)
 
         self.assertEqual(snapshot.mode, "live")
         self.assertEqual(snapshot.trend_icon, "\uf062")
@@ -132,15 +136,15 @@ class GraphEngineHistoryTests(unittest.TestCase):
 
     def test_live_processing_pipeline_still_builds_snapshot(self):
         key = "dev_webserver_temp_in"
-        self.engine.refresh_config(
+        self.live_engine.refresh_config(
             graph_refresh_interval=0.1,
             base_refresh_interval=0.1,
         )
 
         for value in (20, 21, 22, 23, 24, 25):
-            self.engine.process_new_value(key, value)
+            self.live_engine.process_new_value(key, value)
 
-        snapshot = self.engine.get_live_snapshot(key)
+        snapshot = self.live_engine.get_live_snapshot(key)
         self.assertEqual(snapshot.values, (20.0, 21.0, 22.0, 23.0, 24.0, 25.0))
         self.assertEqual(snapshot.last_value, 25.0)
         self.assertEqual(snapshot.trend_icon, "\uf062")
@@ -532,7 +536,7 @@ class GraphEngineHistoryTests(unittest.TestCase):
 
     def test_two_dashboards_follow_latest_hub_target_for_same_device(self):
         second_gsm = FakeGsm()
-        second_engine = GraphEngine(second_gsm)
+        second_engine = GraphHistoryEngine(second_gsm)
         first_target = history_payload(
             1,
             {
@@ -846,7 +850,7 @@ class GraphEngineHistoryTests(unittest.TestCase):
         }
 
         with patch(
-            "dashboard_gui.gsm_engines.graph_engine.config._init",
+            "dashboard_gui.gsm_engines.graph_history_engine.config._init",
             return_value=android_config,
         ):
             self.assertTrue(self.engine.ingest_history_pipeline(payload))
@@ -875,7 +879,7 @@ class GraphEngineHistoryTests(unittest.TestCase):
         }
 
         with patch(
-            "dashboard_gui.gsm_engines.graph_engine.config._init",
+            "dashboard_gui.gsm_engines.graph_history_engine.config._init",
             return_value=android_config,
         ):
             self.assertTrue(
@@ -952,7 +956,7 @@ class GraphEngineHistoryTests(unittest.TestCase):
         payload = history_payload(1, {})
 
         with patch(
-            "dashboard_gui.gsm_engines.graph_engine.config._init",
+            "dashboard_gui.gsm_engines.graph_history_engine.config._init",
             return_value=android_config,
         ):
             self.assertTrue(self.engine.ingest_history_pipeline(payload))
@@ -986,7 +990,7 @@ class GraphEngineHistoryTests(unittest.TestCase):
             ]
             engine.process_cycle()
 
-        gsm.graph_engine.ingest_history_pipeline.assert_called_once_with(
+        gsm.graph_history_engine.ingest_history_pipeline.assert_called_once_with(
             history
         )
         gsm.metrics_engine.process_metrics.assert_not_called()
@@ -1259,11 +1263,11 @@ class GraphEngineHistoryTests(unittest.TestCase):
             / "gsm_engines"
             / "data_flow_engine.py"
         ).read_text(encoding="utf-8")
-        graph_engine_source = (
+        graph_history_engine_source = (
             project_root
             / "dashboard_gui"
             / "gsm_engines"
-            / "graph_engine.py"
+            / "graph_history_engine.py"
         ).read_text(encoding="utf-8")
 
         self.assertIn(
@@ -1290,14 +1294,14 @@ class GraphEngineHistoryTests(unittest.TestCase):
             "ingest_history_pipeline(",
             data_flow_source,
         )
-        self.assertNotIn("response.json()", graph_engine_source)
-        self.assertNotIn("requests.", graph_engine_source)
-        self.assertNotIn("history_endpoint", graph_engine_source)
+        self.assertNotIn("response.json()", graph_history_engine_source)
+        self.assertNotIn("requests.", graph_history_engine_source)
+        self.assertNotIn("history_endpoint", graph_history_engine_source)
         self.assertNotIn("history_endpoint", virtual_hub_source)
         self.assertNotIn("history_endpoint", decoder_source)
         self.assertNotIn(
             'acknowledgement.get("devices")',
-            graph_engine_source,
+            graph_history_engine_source,
         )
 
     def test_shared_mesh_keeps_chart_tile_geometry(self):
@@ -1311,11 +1315,17 @@ class GraphEngineHistoryTests(unittest.TestCase):
             / "graph_mesh.py"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("g_pos = graph.pos", mesh_source)
-        self.assertIn("g_size = graph.size", mesh_source)
-        self.assertIn("pad = dp_scaled(0)", mesh_source)
-        self.assertNotIn("view_pos", mesh_source)
-        self.assertNotIn("view_size", mesh_source)
+        self.assertIn(
+            "graph.pos[0] + graph.view_pos[0]",
+            mesh_source,
+        )
+        self.assertIn(
+            "graph.pos[1] + graph.view_pos[1]",
+            mesh_source,
+        )
+        self.assertIn("g_size = graph.view_size", mesh_source)
+        self.assertNotIn("round(", mesh_source)
+        self.assertNotIn("dp_scaled", mesh_source)
 
 
 if __name__ == "__main__":

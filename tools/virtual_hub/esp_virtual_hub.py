@@ -1,3 +1,5 @@
+# tools/virtual_hub/esp_virtual_hub.py
+
 import json
 import socket
 import threading
@@ -14,6 +16,7 @@ from kivy.uix.textinput import TextInput
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from bounded_log import BoundedLogBuffer
 from history_routes import (
     HistoryPipelineStore,
     create_history_blueprint,
@@ -28,18 +31,23 @@ ESP_IP = "192.168.2.20"
 HUB_PROXY_PORT = 80
 USER = "admin"
 PASSWORD = "1234"
+PROXY_LOG_MAX_LINES = 300
+TUNNEL_LOG_MAX_LINES = 200
+LOG_FLUSH_INTERVAL = 0.1
 
 
 def get_local_ip():
     """Ermittelt die lokale IP-Adresse des Rechners im Netzwerk."""
+    sock = None
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("8.8.8.8", 80))
+        return sock.getsockname()[0]
     except Exception:
         return "127.0.0.1"
+    finally:
+        if sock is not None:
+            sock.close()
 
 
 # ==============================================================================
@@ -51,7 +59,7 @@ def fetch_esp_data(ip_address, username=None, password=None, timeout=2.0):
         return False, "Keine IP-Adresse eingegeben."
 
     base_url = f"http://{ip_clean}"
-    endpoint = f"{base_url}data"
+    endpoint = f"{base_url}/data"
 
     try:
         response = requests.get(
@@ -61,20 +69,22 @@ def fetch_esp_data(ip_address, username=None, password=None, timeout=2.0):
             headers={"Connection": "close", "Accept": "application/json"},
         )
 
-        if response.status_code == 200:
-            try:
-                payload = response.json()
-                return True, payload
-            except json.JSONDecodeError:
-                return (
-                    False,
-                    f"HTTP 200, aber ungültiges JSON empfangen:\n{response.text}",
-                )
-        else:
+        try:
+            if response.status_code == 200:
+                try:
+                    payload = response.json()
+                    return True, payload
+                except json.JSONDecodeError:
+                    return (
+                        False,
+                        f"HTTP 200, aber ungültiges JSON empfangen:\n{response.text}",
+                    )
             return (
                 False,
                 f"HTTP-Fehler {response.status_code}: {response.reason}",
             )
+        finally:
+            response.close()
 
     except requests.exceptions.Timeout:
         return False, f"Timeout beim Verbindungsaufbau zu {ip_clean} ({timeout}s)"
@@ -132,33 +142,46 @@ def forward_request_to_esp(path):
             timeout=5.0,
         )
 
-        log_msg = f"[{timestamp}] {method} /{path} -> ESP ({resp.status_code})"
-        if log_callback:
-            log_callback(log_msg)
+        try:
+            log_msg = (
+                f"[{timestamp}] {method} /{path} -> ESP ({resp.status_code})"
+            )
+            if log_callback:
+                log_callback(log_msg)
 
-        # /history steuert nur die Auswahl. Die ausgewählten Messdaten laufen
-        # ausschließlich über den vorhandenen /data-Webkanal.
-        if path.strip("/") == "data" and resp.status_code == 200:
-            try:
-                esp_payload = resp.json()
-                esp_payload["history"] = (
-                    history_pipeline_store.get_pipeline_payload()
-                )
-                return (
-                    jsonify(esp_payload),
-                    200,
-                    {"Content-Type": "application/json"},
-                )
-            except Exception as metadata_error:
-                if log_callback:
-                    log_callback(
-                        f"[{timestamp}] History-Pipeline konnte nicht "
-                        f"eingespeist werden: {metadata_error}"
+            # Die History bleibt ausschließlich Teil des /data-Webkanals.
+            if path.strip("/") == "data" and resp.status_code == 200:
+                try:
+                    esp_payload = resp.json()
+                    esp_payload["history"] = (
+                        history_pipeline_store.get_pipeline_payload(
+                            copy_payload=False,
+                        )
                     )
-                return (resp.content, resp.status_code, resp.headers.items())
+                    return (
+                        jsonify(esp_payload),
+                        200,
+                        {"Content-Type": "application/json"},
+                    )
+                except Exception as metadata_error:
+                    if log_callback:
+                        log_callback(
+                            f"[{timestamp}] History-Pipeline konnte nicht "
+                            f"eingespeist werden: {metadata_error}"
+                        )
+                    return (
+                        resp.content,
+                        resp.status_code,
+                        list(resp.headers.items()),
+                    )
 
-        # Für alle anderen Pfade oder Fehler: 1:1 durchreichen
-        return (resp.content, resp.status_code, resp.headers.items())
+            return (
+                resp.content,
+                resp.status_code,
+                list(resp.headers.items()),
+            )
+        finally:
+            resp.close()
 
     except requests.exceptions.Timeout:
         if log_callback:
@@ -224,6 +247,27 @@ class VirtualHubWidget(BoxLayout):
         self.local_ip = get_local_ip()
         self.last_notified_tunnel_url = None
         self.device_id = "unknown"
+        self._fetch_lock = threading.Lock()
+        self._fetch_in_progress = False
+        self._tunnel_action_lock = threading.Lock()
+        self._shutting_down = False
+        self._proxy_log_buffer = BoundedLogBuffer(
+            PROXY_LOG_MAX_LINES,
+            initial_lines=("<Warte auf Requests vom Webclient...>",),
+        )
+        self._tunnel_log_buffer = BoundedLogBuffer(
+            TUNNEL_LOG_MAX_LINES,
+            initial_lines=("<Tunnel Log...>",),
+        )
+        self._proxy_log_trigger = Clock.create_trigger(
+            self._flush_proxy_log_ui,
+            LOG_FLUSH_INTERVAL,
+        )
+        self._tunnel_log_trigger = Clock.create_trigger(
+            self._flush_tunnel_log_ui,
+            LOG_FLUSH_INTERVAL,
+        )
+        self._tunnel_start_event = None
 
         global log_callback
         log_callback = self.add_proxy_log
@@ -344,7 +388,7 @@ class VirtualHubWidget(BoxLayout):
         tunnel_box.add_widget(tunnel_btn_layout)
 
         self.tunnel_log_output = TextInput(
-            text="<Tunnel Log...>\n",
+            text="\n".join(self._tunnel_log_buffer.snapshot()) + "\n",
             readonly=True,
             multiline=True,
             size_hint_y=None,
@@ -469,7 +513,7 @@ class VirtualHubWidget(BoxLayout):
         )
 
         self.proxy_log_output = TextInput(
-            text="<Warte auf Requests vom Webclient...>\n",
+            text="\n".join(self._proxy_log_buffer.snapshot()) + "\n",
             readonly=True,
             multiline=True,
             size_hint_y=None,
@@ -505,7 +549,10 @@ class VirtualHubWidget(BoxLayout):
         self.add_widget(main_scroll)
 
         # Tunnel direkt beim Start der UI anwerfen
-        Clock.schedule_once(lambda dt: self.tunnel_manager.start(), 0.5)
+        self._tunnel_start_event = Clock.schedule_once(
+            self._start_tunnel,
+            0.5,
+        )
 
     def on_scan_devices(self, instance):
         open_mdns_scanner_popup(
@@ -514,10 +561,17 @@ class VirtualHubWidget(BoxLayout):
             hostname_input_field=None,
             save_callback=lambda: None,
         )
+
+    def _start_tunnel(self, _dt):
+        self._tunnel_start_event = None
+        if not self._shutting_down:
+            self.tunnel_manager.start()
     # --------------------------------------------------------------------------
     # Cloudflare Tunnel Handlers (Thread-sicher via Clock)
     # --------------------------------------------------------------------------
     def on_tunnel_status(self, status):
+        if self._shutting_down:
+            return
         Clock.schedule_once(lambda dt: self._update_tunnel_status_ui(status))
 
     def _update_tunnel_status_ui(self, status):
@@ -535,6 +589,8 @@ class VirtualHubWidget(BoxLayout):
             self.tunnel_status_label.color = (0.7, 0.7, 0.7, 1)
 
     def on_tunnel_url(self, url):
+        if self._shutting_down:
+            return
         Clock.schedule_once(lambda dt: self._update_tunnel_url_ui(url))
 
     def _update_tunnel_url_ui(self, url):
@@ -551,10 +607,15 @@ class VirtualHubWidget(BoxLayout):
             ).start()
 
     def on_tunnel_log(self, message):
-        Clock.schedule_once(lambda dt: self._append_tunnel_log_ui(message))
+        if self._shutting_down:
+            return
+        self._tunnel_log_buffer.append(message)
+        self._tunnel_log_trigger()
 
-    def _append_tunnel_log_ui(self, message):
-        self.tunnel_log_output.text += message + "\n"
+    def _flush_tunnel_log_ui(self, _dt):
+        text = self._tunnel_log_buffer.drain_text()
+        if text is not None and not self._shutting_down:
+            self.tunnel_log_output.text = text
 
     def copy_tunnel_url(self, instance):
         url = self.tunnel_url_input.text.strip()
@@ -567,10 +628,29 @@ class VirtualHubWidget(BoxLayout):
         self.btn_copy_url.text = "Adresse kopieren"
 
     def on_restart_tunnel_click(self, instance):
-        threading.Thread(target=self.tunnel_manager.restart, daemon=True).start()
+        self._start_tunnel_action(self.tunnel_manager.restart)
 
     def on_stop_tunnel_click(self, instance):
-        threading.Thread(target=self.tunnel_manager.stop, daemon=True).start()
+        self._start_tunnel_action(self.tunnel_manager.stop)
+
+    def _start_tunnel_action(self, action):
+        if self._shutting_down:
+            return
+
+        def run_action():
+            if not self._tunnel_action_lock.acquire(blocking=False):
+                return
+            try:
+                if not self._shutting_down:
+                    action()
+            finally:
+                self._tunnel_action_lock.release()
+
+        threading.Thread(
+            target=run_action,
+            daemon=True,
+            name="virtual-hub-tunnel-action",
+        ).start()
 
     # --------------------------------------------------------------------------
     # Bestehende Handlers
@@ -580,12 +660,22 @@ class VirtualHubWidget(BoxLayout):
         ESP_IP = value.strip()
 
     def add_proxy_log(self, log_line):
-        Clock.schedule_once(lambda dt: self._append_log_text(log_line))
+        if self._shutting_down:
+            return
+        self._proxy_log_buffer.append(log_line)
+        self._proxy_log_trigger()
 
-    def _append_log_text(self, log_line):
-        self.proxy_log_output.text += log_line + "\n"
+    def _flush_proxy_log_ui(self, _dt):
+        text = self._proxy_log_buffer.drain_text()
+        if text is not None and not self._shutting_down:
+            self.proxy_log_output.text = text
 
     def on_fetch_click(self, instance):
+        with self._fetch_lock:
+            if self._fetch_in_progress or self._shutting_down:
+                return
+            self._fetch_in_progress = True
+
         self.btn_fetch.disabled = True
         ip = self.ip_input.text
         user = self.user_input.text.strip() or None
@@ -598,23 +688,39 @@ class VirtualHubWidget(BoxLayout):
         ).start()
 
     def _worker_thread(self, ip, user, password):
-        success, response = fetch_esp_data(ip, user, password)
+        try:
+            success, response = fetch_esp_data(ip, user, password)
+        except Exception as exc:
+            success, response = False, f"Unerwarteter Fehler: {exc}"
+
+        if self._shutting_down:
+            with self._fetch_lock:
+                self._fetch_in_progress = False
+            return
+
         Clock.schedule_once(
             lambda dt: self._update_ui_after_fetch(success, response)
         )
 
     def _update_ui_after_fetch(self, success, response):
-        self.btn_fetch.disabled = False
-        if success:
-            pretty_json = json.dumps(response, indent=2, ensure_ascii=False)
-            self.json_output.text = pretty_json
-            # Extract device_id if present in payload
-            if isinstance(response, dict):
-                dev_id = response.get("device_id") or response.get("id") or response.get("mac")
-                if dev_id:
-                    self.device_id = str(dev_id)
-        else:
-            self.json_output.text = f"FEHLER:\n{response}"
+        try:
+            self.btn_fetch.disabled = False
+            if success:
+                pretty_json = json.dumps(response, indent=2, ensure_ascii=False)
+                self.json_output.text = pretty_json
+                if isinstance(response, dict):
+                    dev_id = (
+                        response.get("device_id")
+                        or response.get("id")
+                        or response.get("mac")
+                    )
+                    if dev_id:
+                        self.device_id = str(dev_id)
+            else:
+                self.json_output.text = f"FEHLER:\n{response}"
+        finally:
+            with self._fetch_lock:
+                self._fetch_in_progress = False
 
     def toggle_auto_refresh(self, instance):
         if self.auto_refresh_event:
@@ -624,10 +730,33 @@ class VirtualHubWidget(BoxLayout):
             self.btn_auto.background_color = (0.5, 0.5, 0.5, 1.0)
         else:
             self.auto_refresh_event = Clock.schedule_interval(
-                lambda dt: self.on_fetch_click(None), 2.0
+                self._auto_refresh_tick,
+                2.0,
             )
             self.btn_auto.text = "Auto-Refresh: AN (2s)"
             self.btn_auto.background_color = (0.2, 0.8, 0.2, 1.0)
+
+    def _auto_refresh_tick(self, _dt):
+        self.on_fetch_click(None)
+
+    def shutdown(self):
+        self._shutting_down = True
+
+        if self._tunnel_start_event:
+            self._tunnel_start_event.cancel()
+            self._tunnel_start_event = None
+        if self.auto_refresh_event:
+            self.auto_refresh_event.cancel()
+            self.auto_refresh_event = None
+
+        self._proxy_log_trigger.cancel()
+        self._tunnel_log_trigger.cancel()
+
+        global log_callback
+        if getattr(log_callback, "__self__", None) is self:
+            log_callback = None
+
+        self.tunnel_manager.stop()
 
 
 class VirtualHubApp(App):
@@ -642,8 +771,8 @@ class VirtualHubApp(App):
 
     def on_stop(self):
         history_pipeline_store.stop_auto_refresh()
-        if hasattr(self, "hub_widget") and hasattr(self.hub_widget, "tunnel_manager"):
-            self.hub_widget.tunnel_manager.stop()
+        if hasattr(self, "hub_widget"):
+            self.hub_widget.shutdown()
 
 
 if __name__ == "__main__":

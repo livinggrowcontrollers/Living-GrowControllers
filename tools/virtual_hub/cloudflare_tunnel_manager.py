@@ -23,6 +23,8 @@ class CloudflareTunnelManager:
         self.process = None
         self.reader_thread = None
         self.stop_requested = False
+        self._state_lock = threading.RLock()
+        self._operation_lock = threading.Lock()
         
         self.status = "stopped"
         self.public_url = ""
@@ -37,25 +39,38 @@ class CloudflareTunnelManager:
         return os.path.join(base_dir, binary_name)
 
     def _update_status(self, new_status):
-        self.status = new_status
-        if self.on_status_cb:
-            self.on_status_cb(new_status)
+        with self._state_lock:
+            self.status = new_status
+            callback = self.on_status_cb
+        if callback:
+            callback(new_status)
 
     def _update_url(self, url):
-        self.public_url = url
-        if self.on_url_cb:
-            self.on_url_cb(url)
+        with self._state_lock:
+            self.public_url = url
+            callback = self.on_url_cb
+        if callback:
+            callback(url)
 
     def _log(self, message):
-        if self.on_log_cb:
-            self.on_log_cb(message)
+        with self._state_lock:
+            callback = self.on_log_cb
+        if callback:
+            callback(message)
 
     def start(self):
-        if self.process and self.process.poll() is None:
+        with self._operation_lock:
+            self._start_locked()
+
+    def _start_locked(self):
+        with self._state_lock:
+            process = self.process
+        if process and process.poll() is None:
             self._log("[Tunnel] Tunnel läuft bereits.")
             return
 
-        self.stop_requested = False
+        with self._state_lock:
+            self.stop_requested = False
         self._update_url("")
         self._update_status("starting")
 
@@ -83,7 +98,7 @@ class CloudflareTunnelManager:
 
         try:
             self._log(f"[Tunnel] Starte cloudflared: {' '.join(command)}")
-            self.process = subprocess.Popen(
+            process = subprocess.Popen(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -96,15 +111,23 @@ class CloudflareTunnelManager:
             self._update_status("error")
             return
 
-        self.reader_thread = threading.Thread(target=self._read_output, daemon=True)
-        self.reader_thread.start()
+        reader_thread = threading.Thread(
+            target=self._read_output,
+            args=(process,),
+            daemon=True,
+            name="cloudflared-output",
+        )
+        with self._state_lock:
+            self.process = process
+            self.reader_thread = reader_thread
+        reader_thread.start()
 
-    def _read_output(self):
+    def _read_output(self, process):
         url_pattern = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
         url_found = False
 
-        while self.process and self.process.poll() is None:
-            line = self.process.stdout.readline()
+        while process.poll() is None:
+            line = process.stdout.readline()
             if not line:
                 break
             
@@ -121,8 +144,14 @@ class CloudflareTunnelManager:
                         self._update_status("online")
 
         # Prozess beendet
-        exit_code = self.process.poll() if self.process else None
-        if not self.stop_requested:
+        exit_code = process.poll()
+        with self._state_lock:
+            is_current = self.process is process
+            stop_requested = self.stop_requested
+        if not is_current:
+            return
+
+        if not stop_requested:
             if not url_found and self.status == "starting":
                 self._log("[Tunnel Fehler] Prozess beendet ohne eine URL zu erzeugen.")
                 self._update_status("error")
@@ -135,30 +164,51 @@ class CloudflareTunnelManager:
             self._update_status("stopped")
 
     def stop(self):
-        self.stop_requested = True
-        if self.process and self.process.poll() is None:
+        with self._operation_lock:
+            self._stop_locked()
+
+    def _stop_locked(self):
+        with self._state_lock:
+            self.stop_requested = True
+            process = self.process
+            reader_thread = self.reader_thread
+
+        if process and process.poll() is None:
             self._log("[Tunnel] Stoppe cloudflared-Prozess...")
             try:
-                self.process.terminate()
-                # Max 2 Sekunden warten
-                for _ in range(20):
-                    if self.process.poll() is not None:
-                        break
-                    time.sleep(0.1)
-                
-                if self.process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=2.0)
+                except subprocess.TimeoutExpired:
                     self._log("[Tunnel] Prozess reagiert nicht auf terminate(), sende kill()...")
-                    self.process.kill()
+                    process.kill()
+                    process.wait(timeout=1.0)
             except Exception as e:
                 self._log(f"[Tunnel Fehler] Fehler beim Stoppen: {str(e)}")
 
-        self.process = None
+        if process and process.stdout:
+            try:
+                process.stdout.close()
+            except Exception:
+                pass
+        if (
+            reader_thread
+            and reader_thread is not threading.current_thread()
+            and reader_thread.is_alive()
+        ):
+            reader_thread.join(timeout=1.0)
+
+        with self._state_lock:
+            if self.process is process:
+                self.process = None
+                self.reader_thread = None
         self._update_url("")
         self._update_status("stopped")
         self._log("[Tunnel] Gestoppt.")
 
     def restart(self):
-        self._log("[Tunnel] Neustart wird durchgeführt...")
-        self.stop()
-        time.sleep(0.5)
-        self.start()
+        with self._operation_lock:
+            self._log("[Tunnel] Neustart wird durchgeführt...")
+            self._stop_locked()
+            time.sleep(0.5)
+            self._start_locked()

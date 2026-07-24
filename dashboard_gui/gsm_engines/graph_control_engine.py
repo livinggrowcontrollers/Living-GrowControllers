@@ -23,6 +23,7 @@ class GraphControlEngine:
         
         # 1. Daten in der GraphEngine löschen
         self.gsm.graph_engine.reset()
+        self.gsm.graph_history_engine.reset()
         
         # 2. Alle UIs informieren (Dashboard, Fullscreen, etc.)
         # Wir nutzen den UIManager, um alle Screens zu erreichen

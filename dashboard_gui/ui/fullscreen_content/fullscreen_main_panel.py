@@ -200,7 +200,7 @@ class FullScreenMainPanel(FloatLayout):
 
         self.controls = ControlButtons()
         self.controls.size_hint = (1, None)
-        self.controls.height = dp_scaled(40)
+        self.controls.height = dp_scaled(30)
         self.controls.pos_hint = {"y": 0}
         self.add_widget(self.controls)
 

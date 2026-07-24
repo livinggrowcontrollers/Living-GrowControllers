@@ -25,6 +25,8 @@ class UnitEngine:
         # Optional: Graph Reset damit keine Drift-Artefakte entstehen
         if hasattr(self.gsm, "graph_engine"):
             self.gsm.graph_engine.reset()
+        if hasattr(self.gsm, "graph_history_engine"):
+            self.gsm.graph_history_engine.reset()
 
     def get_temp_unit(self):
         return self.temp_unit

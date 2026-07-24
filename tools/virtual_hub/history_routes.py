@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from copy import deepcopy
 import math
 import threading
@@ -15,6 +16,7 @@ MAX_TARGET_POINTS = 500
 DEFAULT_HISTORY_HOURS = 48
 LIVE_HISTORY_HOURS = 6
 HISTORY_REFRESH_SECONDS = 60.0
+MAX_SELECTION_CACHE = 256
 
 
 class HistoryPipelineStore:
@@ -29,6 +31,8 @@ class HistoryPipelineStore:
         self.csv_file = csv_file
         self.log_cb = log_cb
         self._lock = threading.RLock()
+        self._selection_lock = threading.Lock()
+        self._initialization_lock = threading.Lock()
         self._history_session = (
             str(history_session).strip()
             if history_session
@@ -36,7 +40,7 @@ class HistoryPipelineStore:
         )
         self._rev_history = 0
         self._history_generated_at = 0.0
-        self._selections = {}
+        self._selections = OrderedDict()
         self._payload = None
         self._refresh_stop = threading.Event()
         self._refresh_thread = None
@@ -139,6 +143,12 @@ class HistoryPipelineStore:
             **deepcopy(selection),
         }
 
+    def _remember_selection(self, selection_id, result):
+        self._selections[selection_id] = deepcopy(result)
+        self._selections.move_to_end(selection_id)
+        while len(self._selections) > MAX_SELECTION_CACHE:
+            self._selections.popitem(last=False)
+
     def get_control_state(self):
         """Return the current command base without exposing log contents."""
         with self._lock:
@@ -200,21 +210,22 @@ class HistoryPipelineStore:
         base_session=None,
     ):
         """Commit one target for one exact device_id without dropping peers."""
-        with self._lock:
+        with self._selection_lock:
             normalized_device_id = self._device_id(device_id)
             if not normalized_device_id:
                 return {"error": "Query-Parameter 'device_id' fehlt."}
 
             normalized_selection_id = self._selection_id(selection_id)
-            previous = self._selections.get(normalized_selection_id)
-            if previous is not None:
-                return deepcopy(previous)
-            conflict = self._base_conflict(
-                base_revision,
-                base_session,
-            )
-            if conflict is not None:
-                return conflict
+            with self._lock:
+                previous = self._selections.get(normalized_selection_id)
+                if previous is not None:
+                    return deepcopy(previous)
+                conflict = self._base_conflict(
+                    base_revision,
+                    base_session,
+                )
+                if conflict is not None:
+                    return conflict
 
             devices = compress(
                 csv_file=self.csv_file,
@@ -238,61 +249,60 @@ class HistoryPipelineStore:
                 if range_key is not None
                 else "custom"
             )
-            self._rev_history += 1
-            generated_at = self._next_generated_at()
-            selection = self._selection(
-                revision=self._rev_history,
-                selection_id=normalized_selection_id,
-                mode="history",
-                range_key=normalized_range_key,
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-                target_points=target_points,
-            )
-
-            pipeline_devices = (
-                deepcopy(self._payload["devices"])
-                if self._payload is not None
-                else {}
-            )
-            for compressed_device_id, compressed in devices.items():
-                if (
-                    compressed_device_id != normalized_device_id
-                    and compressed_device_id in pipeline_devices
-                ):
-                    continue
-                initial_selection = (
-                    selection
-                    if compressed_device_id == normalized_device_id
-                    else self._selection(
-                        revision=self._rev_history,
-                        selection_id=(
-                            f"hub-initial:{self._history_session}:"
-                            f"{compressed_device_id}"
-                        ),
-                        mode="history",
-                        range_key=normalized_range_key,
-                        start_timestamp=start_timestamp,
-                        end_timestamp=end_timestamp,
-                        target_points=target_points,
-                    )
+            with self._lock:
+                self._rev_history += 1
+                generated_at = self._next_generated_at()
+                selection = self._selection(
+                    revision=self._rev_history,
+                    selection_id=normalized_selection_id,
+                    mode="history",
+                    range_key=normalized_range_key,
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                    target_points=target_points,
                 )
-                pipeline_devices[compressed_device_id] = (
-                    self._device_block(
+
+                pipeline_devices = (
+                    deepcopy(self._payload["devices"])
+                    if self._payload is not None
+                    else {}
+                )
+                for compressed_device_id, compressed in devices.items():
+                    if (
+                        compressed_device_id != normalized_device_id
+                        and compressed_device_id in pipeline_devices
+                    ):
+                        continue
+                    initial_selection = (
+                        selection
+                        if compressed_device_id == normalized_device_id
+                        else self._selection(
+                            revision=self._rev_history,
+                            selection_id=(
+                                f"hub-initial:{self._history_session}:"
+                                f"{compressed_device_id}"
+                            ),
+                            mode="history",
+                            range_key=normalized_range_key,
+                            start_timestamp=start_timestamp,
+                            end_timestamp=end_timestamp,
+                            target_points=target_points,
+                        )
+                    )
+                    pipeline_devices[compressed_device_id] = self._device_block(
                         compressed_device_id,
                         compressed,
                         initial_selection,
                         generated_at,
                     )
-                )
 
-            self._commit_pipeline(pipeline_devices, generated_at)
-            result = self._selection_result(
-                normalized_device_id,
-                selection,
-            )
-            self._selections[normalized_selection_id] = deepcopy(result)
-            return result
+                self._commit_pipeline(pipeline_devices, generated_at)
+                result = self._selection_result(
+                    normalized_device_id,
+                    selection,
+                )
+                self._remember_selection(normalized_selection_id, result)
+                return result
 
     def select_live(
         self,
@@ -302,21 +312,22 @@ class HistoryPipelineStore:
         base_session=None,
     ):
         """Commit live mode plus a passive 6h log for one device_id."""
-        with self._lock:
+        with self._selection_lock:
             normalized_device_id = self._device_id(device_id)
             if not normalized_device_id:
                 return {"error": "Query-Parameter 'device_id' fehlt."}
 
             normalized_selection_id = self._selection_id(selection_id)
-            previous = self._selections.get(normalized_selection_id)
-            if previous is not None:
-                return deepcopy(previous)
-            conflict = self._base_conflict(
-                base_revision,
-                base_session,
-            )
-            if conflict is not None:
-                return conflict
+            with self._lock:
+                previous = self._selections.get(normalized_selection_id)
+                if previous is not None:
+                    return deepcopy(previous)
+                conflict = self._base_conflict(
+                    base_revision,
+                    base_session,
+                )
+                if conflict is not None:
+                    return conflict
 
             end_timestamp = time.time()
             start_timestamp = (
@@ -332,49 +343,50 @@ class HistoryPipelineStore:
             if "error" in compressed_devices:
                 return {"error": compressed_devices["error"]}
 
-            devices = (
-                deepcopy(self._payload["devices"])
-                if self._payload is not None
-                else {}
-            )
+            with self._lock:
+                devices = (
+                    deepcopy(self._payload["devices"])
+                    if self._payload is not None
+                    else {}
+                )
 
-            self._rev_history += 1
-            generated_at = self._next_generated_at()
-            selection = self._selection(
-                revision=self._rev_history,
-                selection_id=normalized_selection_id,
-                mode="live",
-                start_timestamp=start_timestamp,
-                end_timestamp=end_timestamp,
-                target_points=DEFAULT_TARGET_POINTS,
-                log_range_key=LIVE_HISTORY_HOURS,
-            )
-            previous_block = devices.get(normalized_device_id, {})
-            compressed = compressed_devices.get(
-                normalized_device_id,
-                {
-                    "name": (
-                        previous_block.get("name", "")
-                        if isinstance(previous_block, dict)
-                        else ""
-                    ),
-                    "total_raw_points": 0,
-                    "history": {},
-                },
-            )
-            devices[normalized_device_id] = self._device_block(
-                normalized_device_id,
-                compressed,
-                selection,
-                generated_at,
-            )
-            self._commit_pipeline(devices, generated_at)
-            result = self._selection_result(
-                normalized_device_id,
-                selection,
-            )
-            self._selections[normalized_selection_id] = deepcopy(result)
-            return result
+                self._rev_history += 1
+                generated_at = self._next_generated_at()
+                selection = self._selection(
+                    revision=self._rev_history,
+                    selection_id=normalized_selection_id,
+                    mode="live",
+                    start_timestamp=start_timestamp,
+                    end_timestamp=end_timestamp,
+                    target_points=DEFAULT_TARGET_POINTS,
+                    log_range_key=LIVE_HISTORY_HOURS,
+                )
+                previous_block = devices.get(normalized_device_id, {})
+                compressed = compressed_devices.get(
+                    normalized_device_id,
+                    {
+                        "name": (
+                            previous_block.get("name", "")
+                            if isinstance(previous_block, dict)
+                            else ""
+                        ),
+                        "total_raw_points": 0,
+                        "history": {},
+                    },
+                )
+                devices[normalized_device_id] = self._device_block(
+                    normalized_device_id,
+                    compressed,
+                    selection,
+                    generated_at,
+                )
+                self._commit_pipeline(devices, generated_at)
+                result = self._selection_result(
+                    normalized_device_id,
+                    selection,
+                )
+                self._remember_selection(normalized_selection_id, result)
+                return result
 
     @staticmethod
     def acknowledgement(payload):
@@ -402,25 +414,48 @@ class HistoryPipelineStore:
             },
         }
 
-    def get_pipeline_payload(self):
+    def get_pipeline_payload(self, copy_payload: bool = True):
         """Return all device targets, creating the 48h default once."""
         with self._lock:
-            if self._payload is None:
-                end_timestamp = time.time()
-                start_timestamp = (
-                    end_timestamp
-                    - (DEFAULT_HISTORY_HOURS * 3600)
-                )
-                devices = compress(
-                    csv_file=self.csv_file,
-                    start_timestamp=start_timestamp,
-                    end_timestamp=end_timestamp,
-                    target_points=DEFAULT_TARGET_POINTS,
-                    log_cb=self.log_cb,
-                )
-                if "error" in devices:
-                    return {"error": devices["error"]}
+            payload = self._payload
 
+        if payload is None:
+            with self._initialization_lock:
+                with self._lock:
+                    payload = self._payload
+
+                if payload is None:
+                    self._initialize_default_payload()
+                    with self._lock:
+                        payload = self._payload
+
+        return deepcopy(payload) if copy_payload else payload
+
+    def _initialize_default_payload(self):
+        with self._selection_lock:
+            with self._lock:
+                if self._payload is not None:
+                    return
+            end_timestamp = time.time()
+            start_timestamp = (
+                end_timestamp
+                - (DEFAULT_HISTORY_HOURS * 3600)
+            )
+            devices = compress(
+                csv_file=self.csv_file,
+                start_timestamp=start_timestamp,
+                end_timestamp=end_timestamp,
+                target_points=DEFAULT_TARGET_POINTS,
+                log_cb=self.log_cb,
+            )
+            if "error" in devices:
+                with self._lock:
+                    self._payload = {"error": devices["error"]}
+                return
+
+            with self._lock:
+                if self._payload is not None:
+                    return
                 self._rev_history += 1
                 generated_at = self._next_generated_at()
                 pipeline_devices = {}
@@ -447,7 +482,6 @@ class HistoryPipelineStore:
                     pipeline_devices,
                     generated_at,
                 )
-            return deepcopy(self._payload)
 
     @staticmethod
     def _relative_range_hours(range_key):
@@ -461,10 +495,7 @@ class HistoryPipelineStore:
 
     def refresh_active_windows(self, now=None):
         """Refresh relative logs without changing their control revision."""
-        with self._lock:
-            if self._payload is None:
-                return False
-
+        with self._selection_lock:
             end_timestamp = float(
                 time.time()
                 if now is None
@@ -475,7 +506,11 @@ class HistoryPipelineStore:
                     "History-Aktualisierungszeit ist ungültig."
                 )
 
-            pipeline_devices = deepcopy(self._payload["devices"])
+            with self._lock:
+                if self._payload is None:
+                    return False
+                pipeline_devices = deepcopy(self._payload["devices"])
+
             compressed_by_window = {}
             refreshed_device_ids = []
             generated_at = None
@@ -535,9 +570,10 @@ class HistoryPipelineStore:
                     continue
 
                 if generated_at is None:
-                    generated_at = self._next_generated_at(
-                        end_timestamp
-                    )
+                    with self._lock:
+                        generated_at = self._next_generated_at(
+                            end_timestamp
+                        )
 
                 refreshed_selection = self._selection(
                     revision=int(selection["rev_history"]),
@@ -568,9 +604,10 @@ class HistoryPipelineStore:
             if not refreshed_device_ids:
                 return False
 
-            # rev_history bleibt absichtlich unverändert. Diese Commit-Marke
-            # versioniert ausschließlich den neu erzeugten Loginhalt.
-            self._commit_pipeline(pipeline_devices, generated_at)
+            with self._lock:
+                # rev_history bleibt unverändert. Diese Commit-Marke
+                # versioniert ausschließlich den neu erzeugten Loginhalt.
+                self._commit_pipeline(pipeline_devices, generated_at)
             if self.log_cb:
                 self.log_cb(
                     "[History Pipeline] Automatisch aktualisiert: "
@@ -617,6 +654,14 @@ class HistoryPipelineStore:
 
     def stop_auto_refresh(self):
         self._refresh_stop.set()
+        with self._lock:
+            refresh_thread = self._refresh_thread
+        if (
+            refresh_thread
+            and refresh_thread is not threading.current_thread()
+            and refresh_thread.is_alive()
+        ):
+            refresh_thread.join(timeout=2.0)
 
 
 def _parse_timestamp(name: str) -> float:

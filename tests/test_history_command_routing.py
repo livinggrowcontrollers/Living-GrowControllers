@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from dashboard_gui.gsm_engines.graph_engine import (
+from dashboard_gui.gsm_engines.graph_history_engine import (
     HistorySelectionResult,
     HistoryWindow,
 )
@@ -65,7 +65,7 @@ class HistoryCommandRoutingTests(unittest.TestCase):
     def test_command_engine_owns_history_target_and_exact_device_id(self):
         graph_engine = FakeHistoryGraphEngine()
         gsm = Mock()
-        gsm.graph_engine = graph_engine
+        gsm.graph_history_engine = graph_engine
         engine = OverlayCommandEngine(gsm)
         sent = {}
         completed = []
@@ -209,7 +209,7 @@ class HistoryCommandRoutingTests(unittest.TestCase):
     def test_local_config_uuid_is_never_used_as_history_device_id(self):
         graph_engine = FakeHistoryGraphEngine()
         gsm = Mock()
-        gsm.graph_engine = graph_engine
+        gsm.graph_history_engine = graph_engine
         engine = OverlayCommandEngine(gsm)
 
         with patch(

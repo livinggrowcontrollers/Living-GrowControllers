@@ -12,10 +12,28 @@
         "user": "admin",
         "pass": "1234"
       },
-      "ip_address": "https://presidential-virginia-elimination-meanwhile.trycloudflare.com",
+      "ip_address": "https://emacs-nuclear-solar-icon.trycloudflare.com",
       "mac": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
       "protected": false,
-      "_manual_update_ts": 1784854568.456301
+      "_manual_update_ts": 1784892828.264941,
+      "mixed_enabled": true,
+      "mixed_external": false,
+      "mixed_internal": true
+    },
+    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
+      "device_id": "",
+      "name": "sps",
+      "adv_decoder": "Inkbird_ADV_Desktop",
+      "gatt_decoder": "Inkbird_GATT",
+      "bridge_profile": "Inkbird_Bridge",
+      "image_file": "inkbird.png",
+      "auth": {
+        "user": "admin",
+        "pass": "1234"
+      },
+      "mixed_enabled": true,
+      "mixed_internal": true,
+      "mixed_external": false
     },
     "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
       "device_id": "",
@@ -28,18 +46,6 @@
         "user": "admin",
         "pass": "1234"
       }
-    },
-    "C898B4F2-B452-7502-1A67-0536E77D49EA": {
-      "device_id": "",
-      "name": "sps",
-      "adv_decoder": "Inkbird_ADV_Desktop",
-      "gatt_decoder": "Inkbird_GATT",
-      "bridge_profile": "Inkbird_Bridge",
-      "image_file": "inkbird.png",
-      "auth": {
-        "user": "admin",
-        "pass": "1234"
-      }
     }
   },
   "user": "admin",
@@ -48,10 +54,10 @@
   "bridge_profiles": {},
   "refresh_interval": 0.1,
   "stale_timeout": 15.0,
-  "graph_resolution": 100.0,
+  "graph_resolution": 99.1,
   "graph_refresh_interval": 0.1,
   "graph_smoothing_factor": 1.0,
-  "tile_graph_window": 210,
+  "tile_graph_window": 850,
   "temperature_unit": "C",
   "temperature_offset": 0.0,
   "humidity_offset": 0.0,

@@ -42,7 +42,8 @@ keine zweite globale ActiveChannelEngine mehr.
     GLOBAL_STATE
     ├── active_channel_engine  Gerät- und Kanalauswahl
     ├── data_flow              laufender Datenzyklus
-    ├── graph_engine           Messhistorie, Glättung, Trends
+    ├── graph_engine           Live-Puffer, Glättung, Trends
+    ├── graph_history_engine   Hub-History, Revisionen, History-Snapshots
     ├── metrics_engine         Metriken -> GraphEngine / TileEngine
     ├── tile_engine            aktive Fullscreen-Kacheln je Gerät/Kanal
     ├── unit_engine            Einheiten je Metrik
@@ -174,7 +175,9 @@ Beispiele:
     E697..._webserver_temp_in
     E697..._gatt_vpd_in
 
-GraphEngine besitzt Datenpuffer, Glättung, Downsampling und Trendrichtung.
+GraphEngine besitzt Live-Datenpuffer, Glättung, Downsampling und
+Trendrichtung. GraphHistoryEngine besitzt ausschließlich den bestätigten
+Virtual-Hub-History-Zustand, seine Revisionen und History-Snapshots.
 UnitEngine besitzt die Einheiten. TileEngine merkt sich, welche Metriken je
 (device_id, channel) tatsächlich vorhanden und damit fullscreen-fähig sind.
 
@@ -259,6 +262,8 @@ dashboard_gui/gsm_engines/active_channel_engine.py
 dashboard_gui/gsm_engines/led_engine.py
 dashboard_gui/gsm_engines/metrics_engine.py
 dashboard_gui/gsm_engines/graph_engine.py
+dashboard_gui/gsm_engines/graph_history_engine.py
+dashboard_gui/gsm_engines/graph_models.py
 dashboard_gui/gsm_engines/tile_engine.py
 dashboard_gui/gsm_engines/overlay_command_engine.py
 dashboard_gui/gsm_engines/config_engine.py

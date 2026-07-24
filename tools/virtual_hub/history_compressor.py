@@ -1,6 +1,10 @@
+from collections import OrderedDict
 import csv
+from dataclasses import dataclass
+import io
 import math
 import os
+import threading
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 
@@ -29,10 +33,214 @@ STATE_SENSORS = {
     "light_pct",
 }
 
+INDEX_BLOCK_ROWS = 256
+MAX_CACHED_INDEXES = 8
+INDEX_SIGNATURE_BYTES = 128
+
 
 def _history_device_identity(device_id: str) -> str:
     """Use the logged device_id as the sole device identity."""
     return str(device_id or "").strip() or "unknown"
+
+
+@dataclass
+class _CsvBlock:
+    start_offset: int
+    end_offset: int
+    row_count: int = 0
+    min_timestamp: Optional[float] = None
+    max_timestamp: Optional[float] = None
+
+
+class _HistoryCsvIndex:
+    """Inkrementeller Blockindex für eine wachsende History-CSV."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self._lock = threading.RLock()
+        self._file_identity: Optional[tuple[int, int]] = None
+        self._mtime_ns = 0
+        self._indexed_offset = 0
+        self._field_names: tuple[str, ...] = ()
+        self._timestamp_column = -1
+        self._tail_signature = b""
+        self._ended_with_newline = True
+        self._blocks: List[_CsvBlock] = []
+
+    def _must_rebuild(self, source, file_stat: os.stat_result) -> bool:
+        identity = (file_stat.st_dev, file_stat.st_ino)
+        if identity != self._file_identity:
+            return True
+        if file_stat.st_size < self._indexed_offset:
+            return True
+        if file_stat.st_size > self._indexed_offset and not self._ended_with_newline:
+            return True
+        if (
+            file_stat.st_size == self._indexed_offset
+            and file_stat.st_mtime_ns != self._mtime_ns
+        ):
+            return True
+        if file_stat.st_mtime_ns != self._mtime_ns and self._tail_signature:
+            signature_start = self._indexed_offset - len(self._tail_signature)
+            source.seek(signature_start)
+            if source.read(len(self._tail_signature)) != self._tail_signature:
+                return True
+        return False
+
+    def _reset(self, source, file_stat: os.stat_result) -> None:
+        source.seek(0)
+        header = source.readline()
+        try:
+            decoded_header = header.decode("utf-8-sig").rstrip("\r\n")
+            self._field_names = tuple(next(csv.reader([decoded_header])))
+            self._timestamp_column = self._field_names.index("timestamp")
+        except (StopIteration, UnicodeError, csv.Error, ValueError):
+            self._field_names = ()
+            self._timestamp_column = -1
+
+        self._file_identity = (file_stat.st_dev, file_stat.st_ino)
+        self._indexed_offset = source.tell()
+        self._tail_signature = b""
+        self._ended_with_newline = header.endswith(b"\n")
+        self._blocks = []
+
+    def refresh(self) -> None:
+        with self._lock:
+            with open(self.path, "rb") as source:
+                file_stat = os.fstat(source.fileno())
+                if self._must_rebuild(source, file_stat):
+                    self._reset(source, file_stat)
+                else:
+                    source.seek(self._indexed_offset)
+
+                snapshot_size = file_stat.st_size
+                while source.tell() < snapshot_size:
+                    line_start = source.tell()
+                    line = source.readline(snapshot_size - line_start)
+                    if not line:
+                        break
+
+                    while line.count(b'"') % 2 and source.tell() < snapshot_size:
+                        continuation_start = source.tell()
+                        continuation = source.readline(
+                            snapshot_size - continuation_start
+                        )
+                        if not continuation:
+                            break
+                        line += continuation
+
+                    line_end = source.tell()
+                    if line.count(b'"') % 2:
+                        source.seek(line_start)
+                        break
+
+                    if self._timestamp_column == 0:
+                        timestamp = _safe_float(line.partition(b",")[0])
+                    else:
+                        try:
+                            cells = next(csv.reader([line.decode("utf-8")]))
+                            timestamp = _safe_float(cells[self._timestamp_column])
+                        except (
+                            IndexError,
+                            StopIteration,
+                            UnicodeError,
+                            csv.Error,
+                        ):
+                            timestamp = None
+
+                    if (
+                        not self._blocks
+                        or self._blocks[-1].row_count >= INDEX_BLOCK_ROWS
+                    ):
+                        self._blocks.append(
+                            _CsvBlock(
+                                start_offset=line_start,
+                                end_offset=line_end,
+                            )
+                        )
+
+                    block = self._blocks[-1]
+                    block.end_offset = line_end
+                    block.row_count += 1
+                    if timestamp is not None:
+                        if block.min_timestamp is None or timestamp < block.min_timestamp:
+                            block.min_timestamp = timestamp
+                        if block.max_timestamp is None or timestamp > block.max_timestamp:
+                            block.max_timestamp = timestamp
+
+                    self._indexed_offset = line_end
+
+                signature_length = min(
+                    INDEX_SIGNATURE_BYTES,
+                    self._indexed_offset,
+                )
+                source.seek(self._indexed_offset - signature_length)
+                self._tail_signature = source.read(signature_length)
+                self._ended_with_newline = (
+                    not self._tail_signature
+                    or self._tail_signature.endswith(b"\n")
+                )
+                self._mtime_ns = file_stat.st_mtime_ns
+
+    def scan_plan(
+        self,
+        start_timestamp: float,
+        end_timestamp: float,
+    ) -> tuple[tuple[str, ...], int, List[tuple[int, int]]]:
+        self.refresh()
+        with self._lock:
+            field_names = self._field_names
+            total_rows = sum(block.row_count for block in self._blocks)
+            matching_blocks = [
+                (block.start_offset, block.end_offset)
+                for block in self._blocks
+                if (
+                    block.min_timestamp is None
+                    or block.max_timestamp is None
+                    or (
+                        block.max_timestamp >= start_timestamp
+                        and block.min_timestamp <= end_timestamp
+                    )
+                )
+            ]
+        return field_names, total_rows, matching_blocks
+
+
+_INDEXES: "OrderedDict[str, _HistoryCsvIndex]" = OrderedDict()
+_INDEXES_LOCK = threading.Lock()
+
+
+def _get_history_index(path: str) -> _HistoryCsvIndex:
+    canonical_path = os.path.realpath(path)
+    with _INDEXES_LOCK:
+        index = _INDEXES.get(canonical_path)
+        if index is None:
+            index = _HistoryCsvIndex(canonical_path)
+            _INDEXES[canonical_path] = index
+        else:
+            _INDEXES.move_to_end(canonical_path)
+        while len(_INDEXES) > MAX_CACHED_INDEXES:
+            _INDEXES.popitem(last=False)
+        return index
+
+
+def _iter_indexed_rows(
+    path: str,
+    field_names: Sequence[str],
+    byte_ranges: Sequence[tuple[int, int]],
+):
+    if not field_names:
+        return
+
+    with open(path, "rb") as source:
+        for start_offset, end_offset in byte_ranges:
+            source.seek(start_offset)
+            raw_rows = source.read(end_offset - start_offset)
+            decoded_rows = raw_rows.decode("utf-8")
+            yield from csv.DictReader(
+                io.StringIO(decoded_rows),
+                fieldnames=field_names,
+            )
 
 
 def _safe_float(value: Any) -> Optional[float]:
@@ -335,66 +543,67 @@ def compress(
 
     raw_data: Dict[str, Dict[str, Any]] = {}
     selected_rows = 0
-    skipped_rows = 0
+    total_rows = 0
 
     try:
-        with open(
-            resolved_csv_file,
-            mode="r",
-            encoding="utf-8",
-            newline="",
-        ) as source:
-            reader = csv.DictReader(source)
+        history_index = _get_history_index(resolved_csv_file)
+        field_names, total_rows, byte_ranges = history_index.scan_plan(
+            start,
+            end,
+        )
 
-            for row in reader:
-                timestamp = _safe_float(row.get("timestamp"))
-                if timestamp is None or timestamp < start or timestamp > end:
-                    skipped_rows += 1
+        for row in _iter_indexed_rows(
+            resolved_csv_file,
+            field_names,
+            byte_ranges,
+        ):
+            timestamp = _safe_float(row.get("timestamp"))
+            if timestamp is None or timestamp < start or timestamp > end:
+                continue
+
+            selected_rows += 1
+            csv_device_id = str(
+                row.get("device_id") or "unknown"
+            ).strip()
+            device_name = str(
+                row.get("device_name") or "Unknown Device"
+            ).strip()
+            device_id = _history_device_identity(csv_device_id)
+
+            device = raw_data.setdefault(
+                device_id,
+                {
+                    "name": device_name,
+                    "metrics": {
+                        field_name: {
+                            "count": 0,
+                            "buckets": {},
+                            "samples": [],
+                        }
+                        for field_name in FIELD_NAMES
+                    },
+                },
+            )
+
+            bucket_index = _bucket_index(
+                timestamp,
+                start,
+                end,
+                points,
+            )
+
+            for field_name in FIELD_NAMES:
+                value = _safe_float(row.get(field_name))
+                if value is None:
                     continue
 
-                selected_rows += 1
-                csv_device_id = str(
-                    row.get("device_id") or "unknown"
-                ).strip()
-                device_name = str(
-                    row.get("device_name") or "Unknown Device"
-                ).strip()
-                device_id = _history_device_identity(csv_device_id)
-
-                device = raw_data.setdefault(
-                    device_id,
-                    {
-                        "name": device_name,
-                        "metrics": {
-                            field_name: {
-                                "count": 0,
-                                "buckets": {},
-                                "samples": [],
-                            }
-                            for field_name in FIELD_NAMES
-                        },
-                    },
-                )
-
-                bucket_index = _bucket_index(
+                _add_to_metric_bucket(
+                    device["metrics"][field_name],
+                    bucket_index,
                     timestamp,
-                    start,
-                    end,
+                    value,
                     points,
                 )
-
-                for field_name in FIELD_NAMES:
-                    value = _safe_float(row.get(field_name))
-                    if value is None:
-                        continue
-
-                    _add_to_metric_bucket(
-                        device["metrics"][field_name],
-                        bucket_index,
-                        timestamp,
-                        value,
-                        points,
-                    )
 
     except (OSError, csv.Error) as exc:
         message = str(exc)
@@ -403,7 +612,7 @@ def compress(
 
     log(
         f"{selected_rows} Zeilen im Zeitfenster ausgewählt; "
-        f"{skipped_rows} Zeilen verworfen."
+        f"{total_rows} Zeilen indexiert."
     )
 
     output: Dict[str, Dict[str, Any]] = {}

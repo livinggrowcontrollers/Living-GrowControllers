@@ -261,7 +261,7 @@ class SensorSummaryTile(BoxLayout):
         box_x, _box_y = self.value_box.pos
         box_width, _box_height = self.value_box.size
         
-        graph_left = box_x + (box_width * 0.42)
+        graph_left = box_x + (box_width * 0.40)
         graph_right = box_x + box_width - dp_scaled(10)
         graph_width = max(1.0, graph_right - graph_left)
 
@@ -300,7 +300,7 @@ class SensorSummaryTile(BoxLayout):
 
         for _name, metric, _path, _unit in self.measurements:
             snapshot = (
-                GLOBAL_STATE.graph_engine.get_cached_history_snapshot(
+                GLOBAL_STATE.graph_history_engine.get_cached_history_snapshot(
                     self.device_id,
                     metric,
                 )

@@ -64,6 +64,8 @@ class FullScreenView(Screen):
         self.graph.bind(
             pos=self._schedule_mesh_update,
             size=self._schedule_mesh_update,
+            view_pos=self._schedule_mesh_update,
+            view_size=self._schedule_mesh_update,
         )
 
         self.layout.btn_left.bind(on_release=lambda *_: self._switch(-1))
@@ -78,9 +80,13 @@ class FullScreenView(Screen):
         return GLOBAL_STATE.graph_engine
 
     @property
+    def _graph_history_engine(self):
+        return GLOBAL_STATE.graph_history_engine
+
+    @property
     def _history_window(self):
         history_window, _revision = (
-            self._graph_engine.get_graph_range_state()
+            self._graph_history_engine.get_graph_range_state()
         )
         return history_window
 
@@ -185,7 +191,7 @@ class FullScreenView(Screen):
         return True
 
     def _clear_active_tile(self):
-        self._graph_engine.cancel_history_selection()
+        self._graph_history_engine.cancel_history_selection()
         self.current_key = None
         self.tile_id = None
         self.active_tile = None
@@ -203,7 +209,7 @@ class FullScreenView(Screen):
         self.graph.ymax = 1
 
     def _select_time_range(self, hours):
-        self._graph_engine.cancel_history_selection()
+        self._graph_history_engine.cancel_history_selection()
         self._history_selection_key = None
         self._rendered_history_signature = None
         self._rendered_graph_signature = None
@@ -213,7 +219,7 @@ class FullScreenView(Screen):
         clear_graph_series(self.plot, self.mesh, self.plot_glow)
 
         if hours is None:
-            self._graph_engine.set_active_history_window(None)
+            self._graph_history_engine.set_active_history_window(None)
             device_id = self._current_device_id()
             if device_id:
                 result = GLOBAL_STATE.send_history_command(
@@ -226,12 +232,14 @@ class FullScreenView(Screen):
             return
 
         try:
-            history_window = self._graph_engine.create_history_window(hours)
+            history_window = self._graph_history_engine.create_history_window(
+                hours
+            )
         except (TypeError, ValueError):
             self._show_history_error("Ungültiges History-Zeitfenster.")
             return
 
-        self._graph_engine.set_active_history_window(history_window)
+        self._graph_history_engine.set_active_history_window(history_window)
         self._select_history_pipeline(
             history_window=history_window,
             force=True,
@@ -243,7 +251,7 @@ class FullScreenView(Screen):
         end_timestamp,
     ):
         try:
-            history_window = self._graph_engine.create_history_window(
+            history_window = self._graph_history_engine.create_history_window(
                 "custom",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -254,8 +262,8 @@ class FullScreenView(Screen):
             )
             return
 
-        self._graph_engine.cancel_history_selection()
-        self._graph_engine.set_active_history_window(history_window)
+        self._graph_history_engine.cancel_history_selection()
+        self._graph_history_engine.set_active_history_window(history_window)
         self._history_selection_key = None
         self._rendered_history_signature = None
         self._rendered_graph_signature = None
@@ -277,10 +285,10 @@ class FullScreenView(Screen):
 
     def _sync_history_target(self):
         history_window, revision = (
-            self._graph_engine.get_graph_range_state()
+            self._graph_history_engine.get_graph_range_state()
         )
         confirmation = (
-            self._graph_engine.consume_history_confirmation(
+            self._graph_history_engine.consume_history_confirmation(
                 self._history_command_selection_id
             )
         )
@@ -344,7 +352,7 @@ class FullScreenView(Screen):
             self._render_empty_graph()
             return
 
-        pipeline_key = self._graph_engine.get_history_pipeline_key(
+        pipeline_key = self._graph_history_engine.get_history_pipeline_key(
             device_id
         )
         if pipeline_key is None:
@@ -353,7 +361,7 @@ class FullScreenView(Screen):
                 and self._history_selection_key[0] == device_id
             ):
                 status, error = (
-                    self._graph_engine.get_history_selection_state(
+                    self._graph_history_engine.get_history_selection_state(
                         self._history_selection_key
                     )
                 )
@@ -375,8 +383,10 @@ class FullScreenView(Screen):
             self._history_selection_key = pipeline_key
             self._rendered_history_signature = None
 
-        status, error = self._graph_engine.get_history_selection_state(
-            self._history_selection_key
+        status, error = (
+            self._graph_history_engine.get_history_selection_state(
+                self._history_selection_key
+            )
         )
         if status == "loaded":
             self._render_history_data()
@@ -480,7 +490,7 @@ class FullScreenView(Screen):
         if not force and signature == self._rendered_history_signature:
             return
 
-        snapshot = self._graph_engine.get_history_snapshot(
+        snapshot = self._graph_history_engine.get_history_snapshot(
             pipeline_key=self._history_selection_key,
             tile_id=self.tile_id,
             label_count=len(self.labels_list),
@@ -681,7 +691,7 @@ class FullScreenView(Screen):
 
     def reset_from_global(self):
         print("[FS] Resetting Fullscreen UI...")
-        self._graph_engine.cancel_history_selection()
+        self._graph_history_engine.cancel_history_selection()
         self._history_selection_key = None
         self._history_command_key = None
         self._history_command_selection_id = None
@@ -781,7 +791,7 @@ class FullScreenView(Screen):
         local_x = touch.x - self.graph.x
         local_y = touch.y - self.graph.y
         graph_x, _graph_y = self.graph.to_data(local_x, local_y)
-        point = self._graph_engine.inspect_history_point(
+        point = self._graph_history_engine.inspect_history_point(
             pipeline_key=self._history_selection_key,
             tile_id=self.tile_id,
             graph_x=graph_x,

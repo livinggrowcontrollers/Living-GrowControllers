@@ -52,7 +52,7 @@ class DataFlowEngine:
                 # nicht verschwinden, nur weil der Live-Timestamp dieses
                 # Kanals auf Android gerade als stale bewertet wird.
                 if ch_name == "webserver":
-                    self.gsm.graph_engine.ingest_history_pipeline(
+                    self.gsm.graph_history_engine.ingest_history_pipeline(
                         ch.get("history")
                     )
 

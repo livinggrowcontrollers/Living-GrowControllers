@@ -10,6 +10,8 @@ from network import client_storage
 from network import network_worker
 from network import client_discovery
 from network.registry import DeviceRegistry
+
+
 class WebClientThread(threading.Thread):
     """
     WebClientThread: Orchestrator und Manager für die zyklischen Daten-Abfragen.
@@ -22,22 +24,53 @@ class WebClientThread(threading.Thread):
         
         # Ablaufsteuerung
         self._stop_event = threading.Event()
+        self._stop_lock = threading.Lock()
+        self._stopped = False
         self.ready = False
 
         # Status & Caches (RAM)
         self.current_data = {}
         self._last_disk_write = 0.0
         self._disk_interval = 60.0
+        self._storage_future = None
 
         # Boot-Load via Storage-Modul auslagern
-        self._local_plants_cache, self._local_plant_revs = client_storage.load_plants_at_boot()
+        (
+            self._local_plants_cache,
+            self._local_plant_revs,
+        ) = client_storage.load_plants_at_boot()
 
         # Instanziierung der Kernkomponenten
         self.registry = DeviceRegistry()
-        self._executor = ThreadPoolExecutor(max_workers=20)
-        
+        self._transport = network_worker.PersistentHTTPTransport()
+        self._executor = ThreadPoolExecutor(
+            max_workers=8,
+            thread_name_prefix="web-poll",
+        )
+        self._heavy_executor = ThreadPoolExecutor(
+            max_workers=2,
+            thread_name_prefix="web-heavy",
+        )
+        self._control_executor = ThreadPoolExecutor(
+            max_workers=2,
+            thread_name_prefix="web-control",
+        )
+        self._history_executor = ThreadPoolExecutor(
+            max_workers=2,
+            thread_name_prefix="web-history",
+        )
+        self._storage_executor = ThreadPoolExecutor(
+            max_workers=1,
+            thread_name_prefix="web-storage",
+        )
+        self._heavy_lock = threading.Lock()
+        self._heavy_inflight = set()
+        self._heavy_failures = {}
+        self._heavy_retry_after = {}
+
         # Nutzt den Discovery-Dienst aus dem network-Package
         self._discovery = client_discovery.MDNSDiscoveryService(self.registry)
+
     def run(self):
         # Autarken mDNS-Dienst starten
         try:
@@ -45,32 +78,30 @@ class WebClientThread(threading.Thread):
         except Exception as e:
             print(f"[WebClient] mDNS Dienst Start fehlgeschlagen: {e}")
 
-        while not self._stop_event.is_set():
-            t_start = time.time()
-            try:
-                changed = self.fetch_all_web_data()
+        try:
+            while not self._stop_event.is_set():
+                cycle_started = time.monotonic()
+                try:
+                    self.fetch_all_web_data()
 
-                # Zyklisches Speichern auf HDD via Storage-Modul
-                now = time.time()
-                if (now - self._last_disk_write) >= self._disk_interval:
-                    client_storage.save_web_dump(self.current_data)
-                    self._last_disk_write = now
+                    now = time.monotonic()
+                    if now - self._last_disk_write >= self._disk_interval:
+                        self._schedule_web_dump()
+                        self._last_disk_write = now
 
-                elapsed = time.time() - t_start
-                sleep_time = max(0.1, self.interval - elapsed)
-                self._stop_event.wait(sleep_time)
-            except Exception as e:
-                print(f"[WebClient] Main Loop Error: {e}")
-                time.sleep(1)
+                    elapsed = time.monotonic() - cycle_started
+                    sleep_time = max(0.1, self.interval - elapsed)
+                    self._stop_event.wait(sleep_time)
+                except Exception as exc:
+                    print(f"[WebClient] Main Loop Error: {exc}")
+                    self._stop_event.wait(1.0)
+        finally:
+            self._discovery.stop()
 
     def fetch_all_web_data(self):
         changed = False
         cfg = config._init()
         devices = cfg.get("devices", {})
-        if not devices:
-            return False  
-
-        now = time.time()
         active = set(devices.keys())
         
         # RAM-Cache-Bereinigung von veralteten/gelöschten MACs
@@ -80,9 +111,16 @@ class WebClientThread(threading.Thread):
             if mac not in active: self._local_plants_cache.pop(mac, None)
         for mac in list(self._local_plant_revs.keys()):
             if mac not in active: self._local_plant_revs.pop(mac, None)
-        for mac in active:
-            if mac not in active:
-                self.registry.remove_device(mac)
+        self.registry.remove_inactive(active)
+        self._transport.retain_devices(active)
+        with self._heavy_lock:
+            for mac in tuple(self._heavy_failures):
+                if mac not in active:
+                    self._heavy_failures.pop(mac, None)
+                    self._heavy_retry_after.pop(mac, None)
+
+        if not devices:
+            return False
 
         try:
             from decoder import inject_web_data
@@ -104,26 +142,92 @@ class WebClientThread(threading.Thread):
             job = self._executor.submit(
                 network_worker.fetch_single_device, 
                 mac, dev_cfg, targets, self.registry, 
-                self._local_plants_cache, self._local_plant_revs
+                self._local_plants_cache, self._local_plant_revs,
+                self._transport,
+                self._schedule_heavy_fetch,
             )
             future_to_mac[job] = mac
 
         # Ergebnisse verarbeiten, sobald sie eintreffen
         if future_to_mac:
             for future in as_completed(future_to_mac):
-                res = future.result()
+                try:
+                    res = future.result()
+                except Exception as exc:
+                    mac = future_to_mac[future]
+                    print(f"[WebClient] Worker-Fehler für {mac}: {exc}")
+                    continue
                 if res is None:
                     continue
                 
                 mac, payload, is_ap = res
                 if payload:
-                    payload["timestamp"] = now
+                    payload["timestamp"] = time.time()
                     inject_web_data(mac, payload)
                     self.current_data[mac] = payload
                     changed = True
 
         self.ready = True
-        return changed    
+        return changed
+
+    def _schedule_web_dump(self):
+        if self._stop_event.is_set():
+            return
+        if self._storage_future and not self._storage_future.done():
+            return
+
+        snapshot = dict(self.current_data)
+        self._storage_future = self._storage_executor.submit(
+            client_storage.save_web_dump,
+            snapshot,
+        )
+
+    def _schedule_heavy_fetch(self, mac, base_url, user, pw):
+        now = time.monotonic()
+        with self._heavy_lock:
+            if mac in self._heavy_inflight:
+                return
+            if now < self._heavy_retry_after.get(mac, 0.0):
+                return
+            self._heavy_inflight.add(mac)
+
+        try:
+            self._heavy_executor.submit(
+                self._run_heavy_fetch,
+                mac,
+                base_url,
+                user,
+                pw,
+            )
+        except RuntimeError:
+            with self._heavy_lock:
+                self._heavy_inflight.discard(mac)
+
+    def _run_heavy_fetch(self, mac, base_url, user, pw):
+        succeeded = False
+        try:
+            succeeded = network_worker.fetch_heavy_plant_data(
+                mac,
+                base_url,
+                user,
+                pw,
+                self._local_plants_cache,
+                self._local_plant_revs,
+                transport=self._transport,
+            )
+        finally:
+            with self._heavy_lock:
+                self._heavy_inflight.discard(mac)
+                if succeeded:
+                    self._heavy_failures.pop(mac, None)
+                    self._heavy_retry_after.pop(mac, None)
+                else:
+                    failures = self._heavy_failures.get(mac, 0) + 1
+                    self._heavy_failures[mac] = failures
+                    delay = min(30.0, 2.0 ** min(failures, 5))
+                    self._heavy_retry_after[mac] = (
+                        time.monotonic() + delay
+                    )
 
 
 
@@ -149,13 +253,20 @@ class WebClientThread(threading.Thread):
                 if "rev_plant_planner" in payload
                 else "/control"
             )
-            for base_url in targets:
-                if network_worker.send_control_request(
-                    base_url, payload, user, pw, endpoint=endpoint
-                ):
-                    break # Erfolg, weiteren Loop abbrechen
+            network_worker.send_control_request(
+                targets[0],
+                payload,
+                user,
+                pw,
+                endpoint=endpoint,
+                mac=mac,
+                transport=self._transport,
+            )
 
-        threading.Thread(target=_async_send, daemon=True).start()
+        try:
+            self._control_executor.submit(_async_send)
+        except RuntimeError:
+            return
 
     def send_history_command(self, mac, params, on_done):
         """Resolve the current route and send one History target."""
@@ -183,14 +294,23 @@ class WebClientThread(threading.Thread):
             user, pw = config.get_device_auth(mac)
             last_error = "History-Ziel konnte nicht erreicht werden."
             for base_url in targets:
-                acknowledgement, error = (
-                    network_worker.send_history_request(
+                transport = getattr(self, "_transport", None)
+                if transport is None:
+                    acknowledgement, error = network_worker.send_history_request(
                         base_url,
                         command_params,
                         user,
                         pw,
                     )
-                )
+                else:
+                    acknowledgement, error = network_worker.send_history_request(
+                        base_url,
+                        command_params,
+                        user,
+                        pw,
+                        mac=mac,
+                        transport=transport,
+                    )
                 if acknowledgement is not None:
                     finish(acknowledgement, error)
                     return
@@ -199,24 +319,44 @@ class WebClientThread(threading.Thread):
 
             finish(None, last_error)
 
-        threading.Thread(
-            target=_async_send,
-            daemon=True,
-            name="history-command",
-        ).start()
+        history_executor = getattr(self, "_history_executor", None)
+        if history_executor is None:
+            threading.Thread(
+                target=_async_send,
+                daemon=True,
+                name="history-command",
+            ).start()
+            return
+        try:
+            history_executor.submit(_async_send)
+        except RuntimeError:
+            finish(None, "History-Worker ist bereits beendet.")
 
     def is_synced(self, mac, rev_key):
         if mac not in self.current_data:
             return False
 
-        local_rev = client_storage.get_local_settings_rev(mac, rev_key)
+        local_rev = client_storage.get_local_settings_rev(mac)
         server_rev = int(self.current_data[mac].get(rev_key, -1))
 
         return server_rev == int(local_rev)
     def stop(self):
+        with self._stop_lock:
+            if self._stopped:
+                return
+            self._stopped = True
+
         self._stop_event.set()
         self._discovery.stop()
-        self._executor.shutdown(wait=False)
+        for executor in (
+            self._executor,
+            self._heavy_executor,
+            self._control_executor,
+            self._history_executor,
+            self._storage_executor,
+        ):
+            executor.shutdown(wait=False, cancel_futures=True)
+        self._transport.close()
 
 
     def start_ota_update(self, mac, file_path, on_progress_callback=None, on_done_callback=None):
@@ -226,11 +366,11 @@ class WebClientThread(threading.Thread):
         import os
         import threading
         import time
-        import urllib.request
         import urllib.parse
         import http.client
 
         def _async_upload():
+            conn = None
             cfg = config._init()
             dev_cfg = cfg.get("devices", {}).get(mac, {})
             targets = self.registry.build_targets(mac, dev_cfg)
@@ -292,7 +432,7 @@ class WebClientThread(threading.Thread):
                 conn.send(footer)
                 
                 response = conn.getresponse()
-                resp_data = response.read().decode('utf-8')
+                response.read()
                 
                 if response.status == 200:
                     if on_done_callback: on_done_callback(True, "Erfolgreich übertragen!")
@@ -301,6 +441,12 @@ class WebClientThread(threading.Thread):
 
             except Exception as e:
                 if on_done_callback: on_done_callback(False, str(e))
+            finally:
+                if conn is not None:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
 
         threading.Thread(target=_async_upload, daemon=True).start()
 # Singleton Instanz für die App bereitstellen

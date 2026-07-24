@@ -69,7 +69,7 @@ class DashboardMainPanel(GridLayout):
         active_channel = GLOBAL_STATE.get_active_channel()
         active_device_id = data[active_idx].get("device_id") if active_idx < len(data) else None
         history_window, range_revision = (
-            GLOBAL_STATE.graph_engine.get_graph_range_state()
+            GLOBAL_STATE.graph_history_engine.get_graph_range_state()
         )
         if range_revision != self._graph_range_revision:
             self._graph_range_revision = range_revision
@@ -210,8 +210,10 @@ class DashboardMainPanel(GridLayout):
             )
             return
 
-        pipeline_key = GLOBAL_STATE.graph_engine.get_history_pipeline_key(
-            str(device_id)
+        pipeline_key = (
+            GLOBAL_STATE.graph_history_engine.get_history_pipeline_key(
+                str(device_id)
+            )
         )
         expected_window = (
             float(history_window.start_timestamp),
@@ -235,7 +237,7 @@ class DashboardMainPanel(GridLayout):
             if tile is None:
                 continue
 
-            snapshot = GLOBAL_STATE.graph_engine.get_history_snapshot(
+            snapshot = GLOBAL_STATE.graph_history_engine.get_history_snapshot(
                 pipeline_key=self._history_pipeline_key,
                 tile_id=tile_id,
                 label_count=len(tile.labels_list),
