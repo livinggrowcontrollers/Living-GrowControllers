@@ -158,6 +158,28 @@ class GlobalStateManager:
         if not mac:
             return None
         return self.overlay_engine.retry_command(mac, cmd_type, instance_id=instance_id)
+
+    def send_history_command(
+        self,
+        mode,
+        device_id=None,
+        history_window=None,
+        target_points=None,
+        on_complete=None,
+        force=False,
+    ):
+        """Route Virtual-Hub History commands through the Command Engine."""
+        mac = str(device_id or self.get_active_device_id() or "").strip()
+        if not mac:
+            return None
+        return self.overlay_engine.send_history_command(
+            mac=mac,
+            mode=mode,
+            history_window=history_window,
+            target_points=target_points,
+            on_complete=on_complete,
+            force=force,
+        )
     
     
     # ---------------------------------------------------------

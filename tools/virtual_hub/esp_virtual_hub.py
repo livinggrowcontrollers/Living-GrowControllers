@@ -14,7 +14,10 @@ from kivy.uix.textinput import TextInput
 import requests
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from history_compressor import compress
+from history_routes import (
+    HistoryPipelineStore,
+    create_history_blueprint,
+)
 from cloudflare_tunnel_manager import CloudflareTunnelManager
 from email_sender import EmailSender
 from mdns_scanner_popup import open_mdns_scanner_popup
@@ -92,6 +95,25 @@ CORS(proxy_app)
 
 log_callback = None
 
+
+def _history_log(message):
+    if log_callback:
+        log_callback(message)
+
+
+history_pipeline_store = HistoryPipelineStore(
+    csv_file=None,
+    log_cb=_history_log,
+)
+
+proxy_app.register_blueprint(
+    create_history_blueprint(
+        pipeline_store=history_pipeline_store,
+        log_cb=_history_log,
+    )
+)
+
+
 def forward_request_to_esp(path):
     target_url = f"http://{ESP_IP}/{path}"
     method = request.method
@@ -114,46 +136,25 @@ def forward_request_to_esp(path):
         if log_callback:
             log_callback(log_msg)
 
-
-# ======================================================================
-        # HISTORIE EINSCHLEUSEN (Schlanke Baumstruktur)
-        # ======================================================================
+        # /history steuert nur die Auswahl. Die ausgewählten Messdaten laufen
+        # ausschließlich über den vorhandenen /data-Webkanal.
         if path.strip("/") == "data" and resp.status_code == 200:
             try:
-                # 1. Originales JSON vom ESP parsen
                 esp_payload = resp.json()
-                
-                # Device ID vom ESP ermitteln (Fallback 'ESP32_GROW_ROOM_01' oder 'unknown')
-                dev_id = str(esp_payload.get("device_id") or esp_payload.get("id") or "ESP32_GROW_ROOM_01")
-
-                # 2. History aus log.csv komprimieren
-                full_compressed_data = compress(
-                    csv_path=None,
-                    target_points_per_series=200,
-                    max_age_hours=48.0
+                esp_payload["history"] = (
+                    history_pipeline_store.get_pipeline_payload()
                 )
-
-                # 3. BAUM SCHLANK MACHEN:
-                # Wir holen nur die reinen Sensordaten ('history') für dieses spezifische Gerät heraus
-                if dev_id in full_compressed_data:
-                    clean_history = full_compressed_data[dev_id].get("history", {})
-                else:
-                    # Fallback: Wenn ID nicht matcht, nimm den ersten Eintrag aus der CSV
-                    first_key = next(iter(full_compressed_data), None)
-                    clean_history = full_compressed_data[first_key].get("history", {}) if first_key else {}
-
-                # 4. Schlanke Historie direkt im Payload platzieren
-                esp_payload["history"] = clean_history
-
+                return (
+                    jsonify(esp_payload),
+                    200,
+                    {"Content-Type": "application/json"},
+                )
+            except Exception as metadata_error:
                 if log_callback:
-                    log_callback(f"[{timestamp}] -> Schlanke History ({len(clean_history)} Sensoren) in /data injiziert!")
-
-                # 5. Modifiziertes Gesamt-JSON zurückgeben
-                return jsonify(esp_payload), 200, {"Content-Type": "application/json"}
-
-            except Exception as inject_err:
-                if log_callback:
-                    log_callback(f"[{timestamp}] ERROR beim Einschleusen: {str(inject_err)}")
+                    log_callback(
+                        f"[{timestamp}] History-Pipeline konnte nicht "
+                        f"eingespeist werden: {metadata_error}"
+                    )
                 return (resp.content, resp.status_code, resp.headers.items())
 
         # Für alle anderen Pfade oder Fehler: 1:1 durchreichen
@@ -448,15 +449,6 @@ class VirtualHubWidget(BoxLayout):
         self.btn_fetch.bind(on_press=self.on_fetch_click)
         btn_layout.add_widget(self.btn_fetch)
 
-        # NEU: Button für History Compressor Debugging
-        self.btn_compress = Button(
-            text="📊 History Komprimieren",
-            background_color=(0.8, 0.4, 0.1, 1.0),
-            bold=True,
-        )
-        self.btn_compress.bind(on_press=self.on_compress_click)
-        btn_layout.add_widget(self.btn_compress)
-
         self.btn_auto = Button(
             text="Auto-Refresh: AUS", background_color=(0.5, 0.5, 0.5, 1.0)
         )
@@ -514,43 +506,6 @@ class VirtualHubWidget(BoxLayout):
 
         # Tunnel direkt beim Start der UI anwerfen
         Clock.schedule_once(lambda dt: self.tunnel_manager.start(), 0.5)
-
-    # --------------------------------------------------------------------------
-    # HISTORY COMPRESSOR DEBUG HANDLER
-    # --------------------------------------------------------------------------
-    def on_compress_click(self, instance):
-        self.btn_compress.disabled = True
-        self.add_proxy_log("[UI] Starte Kompression von data/log.csv ...")
-        
-        # Thread starten, damit Kivy-UI nicht einfriert
-        threading.Thread(
-            target=self._worker_compress,
-            daemon=True
-        ).start()
-
-    def _worker_compress(self):
-        # Callback leitet Debug-Meldungen direkt ins Live-Proxy-Log der UI
-        def debug_logger(msg):
-            self.add_proxy_log(msg)
-
-        # HIER ÄNDERN: csv_path=None lassen, damit der automatische Pfad greift!
-        result = compress(
-            csv_path=None,
-            target_points_per_series=500,
-            log_cb=debug_logger
-        )
-
-        # Ergebnis in der UI ausgeben
-        Clock.schedule_once(lambda dt: self._update_ui_after_compress(result))
-    def _update_ui_after_compress(self, result):
-        self.btn_compress.disabled = False
-        pretty_json = json.dumps(result, indent=2, ensure_ascii=False)
-        self.json_output.text = pretty_json
-    def prepare_history_payload(self):
-        """Liest log.csv ein und erzeugt eine stark komprimierte Zeitreihe."""
-        # HIER ÄNDERN: csv_path=None verwenden!
-        compressed_payload = compress(csv_path=None, target_points_per_series=500)
-        return compressed_payload
 
     def on_scan_devices(self, instance):
         open_mdns_scanner_popup(
@@ -681,10 +636,12 @@ class VirtualHubApp(App):
         self.title = "ESP Virtual Hub & Proxy"
         proxy_thread = threading.Thread(target=start_proxy_server, daemon=True)
         proxy_thread.start()
+        history_pipeline_store.start_auto_refresh()
         self.hub_widget = VirtualHubWidget()
         return self.hub_widget
 
     def on_stop(self):
+        history_pipeline_store.stop_auto_refresh()
         if hasattr(self, "hub_widget") and hasattr(self.hub_widget, "tunnel_manager"):
             self.hub_widget.tunnel_manager.stop()
 

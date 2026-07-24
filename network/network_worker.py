@@ -2,6 +2,40 @@
 import requests
 import config
 import network.client_storage
+
+
+def send_history_request(base_url, params, user, pw):
+    """Send one History target to the currently resolved device route."""
+    try:
+        response = requests.get(
+            f"{base_url.rstrip('/')}/history",
+            params=dict(params),
+            timeout=(3.05, 20.0),
+            auth=(user, pw) if user else None,
+            headers={
+                "Connection": "close",
+                "Accept": "application/json",
+            },
+        )
+    except requests.RequestException as exc:
+        return None, str(exc)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+
+    if response.status_code == 200 and isinstance(payload, dict):
+        return payload, None
+
+    if isinstance(payload, dict):
+        return payload, str(
+            payload.get("error")
+            or f"History-HTTP-Fehler {response.status_code}"
+        )
+    return None, f"History-HTTP-Fehler {response.status_code}"
+
+
 def fetch_single_device(mac, dev_cfg, targets, registry, local_plants_cache, local_plant_revs):
     """
     Führt den HTTP-Request für ein einzelnes Gerät aus.

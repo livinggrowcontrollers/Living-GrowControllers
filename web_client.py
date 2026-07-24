@@ -157,6 +157,54 @@ class WebClientThread(threading.Thread):
 
         threading.Thread(target=_async_send, daemon=True).start()
 
+    def send_history_command(self, mac, params, on_done):
+        """Resolve the current route and send one History target."""
+        command_params = dict(params)
+
+        def finish(payload, error):
+            if callable(on_done):
+                on_done(payload, error)
+
+        def _async_send():
+            cfg = config._init()
+            dev_cfg = cfg.get("devices", {}).get(mac, {})
+            if self.registry.is_cooldown(mac):
+                finish(
+                    None,
+                    "Aktuelle Geräteroute ist vorübergehend gesperrt.",
+                )
+                return
+
+            targets = self.registry.build_targets(mac, dev_cfg)
+            if not targets:
+                finish(None, "Keine aktuelle Geräteroute verfügbar.")
+                return
+
+            user, pw = config.get_device_auth(mac)
+            last_error = "History-Ziel konnte nicht erreicht werden."
+            for base_url in targets:
+                acknowledgement, error = (
+                    network_worker.send_history_request(
+                        base_url,
+                        command_params,
+                        user,
+                        pw,
+                    )
+                )
+                if acknowledgement is not None:
+                    finish(acknowledgement, error)
+                    return
+                if error:
+                    last_error = error
+
+            finish(None, last_error)
+
+        threading.Thread(
+            target=_async_send,
+            daemon=True,
+            name="history-command",
+        ).start()
+
     def is_synced(self, mac, rev_key):
         if mac not in self.current_data:
             return False

@@ -1,0 +1,167 @@
+VIRTUAL-HUB HISTORY-REVISIONSSYSTEM
+==================================
+
+Ziel
+----
+
+Der Virtual Hub ist die einzige Source of Truth für den aktiven Logmodus.
+Ein Dashboard sendet nur einen Sollzustand. Erst die Hub-Bestätigung und der
+danach über /data gelieferte History-Block machen diesen Zustand verbindlich.
+
+Für Geräteidentität wird ausschließlich device_id verwendet. device_name,
+hostname oder lokale Anzeigenamen sind niemals Ersatzidentitäten.
+
+
+Steuerweg
+---------
+
+1. Ein Benutzer wählt im Fullscreen für device_id X ein Zeitfenster.
+2. Der Fullscreen registriert die Sollrevision wie der Grow Controller in
+   einer RevisionSession und gibt den Befehl ausschließlich an:
+
+   Fullscreen -> GlobalStateManager -> OverlayCommandEngine
+   -> WEB_CLIENT -> aktuell konfigurierte Geräteroute -> /history
+
+   Fullscreen und GraphEngine führen keine HTTP-Anfrage aus. Es wird auch
+   kein History-Endpunkt aus einem früheren Remote-/Lokalmodus gespeichert.
+   WEB_CLIENT löst die Geräteroute für jeden einzelnen Befehl neu aus der
+   aktuellen Gerätekonfiguration auf.
+3. Das Dashboard sendet an /history:
+   - mode=history
+   - device_id
+   - range_key
+   - from
+   - to
+   - points
+   - selection_id
+   - base_session
+   - base_revision
+4. Der Hub nimmt den Befehl nur an, wenn base_session und base_revision exakt
+   seinem aktuellen Steuerzustand entsprechen. Eine veraltete Basis wird mit
+   HTTP 409 abgewiesen und verändert die Pipeline nicht.
+5. Der Hub serialisiert die Änderung, erhöht rev_history und bestätigt nur
+   die Steuerdaten. /history liefert niemals Messreihen.
+6. Der Hub komprimiert das Log und veröffentlicht über /data:
+   - history_session
+   - rev_history der vollständigen Pipeline
+   - devices, exakt nach device_id indiziert
+7. Direkt vor jedem Geräte-Log steht history_selection. Dieser Header
+   beschreibt eindeutig, für welches Zeitfenster das folgende Log gültig ist.
+8. Alle Dashboards übernehmen nur diesen Hub-bestätigten Zustand. Eine
+   normale Render- oder Poll-Schleife sendet keine History-Auswahl.
+9. Das Auswahl-Popup erscheint erst, wenn genau dieselbe selection_id und
+   die Sollrevision über den normalen /data-Kanal gespiegelt wurden. Das
+   HTTP-ACK allein gilt nicht als sichtbare Bestätigung.
+
+
+Pipeline-Form
+-------------
+
+history: {
+  history_session: "UUID des laufenden Hub-Prozesses",
+  rev_history: 42,
+  devices: {
+    "growmaster-d064": {
+      device_id: "growmaster-d064",
+      name: "reiner Anzeigename",
+      history_selection: {
+        rev_history: 42,
+        selection_id: "UUID dieser Benutzeraktion",
+        mode: "history",
+        range_key: 24,
+        range_label: "24h",
+        from: 123.0,
+        to: 456.0,
+        points: 30
+      },
+      total_raw_points: 1234,
+      history: {
+        ...
+      }
+    }
+  }
+}
+
+
+Revisionsregeln
+---------------
+
+- Der Hub vergibt die endgültige Revision.
+- Jeder Befehl nennt seine vom Hub zuvor über /data bestätigte
+  base_session und base_revision. Die Zielrevision ist base_revision + 1.
+- Eine veraltete Basis kann niemals einen neueren Hub-Zustand überschreiben.
+- Die Auswahl wird unter dem Hub-Lock komprimiert und atomar veröffentlicht.
+- Die zuletzt vom Hub committete neue selection_id gewinnt.
+- rev_history beschreibt ausschließlich den gewählten Sollmodus. Die Revision
+  ändert sich nur durch eine neue Dashboard-Auswahl, niemals durch die
+  automatische Logaktualisierung.
+- Eine Wiederholung derselben selection_id liefert dieselbe Revision und
+  aktiviert keinen alten Zustand erneut.
+- Innerhalb derselben history_session akzeptiert ein Dashboard nur eine
+  höhere rev_history.
+- Nach einem Hub-Neustart darf eine neue history_session wieder mit Revision 1
+  beginnen.
+- Pakete einer bereits abgelösten Session werden verworfen.
+- Eine Auswahl für device_id X ersetzt nur den Geräteblock X. Andere
+  Geräteblöcke bleiben gültig und werden nicht aus der Pipeline entfernt.
+
+
+Automatische Logaktualisierung
+------------------------------
+
+- Der Virtual Hub komprimiert aktive relative Zeitfenster alle 60 Sekunden
+  erneut aus data/log.csv.
+- 6h, 24h, 48h, 7d, 30d und 365d gleiten mit der aktuellen Hub-Zeit weiter.
+- selection_id, range_key und rev_history bleiben dabei unverändert.
+- history_generated_at kennzeichnet ausschließlich den Erzeugungszeitpunkt
+  des neuen Logblocks. Damit können Dashboards alte, verspätete Wiederholungen
+  desselben Logstands verwerfen.
+- Ein Dashboard akzeptiert bei gleicher rev_history nur ein neueres
+  history_generated_at und nur dann, wenn die Auswahlkennung unverändert ist.
+- Benutzerdefinierte Zeitfenster sind absolute Bereiche und werden nicht
+  verschoben.
+- Im Live-Modus bleibt das bestätigte UI-Ziel live. Zusätzlich hängt der Hub
+  einen als log_range_key=6 gekennzeichneten 6h-Logblock für passive Ansichten
+  an und aktualisiert auch diesen Block alle 60 Sekunden unter derselben
+  selection_id und rev_history.
+- Die Aktualisierung erzeugt keinen zusätzlichen Dashboard-Request. Der neue
+  Block wird weiterhin ausschließlich im normalen /data-Poll transportiert.
+
+
+Live-Modus
+----------
+
+Live ist ebenfalls ein Hub-Ziel:
+
+  mode=live
+  &device_id=X
+  &selection_id=...
+  &base_session=...
+  &base_revision=...
+
+Der Hub bestätigt und veröffentlicht mode=live im history_selection-Header
+des Geräts. Dadurch wechseln alle Dashboards, die dieselbe device_id anzeigen,
+gemeinsam zurück in den Live-Modus. Im selben Header beschreiben
+log_range_key=6, from, to und points den angehängten passiven 6h-Logblock.
+Fullscreen und Dashboard bleiben wegen mode=live in der Live-Darstellung.
+Die Sensor Summary darf den 6h-Block als Verlauf verwenden und bleibt dadurch
+auch im Live-Modus gefüllt.
+
+
+Verantwortlichkeiten
+--------------------
+
+- Fullscreen: sendet Sollzustände ausschließlich durch Benutzeraktionen,
+  verwaltet die RevisionSession und zeigt erst nach /data-Spiegelung das
+  Bestätigungs-Popup.
+- GlobalStateManager: delegiert History-Befehle ohne eigene Transportlogik.
+- OverlayCommandEngine: einziger Besitzer des History-Befehls, der
+  selection_id, Basisrevision, Sollrevision und ACK-Prüfung zusammenführt.
+- WEB_CLIENT: löst pro Befehl die aktuelle lokale oder Remote-Route auf.
+- Virtual Hub: validiert, komprimiert, versioniert, bestätigt und publiziert.
+- /history: reiner Steuerkanal mit ACK, ohne Logdaten.
+- /data: einziger Transportweg für bestätigten History-Header und Logdaten.
+- GraphEngine: besitzt keinen Netzwerktransport. Sie verwirft alte Revisionen
+  und stellt den bestätigten Hub-Zustand für Dashboard, Fullscreen und Grow
+  Overview bereit.
+- Dashboard und Grow Overview: passive Leser der zentralen GraphEngine.

@@ -33,6 +33,8 @@ class ChartTile(ButtonBehavior, BoxLayout):
         self._last_avg = None
         self._last_min = None
         self._last_max = None
+        self._graph_mode = "live"
+        self._history_render_signature = None
         self.window = GLOBAL_STATE.graph_engine.get_window_size()
 
         # -------------------------------------------------
@@ -159,6 +161,11 @@ class ChartTile(ButtonBehavior, BoxLayout):
     def update(self, value, buf_key, render=False):
         if not render:
             return
+
+        if self._graph_mode != "live":
+            self._graph_mode = "live"
+            self._history_render_signature = None
+            self._last_val = None
     
         history = GLOBAL_STATE.get_graph_data(buf_key)
         unit = GLOBAL_STATE.get_unit(buf_key)
@@ -181,6 +188,106 @@ class ChartTile(ButtonBehavior, BoxLayout):
         self._render_buffer(history, unit, buf_key)
         self._upd_mesh()
 
+    def render_history_snapshot(self, snapshot, unit):
+        if snapshot is None:
+            self.render_history_status(
+                "History",
+                "Keine Daten",
+            )
+            return
+
+        resolved_unit = unit or self.unit or "—"
+        signature = (
+            snapshot.points,
+            snapshot.xmin,
+            snapshot.xmax,
+            snapshot.ymin,
+            snapshot.ymax,
+            snapshot.labels,
+            snapshot.last_value,
+            snapshot.stats,
+            resolved_unit,
+        )
+        if (
+            self._graph_mode == "history"
+            and signature == self._history_render_signature
+        ):
+            return
+
+        self._graph_mode = "history"
+        self._history_render_signature = signature
+        self._last_val = snapshot.last_value
+
+        number_style = {
+            **self.presentation.get("formatter", {}),
+            **self.style,
+        }
+        self.lbl_main_info.text = UIFormatter.format_sensor_label(
+            name=self.title,
+            value=snapshot.last_value,
+            unit=resolved_unit,
+            trend="",
+            style=number_style,
+        )
+
+        self.graph.xmin = snapshot.xmin
+        self.graph.xmax = snapshot.xmax
+        self.graph.ymin = snapshot.ymin
+        self.graph.ymax = snapshot.ymax
+        points = list(snapshot.points)
+        self.plot.points = points
+        self.plot_glow.points = points
+
+        for index, label in enumerate(self.labels_list):
+            label.text = (
+                snapshot.labels[index]
+                if index < len(snapshot.labels)
+                else ""
+            )
+
+        stats = snapshot.stats
+        if stats is None:
+            self.lbl_avg.text = "avg: ---"
+            self.lbl_min.text = "min: ---"
+            self.lbl_max.text = "max: ---"
+        else:
+            self.lbl_avg.text = (
+                f"avg: "
+                f"{UIFormatter.format_number(stats.average, number_style)} "
+                f"{resolved_unit}"
+            )
+            self.lbl_min.text = (
+                f"min: "
+                f"{UIFormatter.format_number(stats.minimum, number_style)}"
+                f"{resolved_unit}"
+            )
+            self.lbl_max.text = (
+                f"max: "
+                f"{UIFormatter.format_number(stats.maximum, number_style)}"
+                f"{resolved_unit}"
+            )
+
+        self._upd_mesh()
+
+    def render_history_status(self, range_label, message):
+        signature = ("status", range_label, message)
+        if (
+            self._graph_mode == "history"
+            and signature == self._history_render_signature
+        ):
+            return
+
+        self._graph_mode = "history"
+        self._history_render_signature = signature
+        self._last_val = None
+        self.lbl_main_info.text = (
+            f"[color=#555555]{self.title}: --[/color]"
+        )
+        self._render_empty_graph()
+        self.lbl_avg.text = range_label
+        self.lbl_min.text = message
+        self.lbl_max.text = ""
+
     def refresh_metric_theme(self):
         """Refresh appearance while preserving the tile's graph history."""
         cfg = MetricRegistry.get(self.tile_id)
@@ -202,6 +309,7 @@ class ChartTile(ButtonBehavior, BoxLayout):
         for label in self.labels_list:
             label.color = self.presentation.get("axis_color", [1, 1, 1, 0.4])
         self._last_val = None
+        self._history_render_signature = None
 
     def _render_empty_graph(self):
         clear_graph_series(self.plot, self.mesh, self.plot_glow)
@@ -267,6 +375,8 @@ class ChartTile(ButtonBehavior, BoxLayout):
             self.lbl_max.text = f"max: {UIFormatter.format_number(mx_stat, number_style)}{unit}"
 
     def reset(self):
+        self._graph_mode = "live"
+        self._history_render_signature = None
         self.lbl_main_info.text = f"[color=#555555]{self.title}[/color]"
         self._render_empty_graph()
 

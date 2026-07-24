@@ -23,6 +23,7 @@ class UIFormatter:
         sz_unit = style.get("sz_unit", sz_unit)
         sz_name = style.get("sz_name", sz_name)
         color_sub = style.get("color_sub", "#bbbbbb")
+        color_name = style.get("color_name", color_sub)
         color_value = style.get("color_value")
 
         def scale(size):
@@ -30,7 +31,7 @@ class UIFormatter:
 
         val_str = UIFormatter.format_number(value, style)
 
-        s_name = f"[color={color_sub}][size={scale(sz_name)}]{name}[/size][/color]" if name else ""
+        s_name = f"[color={color_name}][size={scale(sz_name)}]{name}[/size][/color]" if name else ""
         s_trend = f"  [size={scale(sz_trend)}][font=FA]{trend}[/font][/size]  " if trend else "  "
         value_markup = f"[size={scale(sz_val)}]{val_str}[/size]"
         s_val = f"[color={color_value}]{value_markup}[/color]" if color_value else value_markup

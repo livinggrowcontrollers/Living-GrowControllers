@@ -20,6 +20,8 @@ class DashboardMainPanel(GridLayout):
         self.padding = dp_scaled(2)
         self.size_hint_y = None
         self.bind(minimum_height=self.setter('height'))
+        self._history_pipeline_key = None
+        self._graph_range_revision = -1
         
         # Kacheln dynamisch aus der zentralen MetricRegistry erzeugen
         tile_ids = [
@@ -51,7 +53,6 @@ class DashboardMainPanel(GridLayout):
     def update_from_data(self, d):  
         from dashboard_gui.data_buffer import BUFFER
         data = BUFFER.get()
-        
         # 🔥 NEU: Wenn keine Geräte in der ActiveChannelEngine existieren, 
         # Dashboard komplett leeren und abbrechen!
         if hasattr(GLOBAL_STATE, "active_channel_engine"):
@@ -67,6 +68,12 @@ class DashboardMainPanel(GridLayout):
         active_idx = GLOBAL_STATE.get_active_index()
         active_channel = GLOBAL_STATE.get_active_channel()
         active_device_id = data[active_idx].get("device_id") if active_idx < len(data) else None
+        history_window, range_revision = (
+            GLOBAL_STATE.graph_engine.get_graph_range_state()
+        )
+        if range_revision != self._graph_range_revision:
+            self._graph_range_revision = range_revision
+            self._history_pipeline_key = None
 
         # Helper-Update Funktion (JETZT GANZ OBEN DEFINIERT)
         # So ist sie in der ganzen Methode verfügbar.
@@ -125,6 +132,15 @@ class DashboardMainPanel(GridLayout):
 
             self._apply_tile_visibility(active_keys)
 
+        if history_window is not None:
+            self._update_history_tiles(
+                device_id=active_device_id,
+                active_channel=active_channel,
+                active_keys=active_keys,
+                history_window=history_window,
+            )
+            return
+
         # ---------------------------------------------------
         # 3. WERTE-UPDATE (BUFFER FÜR ALLE GERÄTE)
         # ---------------------------------------------------
@@ -178,6 +194,77 @@ class DashboardMainPanel(GridLayout):
             rssi_val = stream.get("rssi")
             if rssi_val is not None:
                 self.tile_rssi.update(rssi_val, f"{prefix}_rssi", render=is_active)
+
+    def _update_history_tiles(
+        self,
+        device_id,
+        active_channel,
+        active_keys,
+        history_window,
+    ):
+        if not device_id:
+            self._render_history_status(
+                active_keys,
+                history_window.label,
+                "Kein Gerät",
+            )
+            return
+
+        pipeline_key = GLOBAL_STATE.graph_engine.get_history_pipeline_key(
+            str(device_id)
+        )
+        expected_window = (
+            float(history_window.start_timestamp),
+            float(history_window.end_timestamp),
+        )
+        if (
+            pipeline_key is None
+            or pipeline_key[1:3] != expected_window
+        ):
+            self._render_history_status(
+                active_keys,
+                history_window.label,
+                "Warte auf Pipeline …",
+            )
+            return
+
+        self._history_pipeline_key = pipeline_key
+
+        for tile_id in active_keys:
+            tile = self.tile_map.get(tile_id)
+            if tile is None:
+                continue
+
+            snapshot = GLOBAL_STATE.graph_engine.get_history_snapshot(
+                pipeline_key=self._history_pipeline_key,
+                tile_id=tile_id,
+                label_count=len(tile.labels_list),
+                range_label=history_window.label,
+            )
+            if snapshot is None:
+                tile.render_history_status(
+                    history_window.label,
+                    "Keine History",
+                )
+                continue
+
+            full_key = f"{device_id}_{active_channel}_{tile_id}"
+            tile.render_history_snapshot(
+                snapshot,
+                GLOBAL_STATE.get_unit(full_key),
+            )
+
+    def _render_history_status(
+        self,
+        active_keys,
+        range_label,
+        message,
+    ):
+        for tile_id in active_keys:
+            tile = self.tile_map.get(tile_id)
+            if tile is not None:
+                tile.render_history_status(range_label, message)
+
     def _apply_tile_visibility(self, active_keys):
         self.clear_widgets()
     

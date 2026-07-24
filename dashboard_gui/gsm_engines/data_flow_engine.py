@@ -48,6 +48,14 @@ class DataFlowEngine:
                 if not isinstance(ch, dict):
                     continue
 
+                # History ist ein vollständiger /data-Pipelineblock und darf
+                # nicht verschwinden, nur weil der Live-Timestamp dieses
+                # Kanals auf Android gerade als stale bewertet wird.
+                if ch_name == "webserver":
+                    self.gsm.graph_engine.ingest_history_pipeline(
+                        ch.get("history")
+                    )
+
                 if not ch.get("alive", False):
                     continue
 

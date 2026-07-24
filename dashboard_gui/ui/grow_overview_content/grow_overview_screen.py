@@ -28,6 +28,7 @@ class GrowOverviewScreen(Screen):
         super().__init__(**kw)
 
         GLOBAL_STATE.ui_handler.attach_screen("grow_overview", self)
+        self._active_summary_device_id = None
 
         # ---------------- ROOT ----------------
         root = BoxLayout(orientation="vertical")
@@ -146,6 +147,14 @@ class GrowOverviewScreen(Screen):
                 ("Hum", None, ("scd41", "humidity"), "%"),
             ),
         )
+        self.sensor_summary_tiles = (
+            self.sht31_internal_tile,
+            self.sht31_external_tile,
+            self.ble_inside_tile,
+            self.ble_outside_tile,
+            self.mlx90614_tile,
+            self.scd41_tile,
+        )
         # ---------------- SENSOR SIZE SETTINGS ----------------
         self.sht31_internal_tile.size_hint_y = None
         self.sht31_internal_tile.height = dp_scaled(140)
@@ -234,6 +243,15 @@ class GrowOverviewScreen(Screen):
         self.header.update_from_global(d)
 
         mac = GLOBAL_STATE.get_active_device_id()
+        active_channel = GLOBAL_STATE.get_active_channel()
+
+        if mac != self._active_summary_device_id:
+            self._active_summary_device_id = mac
+            for tile in self.sensor_summary_tiles:
+                tile.reset_history(
+                    device_id=mac,
+                    channel=active_channel,
+                )
         
         # 1. Hol die echten Daten aus der Engine
         server_data = GLOBAL_STATE.overlay_engine.get_buffer_data(mac) if mac else None
@@ -251,7 +269,6 @@ class GrowOverviewScreen(Screen):
             }
             prefix_string = ""
         else:
-            active_channel = GLOBAL_STATE.get_active_channel()
             prefix_string = f"{mac}_{active_channel}"
 
         # 3. JETZT ERST DIE TILES BESCHICKEN (Läuft somit IMMER durch!)
@@ -270,3 +287,7 @@ class GrowOverviewScreen(Screen):
         self.rtc_tile.update_values(server_data)
         self.scd41_tile.update_values(server_data, prefix=prefix_string)
         self.tapo_tile.update_values(server_data)
+
+    def refresh_metric_theme(self):
+        for tile in self.sensor_summary_tiles:
+            tile.refresh_metric_theme()

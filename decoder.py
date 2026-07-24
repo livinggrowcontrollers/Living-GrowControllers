@@ -104,12 +104,9 @@ _LAST_WRITE_TS = 0
 _DECODED_RAM = []
 _DECODED_TS = 0
 _LAST_CSV_WRITE_TS = 0.0
-_LAST_CSV_CLEANUP_TS = 0.0
 _LAST_HEARTBEAT_TS = 0.0
 
 _LOG_INTERVAL = 55.0
-_CSV_CLEANUP_INTERVAL = 300.0
-_CSV_RETENTION_HOURS = 48
 
 
 _LIVE_WEB_DATA = {} 
@@ -169,7 +166,6 @@ def _write(frames):
     global _DECODED_TS
     global _LAST_WRITE_TS
     global _LAST_CSV_WRITE_TS
-    global _LAST_CSV_CLEANUP_TS
     global _LAST_HEARTBEAT_TS
     now = time.time()
 
@@ -193,10 +189,6 @@ def _write(frames):
         except Exception as e:
             print("[Decoder] Write Error:", e)
 
-    if not _dev_enabled():
-        _cleanup_csv()
-        return
-
     # Neue Messwerte anhängen
     if (now - _LAST_CSV_WRITE_TS) >= _LOG_INTERVAL:
         try:
@@ -204,14 +196,6 @@ def _write(frames):
             _LAST_CSV_WRITE_TS = now
         except Exception as e:
             print("[Decoder] CSV Write Error:", e)
-
-    # Rollierendes Zeitfenster bereinigen
-    if (now - _LAST_CSV_CLEANUP_TS) >= _CSV_CLEANUP_INTERVAL:
-        try:
-            _trim_csv_history(_CSV_RETENTION_HOURS)
-            _LAST_CSV_CLEANUP_TS = now
-        except Exception as e:
-            print("[Decoder] CSV Cleanup Error:", e)
 
 
 def offline_all(cfg):
@@ -363,7 +347,8 @@ def step_decode():
             "dev_name": current_web.get("dev_name", dev_cfg.get("name", mac)) if current_web else dev_cfg.get("name", mac),
             "fw_ver": current_web.get("fw_ver", "unknown") if current_web else "unknown",
             "ip": current_web.get("ip", "0.0.0.0") if current_web else "0.0.0.0",
-            "ssid": current_web.get("ssid", "unknown") if current_web else "unknown"
+            "ssid": current_web.get("ssid", "unknown") if current_web else "unknown",
+            "history": current_web.get("history") if current_web else None,
         }
 
         if current_web:
@@ -561,20 +546,6 @@ def get_decoded_ram():
     return _DECODED_RAM
 
 
-def _dev_enabled():
-    try:
-        return config.is_developer_mode()
-    except Exception:
-        return False
-    
-def _cleanup_csv():
-    if os.path.exists(CSV_FILE):
-        try:
-            os.remove(CSV_FILE)
-        except Exception:
-            pass
-
-
 def _write_csv(frames):
     file_exists = os.path.exists(CSV_FILE)
 
@@ -621,6 +592,7 @@ def _write_csv(frames):
         for frame in frames:
             web = frame.get("webserver", {})
             mac = frame.get("device_id")
+            device_config = devs.get(mac, {})
 
             # Gerätebereiche
             internal = web.get("internal", {})
@@ -633,12 +605,24 @@ def _write_csv(frames):
             exhaust_fan = web.get("exhaust_fan", {})
             circulation_fan = web.get("circulation_fan", {})
 
-            # Gerätename aus der Config
-            device_name = devs.get(mac, {}).get("name", mac)
+            # Die äußere UUID/MAC bleibt der lokale UI-Schlüssel. In der
+            # History-CSV muss ein Growmaster dagegen über seine stabile
+            # physische ID identifiziert werden, damit verschiedene
+            # Installationen dieselben Messreihen finden.
+            stable_device_id = config.get_device_id(device_config)
+            history_device_id = (
+                stable_device_id
+                if config.validate_device_id(stable_device_id)
+                else mac
+            )
+            device_name = device_config.get(
+                "name",
+                stable_device_id or mac,
+            )
 
             writer.writerow([
                 frame.get("timestamp"),
-                mac,
+                history_device_id,
                 device_name,
 
                 # Interne Sensoren
@@ -668,52 +652,6 @@ def _write_csv(frames):
                 web.get("battery_voltage"),
                 web.get("rssi")
             ])
-
-def _trim_csv_history(retention_hours):
-    if not os.path.exists(CSV_FILE):
-        return
-
-    cutoff = time.time() - (float(retention_hours) * 3600.0)
-    temp_file = CSV_FILE + ".tmp"
-
-    kept_rows = 0
-    removed_rows = 0
-
-    with open(CSV_FILE, "r", newline="", encoding="utf-8") as src:
-        reader = csv.reader(src)
-        header = next(reader, None)
-
-        with open(temp_file, "w", newline="", encoding="utf-8") as dst:
-            writer = csv.writer(dst)
-
-            if header:
-                writer.writerow(header)
-
-            for row in reader:
-                if not row:
-                    continue
-
-                try:
-                    row_timestamp = float(row[0])
-                except (ValueError, TypeError, IndexError):
-                    removed_rows += 1
-                    continue
-
-                if row_timestamp >= cutoff:
-                    writer.writerow(row)
-                    kept_rows += 1
-                else:
-                    removed_rows += 1
-
-    os.replace(temp_file, CSV_FILE)
-
-    if removed_rows:
-        print(
-            f"[Decoder] CSV trimmed: "
-            f"{removed_rows} alte Zeilen entfernt, "
-            f"{kept_rows} Zeilen behalten, "
-            f"Fenster={retention_hours}h"
-        )
 
 # --- THREAD CONTROL FOR ASYNC RUNTIME ---
 _DECODER_THREAD = None

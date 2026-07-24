@@ -7,15 +7,15 @@
       "gatt_decoder": "",
       "bridge_profile": "",
       "image_file": "esp32_s3.png",
-      "hostname": "",
+      "hostname": "growmaster-d064",
       "auth": {
         "user": "admin",
         "pass": "1234"
       },
-      "ip_address": "https://critical-surge-scanned-jefferson.trycloudflare.com",
+      "ip_address": "https://presidential-virginia-elimination-meanwhile.trycloudflare.com",
       "mac": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
       "protected": false,
-      "_manual_update_ts": 1784815279.885387
+      "_manual_update_ts": 1784854568.456301
     },
     "FABCEA8B-7EC8-2594-4879-2B3B63989660": {
       "device_id": "",
@@ -49,9 +49,9 @@
   "refresh_interval": 0.1,
   "stale_timeout": 15.0,
   "graph_resolution": 100.0,
-  "graph_refresh_interval": 3.0000000000000004,
+  "graph_refresh_interval": 0.1,
   "graph_smoothing_factor": 1.0,
-  "tile_graph_window": 850,
+  "tile_graph_window": 210,
   "temperature_unit": "C",
   "temperature_offset": 0.0,
   "humidity_offset": 0.0,

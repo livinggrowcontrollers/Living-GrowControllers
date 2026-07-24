@@ -113,6 +113,13 @@ class SettingsScreen(Screen):
         fullscreen = GLOBAL_STATE.ui_handler.get_screen("fullscreen")
         if fullscreen and getattr(fullscreen, "current_key", None):
             fullscreen.activate_tile(fullscreen.current_key)
+
+        grow_overview = GLOBAL_STATE.ui_handler.get_screen("grow_overview")
+        if grow_overview and hasattr(
+            grow_overview,
+            "refresh_metric_theme",
+        ):
+            grow_overview.refresh_metric_theme()
         
     # -----------------------------
     # Cancel Handler

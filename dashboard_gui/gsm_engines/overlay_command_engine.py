@@ -20,8 +20,12 @@
 
 # overlay_command
 import time
+import uuid
+
+import config
 import web_client
 from dashboard_gui.circulation_fan_registry import fan_prefix, fan_revision_key, fan_gpio_keys, MAX_CIRCULATION_FANS
+from dashboard_gui.gsm_engines.graph_engine import HistorySelectionResult
 
 
 CLIMATE_HUB_REVISION_KEY = "rev_exhaust"
@@ -71,6 +75,7 @@ class OverlayCommandEngine:
         self.gsm = gsm
         self._pending_plant_revs = {}
         self._pending_overlay_commands = {}
+        self._pending_history_commands = {}
 
     @staticmethod
     def _channel_key(mac, command_type, instance_id=None):
@@ -134,6 +139,217 @@ class OverlayCommandEngine:
             return self.send_climate_hub_command(mac, **kwargs)
         elif cmd_type == "ota_update":
             return self.send_ota_command(mac, **kwargs)
+        return None
+
+    # =========================================================================
+    # VIRTUAL HUB HISTORY COMMANDS
+    # =========================================================================
+
+    @staticmethod
+    def _history_source_device_id(mac):
+        try:
+            cfg = config._init()
+            device = cfg.get("devices", {}).get(str(mac), {})
+            source_device_id = str(
+                device.get("device_id") or ""
+            ).strip()
+        except (AttributeError, TypeError):
+            source_device_id = ""
+        return source_device_id
+
+    @staticmethod
+    def _history_error_result(
+        mac,
+        mode,
+        message,
+        selection_id=None,
+        target_revision=None,
+    ):
+        return HistorySelectionResult(
+            key=(str(mac), str(mode)),
+            status="failed",
+            error=str(message),
+            selection_id=selection_id,
+            target_revision=target_revision,
+        )
+
+    def send_history_command(
+        self,
+        mac,
+        mode,
+        history_window=None,
+        target_points=None,
+        on_complete=None,
+        force=False,
+    ):
+        """Send one Hub target through the sole project command path."""
+        normalized_mode = str(mode or "").strip().casefold()
+        if normalized_mode not in ("history", "live"):
+            return self._history_error_result(
+                mac,
+                normalized_mode,
+                "Ungültiger History-Modus.",
+            )
+
+        graph_engine = self.gsm.graph_engine
+        base_state = graph_engine.get_history_control_state()
+        if not isinstance(base_state, dict):
+            return self._history_error_result(
+                mac,
+                normalized_mode,
+                "Noch keine History-Basisrevision vom Hub empfangen.",
+            )
+
+        base_session = str(
+            base_state.get("history_session") or ""
+        ).strip()
+        try:
+            base_revision = int(base_state["rev_history"])
+        except (KeyError, TypeError, ValueError):
+            return self._history_error_result(
+                mac,
+                normalized_mode,
+                "Ungültige History-Basisrevision vom Hub.",
+            )
+
+        selection_id = str(uuid.uuid4())
+        source_device_id = self._history_source_device_id(mac)
+        if not source_device_id:
+            return self._history_error_result(
+                mac,
+                normalized_mode,
+                "Stabile device_id für den Virtual Hub fehlt.",
+                selection_id,
+                base_revision + 1,
+            )
+        points = (
+            graph_engine.HISTORY_TARGET_POINTS
+            if target_points is None
+            else int(target_points)
+        )
+
+        if normalized_mode == "history":
+            if history_window is None:
+                return self._history_error_result(
+                    mac,
+                    normalized_mode,
+                    "History-Zeitfenster fehlt.",
+                    selection_id,
+                    base_revision + 1,
+                )
+            result = graph_engine.select_history_window(
+                device_id=mac,
+                history_window=history_window,
+                selection_id=selection_id,
+                base_revision=base_revision,
+                base_session=base_session,
+                force=force,
+                target_points=points,
+            )
+            params = {
+                "mode": "history",
+                "from": history_window.start_timestamp,
+                "to": history_window.end_timestamp,
+                "points": points,
+                "range_key": history_window.range_key,
+            }
+        else:
+            result = graph_engine.select_live_mode(
+                device_id=mac,
+                selection_id=selection_id,
+                base_revision=base_revision,
+                base_session=base_session,
+            )
+            params = {"mode": "live"}
+
+        if result.status != "loading":
+            return result
+
+        params.update(
+            {
+                "device_id": source_device_id,
+                "selection_id": selection_id,
+                "base_revision": base_revision,
+                "base_session": base_session,
+            }
+        )
+        command_key = self._channel_key(mac, "history")
+        envelope = {
+            "selection_id": selection_id,
+            "mode": normalized_mode,
+            "source_device_id": source_device_id,
+            "base_revision": base_revision,
+            "base_session": base_session,
+            "result": result,
+        }
+        self._pending_history_commands[command_key] = envelope
+
+        def finish(acknowledgement, transport_error):
+            current = self._pending_history_commands.get(command_key)
+            if (
+                not current
+                or current["selection_id"] != selection_id
+            ):
+                return
+
+            error = transport_error
+            if not error:
+                error = self._validate_history_acknowledgement(
+                    acknowledgement,
+                    envelope,
+                )
+            graph_engine.complete_history_command(
+                selection_id,
+                error=error,
+            )
+            self._pending_history_commands.pop(command_key, None)
+            if callable(on_complete):
+                on_complete(result.key, error)
+
+        web_client.WEB_CLIENT.send_history_command(
+            mac,
+            params,
+            finish,
+        )
+        return result
+
+    @staticmethod
+    def _validate_history_acknowledgement(
+        acknowledgement,
+        envelope,
+    ):
+        if not isinstance(acknowledgement, dict):
+            return "Ungültige History-Bestätigung vom Hub."
+        if acknowledgement.get("status") != "selected":
+            return str(
+                acknowledgement.get("error")
+                or "History-Auswahl wurde vom Hub nicht bestätigt."
+            )
+        if (
+            str(acknowledgement.get("selection_id") or "")
+            != envelope["selection_id"]
+        ):
+            return "History-Auswahlkennung der Bestätigung stimmt nicht."
+        if (
+            str(acknowledgement.get("device_id") or "")
+            != envelope["source_device_id"]
+        ):
+            return "History-Gerätekennung der Bestätigung stimmt nicht."
+        if acknowledgement.get("mode") != envelope["mode"]:
+            return "History-Modus der Bestätigung stimmt nicht."
+        if (
+            str(acknowledgement.get("history_session") or "")
+            != envelope["base_session"]
+        ):
+            return "History-Session der Bestätigung stimmt nicht."
+        try:
+            confirmed_revision = int(
+                acknowledgement["rev_history"]
+            )
+        except (KeyError, TypeError, ValueError):
+            return "History-Revision der Bestätigung fehlt."
+        if confirmed_revision != envelope["base_revision"] + 1:
+            return "History-Zielrevision der Bestätigung stimmt nicht."
         return None
 
 

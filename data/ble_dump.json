@@ -1,32 +1,32 @@
 [
   {
-    "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
+    "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
     "gatt_raw": null,
-    "timestamp": "2026-07-23T14:06:53.636+0000",
-    "name": "growmaster-d064",
-    "rssi": -54,
-    "adv_raw": "D302A21109C70F3F09EE0F1F9C0002AC07474D",
-    "log_raw": "D302A21109C70F3F09EE0F1F9C0002AC07474D",
+    "timestamp": "2026-07-24T01:01:36.718+0000",
+    "name": "ThermoBeacon2",
+    "rssi": -53,
+    "adv_raw": "190019060000F1F0520E7C019C02FFFFFFFF04046E00",
+    "log_raw": "190019060000F1F0520E7C019C02FFFFFFFF04046E00",
     "note": "raw"
   },
   {
-    "address": "FABCEA8B-7EC8-2594-4879-2B3B63989660",
+    "address": "E697B52A-2E7F-D41E-BC4D-2D027CB38D0B",
     "gatt_raw": null,
-    "timestamp": "2026-07-23T14:06:52.746+0000",
-    "name": "ThermoBeacon2",
-    "rssi": -54,
-    "adv_raw": "190019060000F1F0580E87017302FFFFFFFF8D6A6D00",
-    "log_raw": "190019060000F1F0580E87017302FFFFFFFF8D6A6D00",
+    "timestamp": "2026-07-24T01:01:42.464+0000",
+    "name": "growmaster-d064",
+    "rssi": -55,
+    "adv_raw": "D302A211094510DA095A10D59C00030C076013",
+    "log_raw": "D302A211094510DA095A10D59C00030C076013",
     "note": "raw"
   },
   {
     "address": "C898B4F2-B452-7502-1A67-0536E77D49EA",
     "gatt_raw": null,
-    "timestamp": "2026-07-23T14:06:48.282+0000",
+    "timestamp": "2026-07-24T01:01:43.350+0000",
     "name": "sps",
-    "rssi": -37,
-    "adv_raw": "7A0A1D0E006A740008",
-    "log_raw": "7A0A1D0E006A740008",
+    "rssi": -42,
+    "adv_raw": "1E0AF80E000A4B0008",
+    "log_raw": "1E0AF80E000A4B0008",
     "note": "raw"
   }
 ]
